@@ -26,13 +26,12 @@ const CONFIG = {
   // ---------------------------------------------------------------
   // LEAD DELIVERY
   // ---------------------------------------------------------------
-  // Points at this site's own Netlify Function (netlify/functions/
-  // submit-lead.js), which authenticates to Google Sheets server-side
-  // and appends each lead as a row in the master lead spreadsheet.
-  // No credentials live here or anywhere in the browser — the
-  // function reads them from Netlify environment variables at
-  // runtime. This is a same-origin relative path, not a secret.
-  WEBHOOK_URL: "/.netlify/functions/submit-lead",
+  // PLACEHOLDER — replace with the real webhook / CRM ingestion
+  // endpoint before launch. Must accept a JSON POST body (see
+  // js/payload.js for the exact shape) and should NOT require a
+  // client-side secret. Any API key / auth token belongs on the
+  // receiving server, never in this file.
+  WEBHOOK_URL: "https://webhook.example.com/REPLACE_WITH_REAL_ENDPOINT",
 
   // ---------------------------------------------------------------
   // CONSENT / TCPA DISCLOSURE
