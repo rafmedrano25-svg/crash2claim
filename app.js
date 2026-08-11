@@ -46,7 +46,6 @@
       phone: "",
       email: "",
       consent: false,
-      consent_timestamp: "",
     },
     qualificationStatus: null,
     lastPayload: null,
@@ -650,10 +649,6 @@
     });
     document.getElementById("consentCheck").addEventListener("change", function (e) {
       STATE.answers.consent = e.target.checked;
-      // Record the moment consent was actually given (not just the
-      // later moment the whole form is submitted), so the lead
-      // record reflects when the box was checked.
-      STATE.answers.consent_timestamp = e.target.checked ? new Date().toISOString() : "";
     });
     document.getElementById("submitBtn").addEventListener("click", function () {
       validateAndSubmitStep9();
