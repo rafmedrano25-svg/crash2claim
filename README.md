@@ -80,16 +80,26 @@ to change when the copy does.
 
 ## 4. Where the webhook is configured
 
-`js/config.js` → `CONFIG.WEBHOOK_URL`. It currently points at a placeholder
-(`https://webhook.example.com/REPLACE_WITH_REAL_ENDPOINT`) so the app knows
-not to attempt real delivery yet — see `js/payload.js` (`sendLeadPayload`),
-which logs the payload to the console instead of calling `fetch()` while the
-placeholder is in place, and switches to a real POST once you supply a real
-URL. No API keys or auth tokens belong in this file or anywhere client-side —
-if the receiving endpoint needs auth, handle it server-side.
+`js/config.js` → `CONFIG.WEBHOOK_URL` points at this site's own Netlify
+Function: `/.netlify/functions/submit-lead` (source at
+`netlify/functions/submit-lead.js`). That function runs server-side on
+Netlify, authenticates to the Google Sheets API as a service account, and
+appends one row per submission to the master lead spreadsheet. Credentials
+(`GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`,
+`GOOGLE_SHEET_ID`) live only in Netlify's environment variables — nothing
+is hard-coded in this repo or ever sent to the browser.
 
 `js/payload.js` (`buildLeadPayload`) is where the final JSON shape is
-assembled — see `example-payload.json` for sample output.
+assembled — see `example-payload.json` for sample output, including a
+`test_lead_example`. Adding `?test=1` to the URL marks a submission as a
+test lead (`test_lead: true` in the payload, logged as "TEST" instead of
+"LIVE" in the Sheet) so test runs never get mistaken for real leads.
+
+Consent evidence (`consent_given`, `consent_disclosure_shown`,
+`consent_timestamp`) is captured at the moment the checkbox is checked and
+included in every submission, alongside the qualification result,
+attribution/UTM data, and click IDs — see `example-payload.json` for the
+full field list.
 
 ## 5. Where branding is configured
 
@@ -148,7 +158,6 @@ their results.
 
 ## Still needed before production launch
 
-- Real `WEBHOOK_URL` (CRM/lead-buyer ingestion endpoint)
 - Approved TCPA/consent language to replace `CONSENT_DISCLOSURE`
 - Real Privacy Policy and Terms & Conditions content (`privacy.html`, `terms.html`)
 - Real support/intake phone number (`CONTACT_PHONE`)

@@ -17,6 +17,13 @@
 function buildLeadPayload(answers, qualificationStatus) {
   var attribution = typeof getAttribution === "function" ? getAttribution() : {};
 
+  // ?test=1 (or ?test=true) marks this submission as a test lead.
+  // Read directly from the current URL — in this single-page survey
+  // no reload ever happens between steps, so the query string is
+  // still intact at submit time without needing extra persistence.
+  var testParam = new URLSearchParams(window.location.search).get("test");
+  var isTestLead = testParam === "1" || testParam === "true";
+
   var payload = {
     brand: CONFIG.BRAND_NAME,
     domain: CONFIG.DOMAIN,
@@ -35,10 +42,18 @@ function buildLeadPayload(answers, qualificationStatus) {
     phone: answers.phone || "",
     email: answers.email || "",
 
+    // Consent evidence — what was agreed to, and when. The disclosure
+    // text is snapshotted from CONFIG at submit time so this specific
+    // lead's record doesn't change if the copy is edited later.
+    consent_given: !!answers.consent,
+    consent_disclosure_shown: CONFIG.CONSENT_DISCLOSURE,
+    consent_timestamp: answers.consent_timestamp || "",
+
     qualification_status: qualificationStatus,
     timestamp: new Date().toISOString(),
     landing_page_url: window.location.href,
     referrer: document.referrer || "",
+    test_lead: isTestLead,
   };
 
   // Merge in whatever attribution params were captured, if any.
@@ -65,6 +80,12 @@ function sendLeadPayload(payload) {
     // prototype. Log locally instead of attempting a network call.
     console.info("[Crash2Claim] Webhook not configured. Lead payload:", payload);
     return Promise.resolve({ ok: false, error: "webhook_not_configured" });
+  }
+
+  if (typeof fetch !== "function") {
+    // Defensive fallback for environments without a fetch global
+    // (very old browsers, some test harnesses). Never throws.
+    return Promise.resolve({ ok: false, error: "fetch_unavailable" });
   }
 
   return fetch(CONFIG.WEBHOOK_URL, {
