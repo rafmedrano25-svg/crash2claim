@@ -76,15 +76,23 @@ function buildLeadPayload(answers, qualificationStatus) {
  */
 function sendLeadPayload(payload) {
   if (!CONFIG.WEBHOOK_URL || CONFIG.WEBHOOK_URL.indexOf("REPLACE_WITH_REAL_ENDPOINT") !== -1) {
-    // No real endpoint configured yet — this is expected in the
-    // prototype. Log locally instead of attempting a network call.
-    console.info("[Crash2Claim] Webhook not configured. Lead payload:", payload);
+    // No real endpoint configured yet. Logged as an ERROR (not just
+    // info) with the actual configured value, specifically so a
+    // misconfiguration like this is impossible to miss in DevTools
+    // if it ever happens again on a deployed site.
+    console.error(
+      "[Crash2Claim] WEBHOOK_URL is not configured (current value: " +
+        JSON.stringify(CONFIG.WEBHOOK_URL) +
+        "). No request was sent. Lead payload:",
+      payload
+    );
     return Promise.resolve({ ok: false, error: "webhook_not_configured" });
   }
 
   if (typeof fetch !== "function") {
     // Defensive fallback for environments without a fetch global
     // (very old browsers, some test harnesses). Never throws.
+    console.error("[Crash2Claim] fetch() is not available in this environment. Lead payload:", payload);
     return Promise.resolve({ ok: false, error: "fetch_unavailable" });
   }
 
@@ -95,11 +103,13 @@ function sendLeadPayload(payload) {
   })
     .then(function (res) {
       if (!res.ok) {
+        console.error("[Crash2Claim] Lead delivery failed with HTTP status " + res.status + ".");
         return { ok: false, error: "http_" + res.status };
       }
       return { ok: true };
     })
     .catch(function (err) {
+      console.error("[Crash2Claim] Lead delivery failed:", err && err.message);
       return { ok: false, error: (err && err.message) || "network_error" };
     });
 }
