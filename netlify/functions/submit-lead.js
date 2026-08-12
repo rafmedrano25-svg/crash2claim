@@ -24,6 +24,9 @@ const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 
 // Column order MUST match the header row in the Google Sheet exactly.
+// The first 29 columns are the original, working set — untouched, same
+// order. New tracking fields are APPENDED at the end only, so existing
+// columns never shift position.
 const COLUMNS = [
   "timestamp",
   "test_lead_label",
@@ -54,6 +57,13 @@ const COLUMNS = [
   "subid2",
   "gclid",
   "fbclid",
+  // --- appended tracking-audit additions (see crash2claim-tracking-audit.md) ---
+  "lead_id",
+  "disqualification_reason",
+  "msclkid",
+  "ttclid",
+  "consent_source",
+  "consent_disclosure_version",
 ];
 
 exports.handler = async function (event) {
@@ -89,17 +99,23 @@ exports.handler = async function (event) {
     return jsonResponse(500, { ok: false, error: "private_key_malformed" });
   }
 
+  // Traceability: every log line and response below includes lead_id
+  // (a random, non-PII identifier generated client-side — see
+  // payload.js's generateLeadId()) so a failure can always be matched
+  // back to the specific submission attempt, even though a failed
+  // attempt never produces a Sheet row. Never logs the lead's name,
+  // phone, email, or any other personal detail.
+  var leadIdForLogging = (lead && lead.lead_id) || "(missing)";
+
   try {
     var accessToken = await getGoogleAccessToken(email, privateKey);
     var sheetTabName = await getFirstSheetTitle(sheetId, accessToken);
     var row = buildRow(lead);
     await appendRow(sheetId, sheetTabName, accessToken, row);
-    return jsonResponse(200, { ok: true });
+    return jsonResponse(200, { ok: true, lead_id: leadIdForLogging });
   } catch (err) {
-    // Log only an error code/message server-side (visible to you in
-    // Netlify's function logs), never the lead's personal details.
-    console.error("[submit-lead] Delivery failed:", err && err.message);
-    return jsonResponse(502, { ok: false, error: "sheet_write_failed" });
+    console.error("[submit-lead] Delivery failed. lead_id=" + leadIdForLogging + " reason=" + (err && err.message));
+    return jsonResponse(502, { ok: false, error: "sheet_write_failed", lead_id: leadIdForLogging });
   }
 };
 
