@@ -46,8 +46,11 @@
       phone: "",
       email: "",
       consent: false,
+      consent_timestamp: "",
     },
     qualificationStatus: null,
+    disqualificationReason: null,
+    leadId: null,
     lastPayload: null,
     webhookWarning: false,
   };
@@ -649,6 +652,10 @@
     });
     document.getElementById("consentCheck").addEventListener("change", function (e) {
       STATE.answers.consent = e.target.checked;
+      // Record the moment consent was actually given (not just the
+      // later moment the whole form is submitted), so the lead
+      // record reflects when the box was checked.
+      STATE.answers.consent_timestamp = e.target.checked ? new Date().toISOString() : "";
     });
     document.getElementById("submitBtn").addEventListener("click", function () {
       validateAndSubmitStep9();
@@ -721,10 +728,23 @@
       submitBtn.textContent = "Submitting...";
     }
 
+    // Generated once, right here, before the payload is built or sent —
+    // so the same id is used consistently for this submission (the
+    // isSubmitting/hasSubmitted guards above already prevent this from
+    // ever running twice for one lead).
+    var leadId = generateLeadId();
+    STATE.leadId = leadId;
+
     var status = evaluateQualification(STATE.answers, CONFIG.QUALIFYING_RULES);
     STATE.qualificationStatus = status;
 
-    var payload = buildLeadPayload(STATE.answers, status);
+    // Reason codes are derived from the exact same rules qualification.js
+    // already evaluates — this does not change qualification criteria.
+    var disqualificationReason =
+      status === "unqualified" ? getDisqualificationReason(STATE.answers, CONFIG.QUALIFYING_RULES) : "";
+    STATE.disqualificationReason = disqualificationReason;
+
+    var payload = buildLeadPayload(STATE.answers, status, disqualificationReason, leadId);
     STATE.lastPayload = payload;
 
     sendLeadPayload(payload)
