@@ -624,7 +624,7 @@
       '<input type="checkbox" id="consentCheck"' +
       (a.consent ? " checked" : "") +
       ">" +
-      '<span class="consent-text"><span class="consent-placeholder-tag">Placeholder text</span><br>' +
+      '<span class="consent-text">' +
       CONFIG.CONSENT_DISCLOSURE +
       "</span>" +
       "</label>" +

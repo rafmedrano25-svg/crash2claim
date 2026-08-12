@@ -37,25 +37,41 @@ const CONFIG = {
   // ---------------------------------------------------------------
   // CONSENT / TCPA DISCLOSURE
   // ---------------------------------------------------------------
-  // PLACEHOLDER — FINAL CONSENT LANGUAGE MUST BE APPROVED BEFORE LAUNCH.
-  // Do not launch with this text. Replace with attorney-approved
-  // TCPA / consent language once available. Keep the checkbox in
-  // js/app.js unchecked by default regardless of copy changes here.
+  // Business-approved consent disclosure (CONSENT_DISCLOSURE_VERSION
+  // "v2"), implemented per confirmed 83 Advio LLC / Crash2Claim
+  // business facts. This has NOT yet undergone formal outside-counsel
+  // review. See crash2claim-counsel-review-packet.md for the specific
+  // open legal-review items (recipient-disclosure structure, TCPA
+  // adequacy for an open/dynamic buyer pool, state-specific consent
+  // requirements, etc.) that still need attorney sign-off. Do not
+  // remove that context when this is eventually finalized. Keep the
+  // checkbox in app.js unchecked by default regardless of copy
+  // changes here. Only confirmed facts are stated below — no
+  // autodialer, prerecorded/AI voice, call-recording, or
+  // calling-hour language is included because none of that has been
+  // confirmed as true of Crash2Claim or its downstream recipients.
   CONSENT_DISCLOSURE:
-    "PLACEHOLDER — FINAL CONSENT LANGUAGE MUST BE APPROVED BEFORE LAUNCH. " +
-    "By checking this box and clicking “Get My Free Case Evaluation,” " +
-    "I agree that Crash2Claim and/or its participating partners may contact " +
-    "me at the phone number and email provided — including by call, text " +
-    "(SMS/MMS), and email, and using automated dialing or messaging " +
-    "technology — about my accident inquiry, even if my number is on a " +
-    "Do Not Call list. Message and data rates may apply. Consent is not a " +
-    "condition of purchase. I understand I can revoke consent at any time.",
+    "By checking this box and selecting “Get My Free Case Evaluation,” " +
+    "I am electronically signing this consent and confirming that the " +
+    "information I have provided is accurate. I understand that " +
+    "Crash2Claim is a commercial lead-generation service operated by 83 " +
+    "Advio LLC, is not a law firm, and does not provide legal advice or " +
+    "legal representation. I authorize Crash2Claim and the qualified " +
+    "third parties who may receive my information — which may include " +
+    "attorneys, law firms, legal intake companies, legal service " +
+    "providers, lead buyers, and marketing partners — to contact me " +
+    "about my accident inquiry by telephone, text message (SMS/MMS), " +
+    "and/or email at the phone number and email address I provided. " +
+    "Message and data rates may apply. My consent is not a condition of " +
+    "purchasing any goods or services. I may revoke my consent at any " +
+    "time by emailing privacy@crash2claim.com. My submission is also " +
+    "governed by Crash2Claim's Terms of Use and Privacy Policy.",
 
   // A short, stable version tag for CONSENT_DISCLOSURE above — NOT the
   // legal text itself (that is unchanged). Increment this any time the
   // disclosure copy is edited, so every past lead stays tied to the
   // exact wording it was actually shown, even after future edits.
-  CONSENT_DISCLOSURE_VERSION: "v1",
+  CONSENT_DISCLOSURE_VERSION: "v2",
 
   // ---------------------------------------------------------------
   // QUALIFICATION RULES
