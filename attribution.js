@@ -1,5 +1,5 @@
 /**
- * Crash2Claim — Attribution Capture
+ * Crash2Claim â€” Attribution Capture
  * -----------------------------------------------------------------
  * Captures marketing/tracking parameters from the URL on page load
  * and persists them in sessionStorage so they survive across the
@@ -20,6 +20,8 @@ const ATTRIBUTION_KEYS = [
   "subid2",
   "fbclid",
   "gclid",
+  "msclkid", // Microsoft/Bing Ads click ID
+  "ttclid", // TikTok Ads click ID
 ];
 
 const ATTRIBUTION_STORAGE_KEY = "c2c_attribution";
@@ -49,7 +51,7 @@ function captureAttribution() {
   try {
     sessionStorage.setItem(ATTRIBUTION_STORAGE_KEY, JSON.stringify(stored));
   } catch (e) {
-    // sessionStorage unavailable (e.g. private browsing edge cases) —
+    // sessionStorage unavailable (e.g. private browsing edge cases) â€”
     // attribution simply won't persist across a refresh, but the
     // in-memory value returned below still works for this pageview.
   }
