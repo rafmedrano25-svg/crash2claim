@@ -10,11 +10,66 @@
  */
 
 /**
+ * Generates a unique, non-PII identifier for a single lead submission,
+ * suitable for reconciling this Sheet row against a future CRM/buyer
+ * system. Never derived from name/email/phone or any other personal
+ * data — just random bytes.
+ *
+ * Prefers crypto.randomUUID() (standard, collision-resistant, supported
+ * in all current browsers over HTTPS). Falls back to constructing a
+ * UUID-v4-shaped string from crypto.getRandomValues() for slightly
+ * older browsers, and finally to a Date+Math.random fallback only if
+ * neither Web Crypto API is available.
+ * @returns {string}
+ */
+function generateLeadId() {
+  try {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+  } catch (e) {}
+
+  try {
+    if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+      var bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
+      bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant
+      var hex = Array.prototype.map
+        .call(bytes, function (b) {
+          return b.toString(16).padStart(2, "0");
+        })
+        .join("");
+      return (
+        hex.substring(0, 8) +
+        "-" +
+        hex.substring(8, 12) +
+        "-" +
+        hex.substring(12, 16) +
+        "-" +
+        hex.substring(16, 20) +
+        "-" +
+        hex.substring(20)
+      );
+    }
+  } catch (e) {}
+
+  // Last-resort fallback — weaker randomness, but still never derived
+  // from any personal/identifying data.
+  return "c2c-" + Date.now().toString(36) + "-" + Math.random().toString(36).substring(2, 12);
+}
+
+/**
  * @param {Object} answers - raw survey answers (see js/app.js STATE)
  * @param {"qualified"|"unqualified"} qualificationStatus
+ * @param {string} [disqualificationReason] - stable reason code from
+ *   qualification.js's getDisqualificationReason(), or "" if qualified
+ * @param {string} [leadId] - id from generateLeadId(), generated once
+ *   in app.js before this function is called, so the same id is used
+ *   consistently for this submission
  * @returns {Object} final lead payload
  */
-function buildLeadPayload(answers, qualificationStatus) {
+function buildLeadPayload(answers, qualificationStatus, disqualificationReason, leadId) {
   var attribution = typeof getAttribution === "function" ? getAttribution() : {};
 
   // ?test=1 (or ?test=true) marks this submission as a test lead.
@@ -27,6 +82,8 @@ function buildLeadPayload(answers, qualificationStatus) {
   var payload = {
     brand: CONFIG.BRAND_NAME,
     domain: CONFIG.DOMAIN,
+
+    lead_id: leadId || generateLeadId(),
 
     settlement_intent: answers.settlement_intent || "",
     accident_date: answers.accident_date || "",
@@ -42,21 +99,29 @@ function buildLeadPayload(answers, qualificationStatus) {
     phone: answers.phone || "",
     email: answers.email || "",
 
-    // Consent evidence — what was agreed to, and when. The disclosure
-    // text is snapshotted from CONFIG at submit time so this specific
-    // lead's record doesn't change if the copy is edited later.
+    // Consent evidence — what was agreed to, when, where, and which
+    // version of the disclosure copy was actually shown. The
+    // disclosure text itself is unchanged; consent_disclosure_version
+    // is just a stable tag so future copy edits don't retroactively
+    // change what a past lead's record implies they saw.
     consent_given: !!answers.consent,
     consent_disclosure_shown: CONFIG.CONSENT_DISCLOSURE,
+    consent_disclosure_version: CONFIG.CONSENT_DISCLOSURE_VERSION || "",
     consent_timestamp: answers.consent_timestamp || "",
+    consent_source: "crash2claim_survey_contact_step",
 
     qualification_status: qualificationStatus,
+    disqualification_reason: qualificationStatus === "unqualified" ? disqualificationReason || "" : "",
+
     timestamp: new Date().toISOString(),
     landing_page_url: window.location.href,
     referrer: document.referrer || "",
     test_lead: isTestLead,
   };
 
-  // Merge in whatever attribution params were captured, if any.
+  // Merge in whatever attribution params were captured, if any
+  // (UTMs, subid/subid2, and click IDs including gclid, fbclid,
+  // msclkid, ttclid — see attribution.js's ATTRIBUTION_KEYS).
   ATTRIBUTION_KEYS.forEach(function (key) {
     if (attribution[key]) {
       payload[key] = attribution[key];
@@ -116,6 +181,7 @@ function sendLeadPayload(payload) {
 
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
+    generateLeadId: generateLeadId,
     buildLeadPayload: buildLeadPayload,
     sendLeadPayload: sendLeadPayload,
   };
