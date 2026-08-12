@@ -51,6 +51,12 @@ const CONFIG = {
     "Do Not Call list. Message and data rates may apply. Consent is not a " +
     "condition of purchase. I understand I can revoke consent at any time.",
 
+  // A short, stable version tag for CONSENT_DISCLOSURE above — NOT the
+  // legal text itself (that is unchanged). Increment this any time the
+  // disclosure copy is edited, so every past lead stays tied to the
+  // exact wording it was actually shown, even after future edits.
+  CONSENT_DISCLOSURE_VERSION: "v1",
+
   // ---------------------------------------------------------------
   // QUALIFICATION RULES
   // ---------------------------------------------------------------
