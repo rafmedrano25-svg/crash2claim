@@ -184,7 +184,7 @@
       '<li><span class="dot"></span> See if you may qualify for a free case evaluation</li>' +
       "</ul>" +
       '<button type="button" class="btn btn-primary" id="startBtn">Start My Accident Check</button>' +
-      '<p class="hero-disclaimer">Crash2Claim is a consumer connection service, not a law firm, and does not provide legal advice.</p>'
+      '<p class="hero-disclaimer">Crash2Claim is not a law firm and does not provide legal advice.</p>'
     );
   }
 
@@ -728,18 +728,12 @@
       submitBtn.textContent = "Submitting...";
     }
 
-    // Generated once, right here, before the payload is built or sent —
-    // so the same id is used consistently for this submission (the
-    // isSubmitting/hasSubmitted guards above already prevent this from
-    // ever running twice for one lead).
     var leadId = generateLeadId();
     STATE.leadId = leadId;
 
     var status = evaluateQualification(STATE.answers, CONFIG.QUALIFYING_RULES);
     STATE.qualificationStatus = status;
 
-    // Reason codes are derived from the exact same rules qualification.js
-    // already evaluates — this does not change qualification criteria.
     var disqualificationReason =
       status === "unqualified" ? getDisqualificationReason(STATE.answers, CONFIG.QUALIFYING_RULES) : "";
     STATE.disqualificationReason = disqualificationReason;

@@ -1,7 +1,7 @@
 /* =================================================================
-   Crash2Claim â€” Styles
+   Crash2Claim — Styles
    Mobile-first. Desktop is a progressive enhancement (see @media
-   queries at the bottom) â€” the survey is always a centered card,
+   queries at the bottom) — the survey is always a centered card,
    never a full-width multi-column layout, because it's a focused
    single task.
    ================================================================= */
@@ -45,7 +45,7 @@ body {
 
 body {
   font-family: var(--font);
-  background: #EAF4FB;
+  background: #eaf4fb;
   color: var(--navy);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
@@ -174,6 +174,7 @@ button {
   padding: 0;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 10px;
 }
 
@@ -633,7 +634,7 @@ select.input-error {
 }
 
 /* ---------------------------------------------------------------
-   Desktop enhancement â€” still a single focused card, just with
+   Desktop enhancement — still a single focused card, just with
    breathing room around it instead of a different layout.
    --------------------------------------------------------------- */
 
@@ -655,7 +656,7 @@ select.input-error {
   }
 
   body {
-    background: #EAF4FB;
+    background: #eaf4fb;
   }
 }
 
@@ -799,7 +800,7 @@ select.input-error {
   }
 }
 
-/* Icon answer cards â€” Question 1 (settlement intent) + Question 3 (vehicle type) */
+/* Icon answer cards — Question 1 (settlement intent) + Question 3 (vehicle type) */
 .icon-card-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -872,7 +873,7 @@ select.input-error {
   right: 8px;
 }
 
-/* Per-answer feedback chip ("Got it âœ“" / "Locked in âœ“" / "Nice âœ“") */
+/* Per-answer feedback chip ("Got it ✓" / "Locked in ✓" / "Nice ✓") */
 .c2c-toast {
   position: absolute;
   left: 50%;
@@ -910,7 +911,7 @@ select.input-error {
   }
 }
 
-/* Milestone banners ("Halfway there âœ“" / "Almost done") */
+/* Milestone banners ("Halfway there ✓" / "Almost done") */
 .c2c-milestone {
   text-align: center;
   font-size: 12px;
@@ -955,7 +956,7 @@ select.input-error {
   color: var(--coral-dark);
 }
 
-/* Directional step transitions (forward / back) â€” swap in for the
+/* Directional step transitions (forward / back) — swap in for the
    default .step-enter fade whenever navigation has a direction. */
 .step-slide-fwd {
   animation: c2cSlideFromRight 300ms ease both;
@@ -1027,7 +1028,7 @@ select.input-error {
 }
 
 /* ---------------------------------------------------------------
-   Bigger "Checking your answersâ€¦" reveal â€” charging ring +
+   Bigger "Checking your answers…" reveal — charging ring +
    anticipation beat before the result appears.
    --------------------------------------------------------------- */
 
@@ -1128,7 +1129,7 @@ select.input-error {
 }
 
 .checking-line.checked::before {
-  content: "âœ“";
+  content: "✓";
   border-color: var(--teal);
   background: var(--teal);
   color: #fff;
@@ -1141,7 +1142,7 @@ select.input-error {
 
 /* ---------------------------------------------------------------
    Result badge + confetti burst (qualified only). Abstract shapes
-   in brand colors â€” no coins, cash, or prize iconography.
+   in brand colors — no coins, cash, or prize iconography.
    --------------------------------------------------------------- */
 
 .result-badge-wrap {
