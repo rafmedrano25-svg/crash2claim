@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Get Paid $50 to Tell Your Car Accident Story | Crash2Claim</title>
-<meta name="description" content="Crash2Claim is looking for real people to share their car accident story in a short recorded interview. Eligible, verified participants who complete the interview and release earn $50.">
+<meta name="description" content="Crash2Claim is looking for real people to share their car accident story in a short recorded interview. Selected participants who complete the interview and release earn $50.">
 <meta name="robots" content="noindex, follow">
 <link rel="stylesheet" href="styles-apply.css">
 </head>
@@ -23,12 +23,18 @@
   <section class="apply-hero">
     <p class="apply-hero-eyebrow">Get Paid</p>
     <p class="apply-hero-dollar">$50</p>
-    <h1 class="apply-hero-headline">To Tell Your Car Accident Story.</h1>
+    <h1 class="apply-hero-headline">Tell Your Car Accident Story.</h1>
     <p class="apply-hero-sub">Real people. Real stories. Any outcome.</p>
     <p class="apply-hero-disclaimer" id="heroDisclaimer"></p>
+    <div class="apply-hero-cta">
+      <button type="button" id="startApplyBtn" class="apply-btn apply-btn-primary">Start Your Application</button>
+    </div>
   </section>
 
   <div class="apply-steps" id="howItWorks"></div>
+
+  <!-- JS-driven application flow mounts here: 8 questions -> thank-you -->
+  <main id="applyRoot"></main>
 
   <div class="apply-info-card">
     <h2>Who we're looking for</h2>
@@ -41,14 +47,6 @@
     <ol id="disclosureSteps"></ol>
     <p id="disclosureOutro"></p>
   </div>
-
-  <div class="apply-info-card">
-    <h2>If we're interested in your story</h2>
-    <p id="verificationHeadsup" style="margin:0;"></p>
-  </div>
-
-  <!-- JS-driven application flow mounts here: intro card -> 8 questions -> thank-you -->
-  <main id="applyRoot"></main>
 
   <footer class="apply-footer">
     <div class="apply-footer-links">
@@ -84,8 +82,6 @@
     return "<li>" + s + "</li>";
   }).join("");
   document.getElementById("disclosureOutro").textContent = APPLY_CONFIG.PAYMENT_DISCLOSURE_FULL_OUTRO;
-
-  document.getElementById("verificationHeadsup").textContent = APPLY_CONFIG.VERIFICATION_HEADSUP;
 </script>
 <script src="apply-payload.js"></script>
 <script src="apply-app.js"></script>

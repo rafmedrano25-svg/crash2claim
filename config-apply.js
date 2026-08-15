@@ -1,84 +1,74 @@
 /**
- * Crash2Claim — /apply Recruitment Page Config
+ * Crash2Claim — /apply Recruitment Page Configuration
  * -----------------------------------------------------------------
- * Completely separate from js/config.js (the case-evaluation
- * funnel's config). Nothing in this file is read by app.js,
- * qualification.js, or payload.js, and nothing here ever touches
- * the case-evaluation Google Sheet. nnConsent language, disclosure
- * text, and the submission endpoint are all recruitment-specific.
+ * Fully independent from js/config.js (the case-evaluation funnel's
+ * config). Nothing here is read by, or feeds into, the case-eval
+ * survey, its qualification logic, its lead scoring, or its Sheet.
  * -----------------------------------------------------------------
  */
 
 var APPLY_CONFIG = {
   BRAND_NAME: "Crash2Claim",
 
-  // Separate Netlify Function + separate Google Sheet from the
-  // case-evaluation lead funnel. See netlify/functions/submit-story-application.js
+  // Netlify Function endpoint for THIS system only.
   WEBHOOK_URL: "/.netlify/functions/submit-story-application",
 
   CAMPAIGN_NAME: "story_project_v1",
 
   PAYMENT_AMOUNT_LABEL: "$50",
 
-  // Short version — shown directly under the hero, always visible
-  // without scrolling.
+  // Short line shown directly under the hero.
   PAYMENT_DISCLOSURE_SHORT:
-    "$50 paid to eligible, verified participants who complete the recorded interview and release. Applying does not guarantee selection or payment.",
+    "$50 for selected participants who complete the recorded interview and release.",
 
-  // Full version — shown in its own card before the application
-  // starts. Exact six-step list must stay identical everywhere it
-  // appears (hero, this card, the application, the release).
+  // "How the $50 payment works" card — intro sentence.
   PAYMENT_DISCLOSURE_FULL_INTRO:
-    "Crash2Claim is looking for real people to participate in short recorded interviews about their auto accident experiences. Applying does not automatically qualify you for payment. To receive the $50 participant payment, you must:",
+    "Applying does not guarantee selection or payment. To receive the $50:",
 
+  // "How the $50 payment works" card — ordered steps.
   PAYMENT_DISCLOSURE_STEPS: [
-    "Meet Crash2Claim's participant eligibility criteria",
+    "Meet Crash2Claim's participant criteria",
     "Be selected to participate",
-    "Provide reasonable proof that your story is legitimate, if requested",
-    "Complete any required pre-screen or verification step",
+    "Complete any required pre-screen",
     "Sign the required participant release",
-    "Complete the actual recorded interview",
+    "Complete the recorded interview",
   ],
 
+  // "How the $50 payment works" card — closing sentence.
   PAYMENT_DISCLOSURE_FULL_OUTRO:
-    "The $50 is compensation for completing this process — not for applying, submitting information, having an accident, having a legal claim, hiring an attorney, receiving a settlement, or allowing your content to be published. Payment does not depend on whether your story is ultimately published or how Crash2Claim feels about it.",
+    "$50 is paid for completing the required interview process — not for a particular story, claim outcome, settlement amount, or attorney choice.",
 
+  // "Who we're looking for" card.
   ELIGIBILITY_CRITERIA: [
-    "You are 18 years of age or older",
+    "You're 18 or older",
     "You were personally involved in a real car, truck, or motorcycle accident",
-    "You're able to describe your experience in a short recorded interview, in your own words",
-    "You're comfortable with Crash2Claim recording that interview and, if you're selected and sign the required release, publishing it",
-    "You're able to provide reasonable supporting proof that the accident occurred, if asked",
-    "You meet any additional participant criteria Crash2Claim applies during review",
+    "You're comfortable sharing your experience in a short recorded interview",
   ],
 
-  VERIFICATION_HEADSUP:
-    "If we're interested in your story, we may ask you to provide one reasonable form of documentation showing the accident occurred — for example, a police or accident report, insurance claim documentation, accident or damage photos, or repair documentation. We only ask for this from applicants we're seriously considering, and we only need one reasonable item, not everything on this list. Please redact or black out anything we don't need, such as your Social Security number, driver's license number, full insurance policy number, or unrelated medical or financial information.",
-
-  // Recruitment-specific consent/acknowledgment — deliberately
-  // separate from CONFIG.CONSENT_DISCLOSURE used by the
-  // case-evaluation funnel. Version tag bumps independently.
+  // Recruitment-specific consent (separate from CONFIG.CONSENT_DISCLOSURE
+  // used on the case-evaluation funnel). Shown at Q8 above the consent
+  // checkbox, and stored verbatim in consent_disclosure_shown.
   RECRUITMENT_CONSENT:
-    "By checking this box and submitting my application, I confirm that I am 18 years of age or older, that the information I've provided is accurate to the best of my knowledge, and that I understand applying does not guarantee selection or payment. I understand that if I'm selected, I may be asked to provide reasonable proof that the accident occurred, complete a short pre-screen or verification step, sign a participant release, and complete a recorded interview before receiving the $50 participant payment. I understand this is a separate paid storytelling project and is not a request for legal advice or representation.",
+    "By applying, I confirm I'm 18 or older and that the information I've provided is accurate to the best of my knowledge. I understand applying does not guarantee I'll be selected or paid. If selected, I may be asked to complete a short pre-screen or verification step, sign a participant release, and complete a recorded interview. If I complete these steps, I'll be paid $50. This is a separate, paid storytelling project and is not a request for legal advice, and is not part of Crash2Claim's accident case-evaluation service.",
 
-  RECRUITMENT_CONSENT_VERSION: "v1",
+  RECRUITMENT_CONSENT_VERSION: "v2",
 
+  // Four-step "how it works" strip.
   HOW_IT_WORKS: [
     { num: "1", label: "Apply" },
-    { num: "2", label: "Verify, if selected" },
+    { num: "2", label: "Verify" },
     { num: "3", label: "Interview" },
-    { num: "4", label: "Get paid $50" },
+    { num: "4", label: "Get Paid" },
   ],
 
   STATES: [
-    "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut",
-    "Delaware","District of Columbia","Florida","Georgia","Hawaii","Idaho","Illinois",
-    "Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts",
-    "Michigan","Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada",
-    "New Hampshire","New Jersey","New Mexico","New York","North Carolina","North Dakota",
-    "Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island","South Carolina",
-    "South Dakota","Tennessee","Texas","Utah","Vermont","Virginia","Washington",
-    "West Virginia","Wisconsin","Wyoming",
+    "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware",
+    "Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky",
+    "Louisiana","Maine","Maryland","Massachusetts","Michigan","Minnesota","Mississippi",
+    "Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey","New Mexico",
+    "New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania",
+    "Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont",
+    "Virginia","Washington","West Virginia","Wisconsin","Wyoming","District of Columbia",
   ],
 };
 

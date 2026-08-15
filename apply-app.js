@@ -1,15 +1,16 @@
 /**
- * Crash2Claim — /apply Recruitment Application
+ * Crash2Claim — /apply Recruitment Application Flow
  * -----------------------------------------------------------------
- * Owns the recruitment application state machine only. Completely
- * independent from js/app.js (the case-evaluation survey) — no
- * shared STATE, no shared step logic, no shared field names. Reads
- * js/config-apply.js and js/apply-payload.js, and the shared
- * js/attribution.js utility (unmodified).
+ * Fully independent from js/app.js (the case-evaluation funnel's
+ * flow controller). Different STATE shape, different questions,
+ * different submission target, different Sheet. Does NOT read,
+ * write, or feed into the case-evaluation survey's qualification
+ * logic, lead scoring, or Sheet in any way.
  *
- * 8 questions, one per screen, mobile-first. Consent + submit live
- * on the final question screen, matching the same pattern already
- * used on the case-evaluation funnel's last step.
+ * The application flow is entered via a STATIC "Start Your
+ * Application" button that lives directly in apply.html's hero
+ * (id="startApplyBtn") — this file no longer renders its own intro
+ * card. Clicking that button sets STATE.step = 1 and renders Q1.
  * -----------------------------------------------------------------
  */
 
@@ -17,21 +18,24 @@
   "use strict";
 
   var TOTAL_STEPS = 8;
-
   var applyRoot = document.getElementById("applyRoot");
 
   var params = new URLSearchParams(window.location.search);
   var isTestMode = params.get("test") === "1";
 
+  var TIMEFRAME_OPTIONS = ["This year", "1–2 years ago", "3–5 years ago", "More than 5 years ago"];
+  var SITUATION_OPTIONS = ["Settled / closed", "Still ongoing", "Not sure", "Other"];
+  var COMFORT_OPTIONS = ["Yes", "Maybe", "No"];
+
   var STATE = {
-    step: 0, // 0 = intro/CTA, 1-8 = questions, 9 = thank-you, -1 = age-gate stop
+    step: 0, // 0 = nothing rendered (static hero button starts flow), -1 = age-gate stop, 1-8 = questions, 9 = thank-you
     isSubmitting: false,
     hasSubmitted: false,
     applicantId: null,
     webhookWarning: false,
     answers: {
       first_name: "",
-      is_18: null, // true | false | null
+      is_18: null,
       state: "",
       accident_timeframe: "",
       story_summary: "",
@@ -48,126 +52,114 @@
     if (typeof captureAttribution === "function") {
       captureAttribution();
     }
+
     if (isTestMode) {
       var banner = document.getElementById("applyTestBanner");
       if (banner) banner.style.display = "block";
     }
+
+    bindStaticHeroButton();
     render();
   });
 
-  function render() {
-    if (STATE.step === 0) {
-      applyRoot.innerHTML = introTemplate();
-      bindIntroEvents();
-    } else if (STATE.step === -1) {
-      applyRoot.innerHTML = ageGateStopTemplate();
-    } else if (STATE.step >= 1 && STATE.step <= TOTAL_STEPS) {
-      applyRoot.innerHTML = stepTemplate(STATE.step);
-      bindStepEvents(STATE.step);
-    } else if (STATE.step === TOTAL_STEPS + 1) {
-      applyRoot.innerHTML = thankYouTemplate();
-    }
-    if (typeof applyRoot.scrollIntoView === "function") {
-      applyRoot.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }
-
-  function progressLabel(step) {
-    return '<div class="apply-progress"><span>Question ' + step + " of " + TOTAL_STEPS + "</span></div>";
-  }
-
-  // ---------------------------------------------------------------
-  // Intro / CTA card
-  // ---------------------------------------------------------------
-  function introTemplate() {
-    return (
-      '<div class="apply-card">' +
-      '<h2 class="apply-question">Ready to share your story?</h2>' +
-      '<p style="text-align:center; color:var(--gray-600); font-size:14px; margin:0 0 18px;">Takes about 2 minutes. No documents needed to apply.</p>' +
-      '<div class="apply-step-actions">' +
-      '<button type="button" class="apply-btn apply-btn-primary" id="startApplyBtn">Start Your Application</button>' +
-      "</div>" +
-      "</div>"
-    );
-  }
-
-  function bindIntroEvents() {
-    document.getElementById("startApplyBtn").addEventListener("click", function () {
+  function bindStaticHeroButton() {
+    var btn = document.getElementById("startApplyBtn");
+    if (!btn) return;
+    btn.addEventListener("click", function () {
       STATE.step = 1;
       render();
+      if (applyRoot && typeof applyRoot.scrollIntoView === "function") {
+        applyRoot.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     });
   }
 
-  // ---------------------------------------------------------------
-  // Age-gate stop screen
-  // ---------------------------------------------------------------
+  function render() {
+    if (!applyRoot) return;
+
+    if (STATE.step === 0) {
+      applyRoot.innerHTML = "";
+      return;
+    }
+    if (STATE.step === -1) {
+      applyRoot.innerHTML = ageGateStopTemplate();
+      return;
+    }
+    if (STATE.step >= 1 && STATE.step <= TOTAL_STEPS) {
+      applyRoot.innerHTML = stepTemplate(STATE.step);
+      bindStepEvents(STATE.step);
+      return;
+    }
+    if (STATE.step === TOTAL_STEPS + 1) {
+      applyRoot.innerHTML = thankYouTemplate();
+      return;
+    }
+  }
+
+  // -----------------------------------------------------------------
+  // Age-gate stop (Q2 answered "No")
+  // -----------------------------------------------------------------
   function ageGateStopTemplate() {
     return (
       '<div class="apply-card">' +
       '<h2 class="apply-thankyou-title">Thanks for your interest</h2>' +
-      '<p class="apply-thankyou-body">This opportunity is only open to applicants who are 18 years of age or older. We appreciate you stopping by.</p>' +
+      '<p class="apply-thankyou-body">This project is only open to participants who are 18 or older. We appreciate you taking the time to consider it.</p>' +
       "</div>"
     );
   }
 
-  // ---------------------------------------------------------------
-  // Step dispatch
-  // ---------------------------------------------------------------
+  // -----------------------------------------------------------------
+  // Question steps
+  // -----------------------------------------------------------------
   function stepTemplate(step) {
-    var backBtn = step > 1
-      ? '<button type="button" class="apply-btn-back" id="applyBackBtn">&larr; Back</button>'
-      : "";
+    var progress = '<div class="apply-progress"><span>Question ' + step + " of " + TOTAL_STEPS + "</span></div>";
     var body = "";
-    if (step === 1) body = q1Template();
-    if (step === 2) body = q2Template();
-    if (step === 3) body = q3Template();
-    if (step === 4) body = q4Template();
-    if (step === 5) body = q5Template();
-    if (step === 6) body = q6Template();
-    if (step === 7) body = q7Template();
-    if (step === 8) body = q8Template();
-
-    return (
-      progressLabel(step) +
-      '<div class="apply-card">' +
-      backBtn +
-      body +
-      "</div>"
-    );
+    switch (step) {
+      case 1: body = q1Template(); break;
+      case 2: body = q2Template(); break;
+      case 3: body = q3Template(); break;
+      case 4: body = q4Template(); break;
+      case 5: body = q5Template(); break;
+      case 6: body = q6Template(); break;
+      case 7: body = q7Template(); break;
+      case 8: body = q8Template(); break;
+    }
+    return '<div class="apply-card">' + progress + body + "</div>";
   }
 
   function bindStepEvents(step) {
-    var backBtn = document.getElementById("applyBackBtn");
-    if (backBtn) {
-      backBtn.addEventListener("click", function () {
-        STATE.step -= 1;
+    switch (step) {
+      case 1: bindQ1(); break;
+      case 2: bindQ2(); break;
+      case 3: bindQ3(); break;
+      case 4: bindQ4(); break;
+      case 5: bindQ5(); break;
+      case 6: bindQ6(); break;
+      case 7: bindQ7(); break;
+      case 8: bindQ8(); break;
+    }
+  }
+
+  function backButton(toStep) {
+    return '<button type="button" class="apply-btn-back" id="stepBack">&larr; Back</button>';
+  }
+  function bindBack(toStep) {
+    var back = document.getElementById("stepBack");
+    if (back) {
+      back.addEventListener("click", function () {
+        STATE.step = toStep;
         render();
       });
     }
-    if (step === 1) bindQ1();
-    if (step === 2) bindQ2();
-    if (step === 3) bindQ3();
-    if (step === 4) bindQ4();
-    if (step === 5) bindQ5();
-    if (step === 6) bindQ6();
-    if (step === 7) bindQ7();
-    if (step === 8) bindQ8();
   }
 
-  function goNext() {
-    STATE.step += 1;
-    render();
-  }
-
-  // ---------------------------------------------------------------
-  // Q1 — First name
-  // ---------------------------------------------------------------
+  // Q1 — first name
   function q1Template() {
     return (
-      '<h2 class="apply-question">What\'s your first name?</h2>' +
+      '<p class="apply-question">What\'s your first name?</p>' +
       '<div class="apply-field-group">' +
-      '<input type="text" id="q1Input" autocomplete="given-name" value="' + escapeAttr(STATE.answers.first_name) + '">' +
-      '<div class="apply-error-text" id="q1Error"></div>' +
+      '<input type="text" id="q1Input" maxlength="60" placeholder="First name" value="' + escapeAttr(STATE.answers.first_name) + '">' +
+      '<p class="apply-error-text" id="q1Error"></p>' +
       "</div>" +
       '<div class="apply-step-actions">' +
       '<button type="button" class="apply-btn apply-btn-primary" id="q1Continue">Continue</button>' +
@@ -175,327 +167,281 @@
     );
   }
   function bindQ1() {
-    document.getElementById("q1Continue").addEventListener("click", function () {
-      var val = document.getElementById("q1Input").value.trim();
+    var input = document.getElementById("q1Input");
+    var btn = document.getElementById("q1Continue");
+    btn.addEventListener("click", function () {
+      var val = (input.value || "").trim();
       if (!val) {
         document.getElementById("q1Error").textContent = "Please enter your first name.";
         return;
       }
       STATE.answers.first_name = val;
-      goNext();
+      STATE.step = 2;
+      render();
     });
   }
 
-  // ---------------------------------------------------------------
-  // Q2 — 18+
-  // ---------------------------------------------------------------
+  // Q2 — 18+ confirmation
   function q2Template() {
     return (
-      '<h2 class="apply-question">Are you 18 or older?</h2>' +
+      '<p class="apply-question">Are you 18 or older?</p>' +
       '<div class="apply-answer-list">' +
-      answerBtn("q2Yes", "Yes") +
-      answerBtn("q2No", "No") +
-      "</div>"
+      '<button type="button" class="apply-answer-btn" id="q2Yes">Yes</button>' +
+      '<button type="button" class="apply-answer-btn" id="q2No">No</button>' +
+      "</div>" +
+      backButton(1)
     );
   }
   function bindQ2() {
     document.getElementById("q2Yes").addEventListener("click", function () {
       STATE.answers.is_18 = true;
-      goNext();
+      STATE.step = 3;
+      render();
     });
     document.getElementById("q2No").addEventListener("click", function () {
       STATE.answers.is_18 = false;
       STATE.step = -1;
       render();
     });
+    bindBack(1);
   }
 
-  // ---------------------------------------------------------------
-  // Q3 — State
-  // ---------------------------------------------------------------
+  // Q3 — state
   function q3Template() {
-    var opts = APPLY_CONFIG.STATES.map(function (s) {
-      var sel = STATE.answers.state === s ? " selected" : "";
-      return '<option value="' + s + '"' + sel + ">" + s + "</option>";
+    var options = (typeof APPLY_CONFIG !== "undefined" && APPLY_CONFIG.STATES) || [];
+    var optionsHtml = '<option value="">Select your state</option>' + options.map(function (s) {
+      return '<option value="' + escapeAttr(s) + '"' + (STATE.answers.state === s ? " selected" : "") + ">" + s + "</option>";
     }).join("");
     return (
-      '<h2 class="apply-question">What state did the accident happen in?</h2>' +
+      '<p class="apply-question">What state did the accident happen in?</p>' +
       '<div class="apply-field-group">' +
-      '<select id="q3Input">' +
-      '<option value="">Select a state&hellip;</option>' +
-      opts +
-      "</select>" +
-      '<div class="apply-error-text" id="q3Error"></div>' +
+      '<select id="q3Input">' + optionsHtml + "</select>" +
+      '<p class="apply-error-text" id="q3Error"></p>' +
       "</div>" +
       '<div class="apply-step-actions">' +
       '<button type="button" class="apply-btn apply-btn-primary" id="q3Continue">Continue</button>' +
-      "</div>"
+      "</div>" +
+      backButton(2)
     );
   }
   function bindQ3() {
+    var select = document.getElementById("q3Input");
     document.getElementById("q3Continue").addEventListener("click", function () {
-      var val = document.getElementById("q3Input").value;
+      var val = select.value;
       if (!val) {
         document.getElementById("q3Error").textContent = "Please select a state.";
         return;
       }
       STATE.answers.state = val;
-      goNext();
+      STATE.step = 4;
+      render();
     });
+    bindBack(2);
   }
 
-  // ---------------------------------------------------------------
-  // Q4 — Accident timeframe
-  // ---------------------------------------------------------------
+  // Q4 — accident timeframe
   function q4Template() {
-    var opts = ["This year", "1–2 years ago", "3–5 years ago", "More than 5 years ago"];
+    var optionsHtml = TIMEFRAME_OPTIONS.map(function (label, i) {
+      return '<button type="button" class="apply-answer-btn" id="q4Opt' + i + '">' + label + "</button>";
+    }).join("");
     return (
-      '<h2 class="apply-question">Roughly when did the accident happen?</h2>' +
-      '<div class="apply-answer-list">' +
-      opts.map(function (o, i) {
-        return answerBtn("q4Opt" + i, o, STATE.answers.accident_timeframe === o);
-      }).join("") +
-      "</div>"
+      '<p class="apply-question">When did the accident happen?</p>' +
+      '<div class="apply-answer-list">' + optionsHtml + "</div>" +
+      backButton(3)
     );
   }
   function bindQ4() {
-    var opts = ["This year", "1–2 years ago", "3–5 years ago", "More than 5 years ago"];
-    opts.forEach(function (o, i) {
+    TIMEFRAME_OPTIONS.forEach(function (label, i) {
       document.getElementById("q4Opt" + i).addEventListener("click", function () {
-        STATE.answers.accident_timeframe = o;
-        goNext();
+        STATE.answers.accident_timeframe = label;
+        STATE.step = 5;
+        render();
       });
     });
+    bindBack(3);
   }
 
-  // ---------------------------------------------------------------
-  // Q5 — Short story
-  // ---------------------------------------------------------------
+  // Q5 — story summary
   function q5Template() {
+    var val = STATE.answers.story_summary || "";
     return (
-      '<h2 class="apply-question">In a few sentences, what happened?</h2>' +
+      '<p class="apply-question">In a few sentences, what happened?</p>' +
       '<div class="apply-field-group">' +
-      '<textarea id="q5Input" maxlength="500">' + escapeHtml(STATE.answers.story_summary) + "</textarea>" +
-      '<div class="apply-char-count" id="q5Count">0 / 500</div>' +
-      '<div class="apply-error-text" id="q5Error"></div>' +
+      '<textarea id="q5Input" maxlength="500" placeholder="Tell us briefly what happened...">' + escapeHtml(val) + "</textarea>" +
+      '<p class="apply-char-count" id="q5Count">' + val.length + "/500</p>" +
+      '<p class="apply-error-text" id="q5Error"></p>' +
       "</div>" +
       '<div class="apply-step-actions">' +
       '<button type="button" class="apply-btn apply-btn-primary" id="q5Continue">Continue</button>' +
-      "</div>"
+      "</div>" +
+      backButton(4)
     );
   }
   function bindQ5() {
-    var input = document.getElementById("q5Input");
+    var textarea = document.getElementById("q5Input");
     var count = document.getElementById("q5Count");
-    count.textContent = input.value.length + " / 500";
-    input.addEventListener("input", function () {
-      count.textContent = input.value.length + " / 500";
+    textarea.addEventListener("input", function () {
+      count.textContent = textarea.value.length + "/500";
     });
     document.getElementById("q5Continue").addEventListener("click", function () {
-      var val = input.value.trim();
+      var val = (textarea.value || "").trim();
       if (!val) {
-        document.getElementById("q5Error").textContent = "Please briefly describe what happened.";
+        document.getElementById("q5Error").textContent = "Please share a brief summary.";
         return;
       }
       STATE.answers.story_summary = val;
-      goNext();
+      STATE.step = 6;
+      render();
     });
+    bindBack(4);
   }
 
-  // ---------------------------------------------------------------
-  // Q6 — Situation status
-  // ---------------------------------------------------------------
+  // Q6 — situation status
   function q6Template() {
-    var opts = ["Fully resolved / settled", "Still ongoing", "Never filed a claim", "Other"];
+    var optionsHtml = SITUATION_OPTIONS.map(function (label, i) {
+      return '<button type="button" class="apply-answer-btn" id="q6Opt' + i + '">' + label + "</button>";
+    }).join("");
     return (
-      '<h2 class="apply-question">Where does your situation stand today?</h2>' +
-      '<div class="apply-answer-list">' +
-      opts.map(function (o, i) {
-        return answerBtn("q6Opt" + i, o, STATE.answers.situation_status === o);
-      }).join("") +
-      "</div>"
+      '<p class="apply-question">What\'s the status of your situation now?</p>' +
+      '<div class="apply-answer-list">' + optionsHtml + "</div>" +
+      backButton(5)
     );
   }
   function bindQ6() {
-    var opts = ["Fully resolved / settled", "Still ongoing", "Never filed a claim", "Other"];
-    opts.forEach(function (o, i) {
+    SITUATION_OPTIONS.forEach(function (label, i) {
       document.getElementById("q6Opt" + i).addEventListener("click", function () {
-        STATE.answers.situation_status = o;
-        goNext();
+        STATE.answers.situation_status = label;
+        STATE.step = 7;
+        render();
       });
     });
+    bindBack(5);
   }
 
-  // ---------------------------------------------------------------
-  // Q7 — On-camera comfort
-  // ---------------------------------------------------------------
+  // Q7 — on-camera comfort (does NOT disqualify on "No")
   function q7Template() {
-    var opts = ["Yes", "Maybe — I'd like to know more first", "No"];
+    var optionsHtml = COMFORT_OPTIONS.map(function (label, i) {
+      return '<button type="button" class="apply-answer-btn" id="q7Opt' + i + '">' + label + "</button>";
+    }).join("");
     return (
-      '<h2 class="apply-question">Would you be comfortable being recorded and having Crash2Claim publish your interview (with your permission)?</h2>' +
-      '<div class="apply-answer-list">' +
-      opts.map(function (o, i) {
-        return answerBtn("q7Opt" + i, o, STATE.answers.on_camera_comfort === o);
-      }).join("") +
-      "</div>"
+      '<p class="apply-question">Are you comfortable being on camera for a short recorded interview?</p>' +
+      '<div class="apply-answer-list">' + optionsHtml + "</div>" +
+      backButton(6)
     );
   }
   function bindQ7() {
-    var opts = ["Yes", "Maybe — I'd like to know more first", "No"];
-    opts.forEach(function (o, i) {
+    COMFORT_OPTIONS.forEach(function (label, i) {
       document.getElementById("q7Opt" + i).addEventListener("click", function () {
-        STATE.answers.on_camera_comfort = o;
-        goNext(); // "No" still proceeds to finish the application — not an automatic disqualifier
+        STATE.answers.on_camera_comfort = label;
+        STATE.step = 8;
+        render();
       });
     });
+    bindBack(6);
   }
 
-  // ---------------------------------------------------------------
-  // Q8 — Contact info + consent + submit
-  // ---------------------------------------------------------------
+  // Q8 — contact info + consent + submit
   function q8Template() {
-    var a = STATE.answers;
-    var stepsHtml = APPLY_CONFIG.PAYMENT_DISCLOSURE_STEPS.map(function (s) {
-      return "<li>" + s + "</li>";
-    }).join("");
+    var steps = (typeof APPLY_CONFIG !== "undefined" && APPLY_CONFIG.PAYMENT_DISCLOSURE_STEPS) || [];
+    var stepsHtml = steps.map(function (s) { return "<li>" + s + "</li>"; }).join("");
+    var consentText = (typeof APPLY_CONFIG !== "undefined" && APPLY_CONFIG.RECRUITMENT_CONSENT) || "";
     return (
-      '<h2 class="apply-question">Best way to reach you</h2>' +
+      '<p class="apply-question">Last step &mdash; how can we reach you?</p>' +
       '<div class="apply-field-group">' +
-      '<label class="apply-field-label" for="q8Phone">Phone number</label>' +
-      '<input type="tel" id="q8Phone" autocomplete="tel" value="' + escapeAttr(a.phone) + '">' +
-      '<div class="apply-error-text" id="q8PhoneError"></div>' +
+      '<label class="apply-field-label" for="q8Phone">Phone</label>' +
+      '<input type="tel" id="q8Phone" placeholder="(555) 555-5555" value="' + escapeAttr(STATE.answers.phone) + '">' +
       "</div>" +
       '<div class="apply-field-group">' +
-      '<label class="apply-field-label" for="q8Email">Email address</label>' +
-      '<input type="email" id="q8Email" autocomplete="email" value="' + escapeAttr(a.email) + '">' +
-      '<div class="apply-error-text" id="q8EmailError"></div>' +
+      '<label class="apply-field-label" for="q8Email">Email</label>' +
+      '<input type="email" id="q8Email" placeholder="you@example.com" value="' + escapeAttr(STATE.answers.email) + '">' +
       "</div>" +
-      '<div class="apply-info-card" style="padding:16px; margin-bottom:12px;">' +
-      "<p style=\"margin:0 0 6px; font-weight:700; color:var(--navy); font-size:13px;\">$50 is paid after you:</p>" +
-      '<ol style="font-size:13px;">' + stepsHtml + "</ol>" +
+      '<p class="apply-error-text" id="q8Error"></p>' +
+      '<div class="apply-info-card" style="padding:16px 16px 14px;margin-bottom:0;">' +
+      '<h2 style="font-size:14px;">$50 is paid after you:</h2>' +
+      '<ol style="margin:0;">' + stepsHtml + "</ol>" +
       "</div>" +
-      '<label class="apply-consent-row" for="q8Consent">' +
-      '<input type="checkbox" id="q8Consent"' + (a.consent ? " checked" : "") + ">" +
-      '<span class="apply-consent-text">' + APPLY_CONFIG.RECRUITMENT_CONSENT + "</span>" +
-      "</label>" +
-      '<div class="apply-error-text" id="q8ConsentError"></div>' +
+      '<div class="apply-consent-row">' +
+      '<input type="checkbox" id="q8Consent">' +
+      '<label class="apply-consent-text" for="q8Consent">' + escapeHtml(consentText) + "</label>" +
+      "</div>" +
       '<div class="apply-step-actions">' +
       '<button type="button" class="apply-btn apply-btn-primary" id="q8Submit">Submit Application</button>' +
-      "</div>"
+      "</div>" +
+      backButton(7)
     );
   }
   function bindQ8() {
-    document.getElementById("q8Phone").addEventListener("input", function (e) {
-      STATE.answers.phone = e.target.value;
-    });
-    document.getElementById("q8Email").addEventListener("input", function (e) {
-      STATE.answers.email = e.target.value;
-    });
-    document.getElementById("q8Consent").addEventListener("change", function (e) {
-      STATE.answers.consent = e.target.checked;
-      STATE.answers.consent_timestamp = e.target.checked ? new Date().toISOString() : "";
-    });
+    var phone = document.getElementById("q8Phone");
+    var email = document.getElementById("q8Email");
+    var consent = document.getElementById("q8Consent");
     document.getElementById("q8Submit").addEventListener("click", function () {
-      validateAndSubmit();
+      validateAndSubmit(phone.value, email.value, consent.checked);
     });
+    bindBack(7);
   }
 
-  function validateAndSubmit() {
+  function validateAndSubmit(phoneVal, emailVal, consentChecked) {
+    var phone = (phoneVal || "").trim();
+    var email = (emailVal || "").trim();
+    var errorEl = document.getElementById("q8Error");
+
+    if (!phone || !email) {
+      if (errorEl) errorEl.textContent = "Please enter both a phone number and an email address.";
+      return;
+    }
+    if (!consentChecked) {
+      if (errorEl) errorEl.textContent = "Please check the box to confirm before submitting.";
+      return;
+    }
     if (STATE.isSubmitting || STATE.hasSubmitted) return;
-    var a = STATE.answers;
-    var ok = true;
 
-    var phoneErr = document.getElementById("q8PhoneError");
-    if (!a.phone || a.phone.replace(/\D/g, "").length < 10) {
-      phoneErr.textContent = "Enter a valid phone number.";
-      ok = false;
-    } else {
-      phoneErr.textContent = "";
-    }
+    STATE.answers.phone = phone;
+    STATE.answers.email = email;
+    STATE.answers.consent = true;
+    STATE.answers.consent_timestamp = new Date().toISOString();
 
-    var emailErr = document.getElementById("q8EmailError");
-    if (!a.email || a.email.indexOf("@") === -1) {
-      emailErr.textContent = "Enter a valid email address.";
-      ok = false;
-    } else {
-      emailErr.textContent = "";
-    }
-
-    var consentErr = document.getElementById("q8ConsentError");
-    if (!a.consent) {
-      consentErr.textContent = "Please check the box to continue.";
-      ok = false;
-    } else {
-      consentErr.textContent = "";
-    }
-
-    if (ok) handleSubmit();
+    handleSubmit();
   }
 
   function handleSubmit() {
     STATE.isSubmitting = true;
-    var submitBtn = document.getElementById("q8Submit");
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Submitting...";
-    }
+    STATE.applicantId = generateApplicantId();
 
-    var applicantId = generateApplicantId();
-    STATE.applicantId = applicantId;
+    var payload = buildApplicationPayload(STATE.answers, STATE.applicantId, isTestMode);
 
-    var payload = buildApplicationPayload(STATE.answers, applicantId, isTestMode);
-
-    sendApplicationPayload(payload)
-      .then(function (result) {
-        STATE.webhookWarning = !result.ok;
-      })
-      .catch(function () {
-        STATE.webhookWarning = true;
-      })
-      .then(function () {
-        STATE.isSubmitting = false;
-        STATE.hasSubmitted = true;
-        STATE.step = TOTAL_STEPS + 1;
-        render();
-      });
+    sendApplicationPayload(payload).then(function (result) {
+      STATE.isSubmitting = false;
+      STATE.hasSubmitted = true;
+      STATE.webhookWarning = !result.ok;
+      STATE.step = TOTAL_STEPS + 1;
+      render();
+    });
   }
 
-  // ---------------------------------------------------------------
-  // Thank you
-  // ---------------------------------------------------------------
+  // -----------------------------------------------------------------
+  // Thank-you (final) screen
+  // -----------------------------------------------------------------
   function thankYouTemplate() {
-    var warning = STATE.webhookWarning
-      ? '<div class="apply-thankyou-note" style="margin-top:14px; background:var(--gray-50); border-radius:8px; padding:10px 12px;">We saved your application, but had trouble reaching our system just now. No action is needed on your end.</div>'
-      : "";
     return (
       '<div class="apply-card">' +
       '<h2 class="apply-thankyou-title">Application received.</h2>' +
-      '<p class="apply-thankyou-body">We review applications on a rolling basis. If we\'re interested in your story, we\'ll reach out by phone or email &mdash; that outreach may include a request for reasonable proof that the accident occurred and a short pre-screen conversation before anything is scheduled.</p>' +
-      '<p class="apply-thankyou-note">Applying doesn\'t guarantee selection or payment. If you don\'t hear from us, it isn\'t a reflection on your story &mdash; we\'re only able to select a limited number of participants at a time.</p>' +
-      warning +
+      '<p class="apply-thankyou-body">Thanks for applying to share your story. We review applications on a rolling basis. If we\'re interested in moving forward, we\'ll reach out by phone or email to schedule a short pre-screen conversation.</p>' +
+      '<p class="apply-thankyou-body">Applying doesn\'t guarantee selection or payment, and not everyone who applies will be contacted.</p>' +
+      '<p class="apply-thankyou-note">Reference ID: ' + escapeHtml(STATE.applicantId || "") + "</p>" +
       "</div>"
     );
   }
 
-  // ---------------------------------------------------------------
-  // Shared helpers
-  // ---------------------------------------------------------------
-  function answerBtn(id, label, selected) {
-    return (
-      '<button type="button" class="apply-answer-btn' + (selected ? " selected" : "") + '" id="' + id + '">' +
-      "<span>" + label + "</span>" +
-      "</button>"
-    );
-  }
-
-  function escapeAttr(value) {
-    return String(value || "").replace(/"/g, "&quot;");
-  }
-
-  function escapeHtml(value) {
-    return String(value || "")
+  // -----------------------------------------------------------------
+  // Helpers
+  // -----------------------------------------------------------------
+  function escapeHtml(str) {
+    return String(str || "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
+  }
+  function escapeAttr(str) {
+    return escapeHtml(str).replace(/"/g, "&quot;");
   }
 })();
