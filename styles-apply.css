@@ -1,0 +1,489 @@
+/* =================================================================
+   Crash2Claim — /apply Recruitment Page Styles
+   -----------------------------------------------------------------
+   Deliberately a SEPARATE stylesheet from css/styles.css so the
+   recruitment page can never accidentally affect the production
+   case-evaluation site. Shares the same design tokens (colors,
+   font stack, radii) so it still looks like the same brand, but
+   every rule here is scoped to recruitment-page classes only.
+   ================================================================= */
+
+:root {
+  --navy: #0f2540;
+  --navy-2: #16324f;
+  --coral: #ff5a36;
+  --coral-dark: #e04321;
+  --teal: #0ea5a4;
+  --teal-tint: #eafbfa;
+  --gray-50: #f7f9fc;
+  --gray-100: #eef1f6;
+  --gray-200: #dfe4ec;
+  --gray-400: #98a2b3;
+  --gray-600: #5b6472;
+  --white: #ffffff;
+  --lblue: #eaf4fb;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --shadow-card: 0 12px 32px rgba(15, 37, 64, 0.1);
+  --max-width: 560px;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body.apply-page {
+  font-family: var(--font);
+  background: var(--lblue);
+  color: var(--navy);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+.apply-page img,
+.apply-page svg {
+  display: block;
+  max-width: 100%;
+}
+
+.apply-page button {
+  font-family: inherit;
+}
+
+/* ---------------------------------------------------------------
+   Test-mode banner
+   --------------------------------------------------------------- */
+.apply-test-banner {
+  background: var(--coral);
+  color: var(--white);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 8px 12px;
+  text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------------
+   Shell
+   --------------------------------------------------------------- */
+.apply-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px 40px;
+}
+
+.apply-header {
+  width: 100%;
+  max-width: var(--max-width);
+  display: flex;
+  justify-content: center;
+  padding: 24px 0 8px;
+}
+
+.apply-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--navy);
+  text-decoration: none;
+}
+
+.apply-wordmark .apply-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--coral);
+  color: var(--white);
+  font-size: 15px;
+  font-weight: 800;
+  margin: 0 1px;
+}
+
+/* ---------------------------------------------------------------
+   Hero
+   --------------------------------------------------------------- */
+.apply-hero {
+  width: 100%;
+  max-width: var(--max-width);
+  text-align: center;
+  padding: 8px 0 20px;
+}
+
+.apply-hero-eyebrow {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--navy);
+  text-transform: uppercase;
+  margin: 0 0 4px;
+}
+
+.apply-hero-dollar {
+  font-size: 108px;
+  line-height: 1;
+  font-weight: 800;
+  color: var(--coral);
+  margin: 0 0 6px;
+}
+
+.apply-hero-headline {
+  font-size: 26px;
+  line-height: 1.25;
+  font-weight: 800;
+  color: var(--navy);
+  margin: 0 0 10px;
+}
+
+.apply-hero-sub {
+  font-size: 16px;
+  color: var(--gray-600);
+  margin: 0 0 18px;
+}
+
+.apply-hero-disclaimer {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--gray-400);
+  margin: 14px auto 0;
+  max-width: 440px;
+}
+
+/* ---------------------------------------------------------------
+   How it works strip
+   --------------------------------------------------------------- */
+.apply-steps {
+  width: 100%;
+  max-width: var(--max-width);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 8px 0 24px;
+}
+
+.apply-step-chip {
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  padding: 12px 6px;
+  text-align: center;
+  box-shadow: var(--shadow-card);
+}
+
+.apply-step-chip .num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--teal-tint);
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.apply-step-chip .label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--navy-2);
+  line-height: 1.3;
+}
+
+/* ---------------------------------------------------------------
+   Info sections (eligibility / disclosure / verification heads-up)
+   --------------------------------------------------------------- */
+.apply-info-card {
+  width: 100%;
+  max-width: var(--max-width);
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 22px 22px 20px;
+  margin-bottom: 16px;
+}
+
+.apply-info-card h2 {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--navy);
+  margin: 0 0 10px;
+}
+
+.apply-info-card ol,
+.apply-info-card ul {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--navy-2);
+}
+
+.apply-info-card li {
+  margin-bottom: 4px;
+}
+
+.apply-info-card p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--gray-600);
+  margin: 8px 0 0;
+}
+
+/* ---------------------------------------------------------------
+   Application card / steps (mirrors main survey's card pattern,
+   independently defined so it never depends on css/styles.css)
+   --------------------------------------------------------------- */
+.apply-card {
+  width: 100%;
+  max-width: var(--max-width);
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 28px 20px 24px;
+  margin-top: 4px;
+}
+
+.apply-progress {
+  width: 100%;
+  max-width: var(--max-width);
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-600);
+  display: flex;
+  justify-content: space-between;
+}
+
+.apply-question {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--navy);
+  margin: 4px 0 16px;
+  text-align: center;
+}
+
+.apply-field-group {
+  margin-bottom: 16px;
+}
+
+.apply-field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy-2);
+  margin-bottom: 6px;
+}
+
+.apply-page input[type="text"],
+.apply-page input[type="tel"],
+.apply-page input[type="email"],
+.apply-page textarea,
+.apply-page select {
+  width: 100%;
+  font-size: 16px;
+  padding: 14px;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  color: var(--navy);
+  min-height: 52px;
+  font-family: var(--font);
+}
+
+.apply-page textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.apply-page input:focus,
+.apply-page select:focus,
+.apply-page textarea:focus {
+  outline: none;
+  border-color: var(--teal);
+}
+
+.apply-char-count {
+  font-size: 12px;
+  color: var(--gray-400);
+  text-align: right;
+  margin-top: 4px;
+}
+
+.apply-error-text {
+  color: #d92d20;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 6px;
+  min-height: 16px;
+}
+
+.apply-answer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 4px 0 4px;
+}
+
+.apply-answer-btn {
+  width: 100%;
+  text-align: left;
+  background: var(--teal-tint);
+  border: 2px solid #b9e8e6;
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+  min-height: 56px;
+}
+
+.apply-answer-btn.selected {
+  border-color: var(--coral-dark);
+  background: var(--coral);
+  color: #fff;
+}
+
+.apply-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 17px;
+  font-weight: 700;
+  padding: 16px 20px;
+  cursor: pointer;
+  min-height: 56px;
+}
+
+.apply-btn-primary {
+  background: var(--coral);
+  color: var(--white);
+}
+
+.apply-btn-primary:disabled {
+  background: var(--gray-200);
+  color: var(--gray-400);
+  cursor: not-allowed;
+}
+
+.apply-btn-back {
+  background: transparent;
+  color: var(--gray-600);
+  width: auto;
+  min-height: auto;
+  padding: 8px 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.apply-step-actions {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.apply-consent-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 16px 0 18px;
+  padding: 12px;
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+}
+
+.apply-consent-row input[type="checkbox"] {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.apply-consent-text {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--gray-600);
+}
+
+.apply-thankyou-title {
+  font-size: 22px;
+  font-weight: 800;
+  text-align: center;
+  margin: 4px 0 12px;
+}
+
+.apply-thankyou-body {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--gray-600);
+  text-align: center;
+  margin: 0 0 14px;
+}
+
+.apply-thankyou-note {
+  font-size: 12px;
+  color: var(--gray-400);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.apply-footer {
+  width: 100%;
+  max-width: var(--max-width);
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--gray-200);
+  text-align: center;
+}
+
+.apply-footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.apply-footer-links a {
+  font-size: 12px;
+  color: var(--gray-600);
+  text-decoration: none;
+}
+
+.apply-footer-disclaimer {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--gray-400);
+  padding: 0 8px;
+}
+
+@media (min-width: 640px) {
+  .apply-hero-dollar {
+    font-size: 132px;
+  }
+  .apply-card,
+  .apply-info-card {
+    padding: 34px 34px 28px;
+  }
+}
