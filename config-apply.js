@@ -19,7 +19,7 @@ var APPLY_CONFIG = {
 
   // Short line shown directly under the hero.
   PAYMENT_DISCLOSURE_SHORT:
-    "$50 for selected participants who complete the recorded interview and release.",
+    "$50 is paid only to selected participants whose completed recorded interview is accepted by Crash2Claim for publication. Applying, being selected to interview, or completing a recording does not guarantee payment.",
 
   // "How the $50 payment works" card — intro sentence.
   PAYMENT_DISCLOSURE_FULL_INTRO:
@@ -30,13 +30,14 @@ var APPLY_CONFIG = {
     "Meet Crash2Claim's participant criteria",
     "Be selected to participate",
     "Complete any required pre-screen",
-    "Sign the required participant release",
+    "Sign the participant release",
     "Complete the recorded interview",
+    "Have the completed recording accepted by Crash2Claim for publication",
   ],
 
   // "How the $50 payment works" card — closing sentence.
   PAYMENT_DISCLOSURE_FULL_OUTRO:
-    "$50 is paid for completing the required interview process — not for a particular story, claim outcome, settlement amount, or attorney choice.",
+    "$50 is paid only for completed recordings accepted for publication. Payment is not based on settlement amount, claim outcome, attorney choice, or expressing any particular opinion.",
 
   // "Who we're looking for" card.
   ELIGIBILITY_CRITERIA: [
@@ -49,16 +50,19 @@ var APPLY_CONFIG = {
   // used on the case-evaluation funnel). Shown at Q8 above the consent
   // checkbox, and stored verbatim in consent_disclosure_shown.
   RECRUITMENT_CONSENT:
-    "By applying, I confirm I'm 18 or older and that the information I've provided is accurate to the best of my knowledge. I understand applying does not guarantee I'll be selected or paid. If selected, I may be asked to complete a short pre-screen or verification step, sign a participant release, and complete a recorded interview. If I complete these steps, I'll be paid $50. This is a separate, paid storytelling project and is not a request for legal advice, and is not part of Crash2Claim's accident case-evaluation service.",
+    "By applying, I confirm I'm 18 or older and that the information I've provided is accurate to the best of my knowledge. I understand applying does not guarantee I'll be selected, invited to interview, or paid. If selected, I may be asked to complete a short pre-screen or verification step, sign a participant release, and complete a recorded interview. The $50 payment is earned only if Crash2Claim reviews my completed recording and accepts it for publication in the Crash2Claim content library; that decision is based on production and content suitability, not on my opinions, legal outcome, settlement amount, or attorney choice. This is a separate, paid storytelling project and is not a request for legal advice, and is not part of Crash2Claim's accident case-evaluation service.",
 
-  RECRUITMENT_CONSENT_VERSION: "v2",
+  RECRUITMENT_CONSENT_VERSION: "v3",
 
-  // Four-step "how it works" strip.
+  // Four-step "how it works" strip. Keeps "Verify" (the pre-screen step
+  // still exists in the process) and combines the final step into
+  // "Review / Get Paid" so the strip itself signals that payment
+  // follows a review, not automatic completion.
   HOW_IT_WORKS: [
     { num: "1", label: "Apply" },
     { num: "2", label: "Verify" },
     { num: "3", label: "Interview" },
-    { num: "4", label: "Get Paid" },
+    { num: "4", label: "Review / Get Paid" },
   ],
 
   STATES: [

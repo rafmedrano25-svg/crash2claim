@@ -423,7 +423,7 @@
       "</div>" +
       '<p class="apply-error-text" id="q8Error"></p>' +
       '<div class="apply-info-card" style="padding:16px 16px 14px;margin-bottom:0;">' +
-      '<h2 style="font-size:14px;">$50 is paid after you:</h2>' +
+      '<h2 style="font-size:14px;">To receive the $50:</h2>' +
       '<ol style="margin:0;">' + stepsHtml + "</ol>" +
       "</div>" +
       '<div class="apply-consent-row">' +
