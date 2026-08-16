@@ -20,7 +20,7 @@
     </a>
   </header>
 
-  <section class="apply-hero">
+  <section class="apply-hero apply-landing-only">
     <p class="apply-hero-eyebrow">Get Paid</p>
     <p class="apply-hero-dollar">$50</p>
     <h1 class="apply-hero-headline">Tell Your Car Accident Story.</h1>
@@ -31,17 +31,19 @@
     </div>
   </section>
 
-  <div class="apply-steps" id="howItWorks"></div>
+  <div class="apply-steps apply-landing-only" id="howItWorks"></div>
 
-  <!-- JS-driven application flow mounts here: 8 questions -> thank-you -->
+  <!-- JS-driven application flow mounts here: 8 questions -> thank-you.
+       In application mode this becomes the entire focused experience;
+       the sections above/below marked apply-landing-only are hidden. -->
   <main id="applyRoot"></main>
 
-  <div class="apply-info-card">
+  <div class="apply-info-card apply-landing-only">
     <h2>Who we're looking for</h2>
     <ul id="eligibilityList"></ul>
   </div>
 
-  <div class="apply-info-card">
+  <div class="apply-info-card apply-landing-only">
     <h2>How the $50 payment works</h2>
     <p id="disclosureIntro" style="margin:0 0 8px;"></p>
     <ol id="disclosureSteps"></ol>

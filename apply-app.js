@@ -27,6 +27,10 @@
   var SITUATION_OPTIONS = ["Settled / closed", "Still ongoing", "Not sure", "Other"];
   var COMFORT_OPTIONS = ["Yes", "Maybe", "No"];
 
+  // Layout-only: percentage shown alongside "Question X of 8" in
+  // application mode. Index 0 = step 1 ... index 7 = step 8.
+  var PROGRESS_PERCENT = [12, 25, 37, 50, 62, 75, 87, 100];
+
   var STATE = {
     step: 0, // 0 = nothing rendered (static hero button starts flow), -1 = age-gate stop, 1-8 = questions, 9 = thank-you
     isSubmitting: false,
@@ -66,12 +70,31 @@
     var btn = document.getElementById("startApplyBtn");
     if (!btn) return;
     btn.addEventListener("click", function () {
+      // Layout-only transition: switch the page into a dedicated,
+      // full-page application experience. Hides the landing-page
+      // sections (hero, how-it-works strip, info cards) via CSS and
+      // lets #applyRoot become the focused surface. Does not change
+      // STATE, questions, validation, or submission behavior.
+      document.body.classList.add("app-mode");
       STATE.step = 1;
       render();
-      if (applyRoot && typeof applyRoot.scrollIntoView === "function") {
-        applyRoot.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+      scrollToTop();
     });
+  }
+
+  // Layout-only: header shown above each question card while in
+  // application mode ("Your Story Application" + "Question X of 8"
+  // + percentage + progress bar). Not shown on the age-gate stop or
+  // thank-you screens, which keep their existing plain-card look.
+  function progressHeaderHtml(step) {
+    var percent = PROGRESS_PERCENT[step - 1];
+    return (
+      '<div class="apply-app-header">' +
+      '<p class="apply-app-eyebrow">Your Story Application</p>' +
+      '<div class="apply-progress-row"><span>Question ' + step + " of " + TOTAL_STEPS + "</span><span>" + percent + "%</span></div>" +
+      '<div class="apply-progress-track"><div class="apply-progress-fill" style="width:' + percent + '%"></div></div>' +
+      "</div>"
+    );
   }
 
   function render() {
@@ -83,16 +106,57 @@
     }
     if (STATE.step === -1) {
       applyRoot.innerHTML = ageGateStopTemplate();
+      scrollToTopIfAppMode();
       return;
     }
     if (STATE.step >= 1 && STATE.step <= TOTAL_STEPS) {
-      applyRoot.innerHTML = stepTemplate(STATE.step);
+      applyRoot.innerHTML = progressHeaderHtml(STATE.step) + stepTemplate(STATE.step);
       bindStepEvents(STATE.step);
+      scrollToTopIfAppMode();
+      focusFirstField(STATE.step);
       return;
     }
     if (STATE.step === TOTAL_STEPS + 1) {
       applyRoot.innerHTML = thankYouTemplate();
+      scrollToTopIfAppMode();
       return;
+    }
+  }
+
+  // Layout-only: keeps the current question the dominant thing on
+  // screen as the visitor moves between steps, instead of leaving
+  // them scrolled to wherever the previous question left off.
+  function scrollToTopIfAppMode() {
+    if (document.body.classList.contains("app-mode")) {
+      scrollToTop();
+    }
+  }
+
+  // Guarded scroll helper — some environments (older browsers, test
+  // harnesses) don't implement the smooth-scroll options object.
+  function scrollToTop() {
+    if (typeof window === "undefined" || typeof window.scrollTo !== "function") return;
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    } catch (e) {
+      try {
+        window.scrollTo(0, 0);
+      } catch (e2) {
+        // no-op — scrolling is a layout nicety, never block the flow
+      }
+    }
+  }
+
+  // Layout-only: focuses the primary input on questions that have
+  // one, so mobile/desktop visitors can start typing immediately.
+  // No-op on button-only questions (Q2, Q4, Q6, Q7).
+  function focusFirstField(step) {
+    var idByStep = { 1: "q1Input", 3: "q3Input", 5: "q5Input", 8: "q8Phone" };
+    var id = idByStep[step];
+    if (!id) return;
+    var el = document.getElementById(id);
+    if (el && typeof el.focus === "function") {
+      el.focus({ preventScroll: true });
     }
   }
 
@@ -112,7 +176,9 @@
   // Question steps
   // -----------------------------------------------------------------
   function stepTemplate(step) {
-    var progress = '<div class="apply-progress"><span>Question ' + step + " of " + TOTAL_STEPS + "</span></div>";
+    // Note: the old inline "Question X of Y" line is now rendered by
+    // progressHeaderHtml() above the card (see render()), so the card
+    // itself only contains the question body.
     var body = "";
     switch (step) {
       case 1: body = q1Template(); break;
@@ -124,7 +190,7 @@
       case 7: body = q7Template(); break;
       case 8: body = q8Template(); break;
     }
-    return '<div class="apply-card">' + progress + body + "</div>";
+    return '<div class="apply-card">' + body + "</div>";
   }
 
   function bindStepEvents(step) {
