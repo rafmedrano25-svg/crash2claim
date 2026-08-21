@@ -1,5 +1,3 @@
-
-Config apply · JS
 /**
  * Crash2Claim — /apply Recruitment Page Configuration
  * -----------------------------------------------------------------
@@ -81,4 +79,3 @@ var APPLY_CONFIG = {
 if (typeof module !== "undefined" && module.exports) {
   module.exports = APPLY_CONFIG;
 }
- 
