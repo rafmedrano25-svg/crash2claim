@@ -1,5 +1,5 @@
 /**
- * Crash2Claim â€” Attribution Capture
+ * Crash2Claim — Attribution Capture
  * -----------------------------------------------------------------
  * Captures marketing/tracking parameters from the URL on page load
  * and persists them in sessionStorage so they survive across the
@@ -9,7 +9,7 @@
  * navigation lacks it.
  * -----------------------------------------------------------------
  */
-
+ 
 const ATTRIBUTION_KEYS = [
   "utm_source",
   "utm_medium",
@@ -23,9 +23,9 @@ const ATTRIBUTION_KEYS = [
   "msclkid", // Microsoft/Bing Ads click ID
   "ttclid", // TikTok Ads click ID
 ];
-
+ 
 const ATTRIBUTION_STORAGE_KEY = "c2c_attribution";
-
+ 
 /**
  * Reads any attribution params present on the current URL, merges
  * them into whatever was already captured this session, and returns
@@ -40,25 +40,25 @@ function captureAttribution() {
   } catch (e) {
     stored = {};
   }
-
+ 
   ATTRIBUTION_KEYS.forEach(function (key) {
     var value = params.get(key);
     if (value) {
       stored[key] = value;
     }
   });
-
+ 
   try {
     sessionStorage.setItem(ATTRIBUTION_STORAGE_KEY, JSON.stringify(stored));
   } catch (e) {
-    // sessionStorage unavailable (e.g. private browsing edge cases) â€”
+    // sessionStorage unavailable (e.g. private browsing edge cases) —
     // attribution simply won't persist across a refresh, but the
     // in-memory value returned below still works for this pageview.
   }
-
+ 
   return stored;
 }
-
+ 
 /**
  * Returns the currently persisted attribution set without re-reading
  * the URL. Used when assembling the final payload.
@@ -71,7 +71,7 @@ function getAttribution() {
     return {};
   }
 }
-
+ 
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     ATTRIBUTION_KEYS: ATTRIBUTION_KEYS,
