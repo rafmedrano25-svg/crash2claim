@@ -1,5 +1,3 @@
-
-Apply payload · JS
 /**
  * Crash2Claim — /apply Payload Assembly
  * -----------------------------------------------------------------
@@ -163,4 +161,3 @@ if (typeof module !== "undefined" && module.exports) {
     sendApplicationPayload: sendApplicationPayload,
   };
 }
- 
