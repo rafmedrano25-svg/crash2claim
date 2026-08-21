@@ -1,5 +1,3 @@
-
-Apply app · JS
 /**
  * Crash2Claim — /apply Recruitment Application Flow
  * -----------------------------------------------------------------
@@ -827,4 +825,3 @@ Apply app · JS
     return escapeHtml(str).replace(/"/g, "&quot;");
   }
 })();
- 
