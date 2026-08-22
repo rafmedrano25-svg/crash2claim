@@ -89,13 +89,24 @@
     border-color: var(--teal);
   }
   .hp-contact-note {
-    font-size: 12.5px;
-    color: var(--gray-400);
+    font-size: 14px;
+    color: var(--navy);
+    font-weight: 600;
     margin: 0 0 20px;
     line-height: 1.5;
-    background: var(--gray-50);
+    background: var(--teal-tint);
+    border: 1px solid #b9e8e6;
     border-radius: var(--radius-sm);
-    padding: 10px 12px;
+    padding: 12px 14px;
+    text-align: center;
+  }
+  .hp-contact-note a {
+    color: var(--coral);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .hp-contact-note a:hover {
+    text-decoration: underline;
   }
   .hp-contact-email {
     text-align: center;
@@ -110,6 +121,55 @@
   }
   .hp-contact-email a:hover {
     text-decoration: underline;
+  }
+  .hp-contact-form-msg {
+    margin: 14px 0 0;
+    font-size: 13px;
+    color: var(--navy);
+    text-align: center;
+    line-height: 1.5;
+  }
+  .hp-contact-form-msg:empty {
+    display: none;
+  }
+  .hp-contact-form-msg a {
+    color: var(--coral);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .hp-contact-form-msg a:hover {
+    text-decoration: underline;
+  }
+  .hp-contact-social {
+    margin-top: 32px;
+    text-align: center;
+  }
+  .hp-contact-social-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 0 0 12px;
+  }
+  .hp-contact-social-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+  .hp-contact-social-link {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--navy);
+  }
+  .hp-contact-social-link:hover {
+    background: var(--coral);
+    border-color: var(--coral);
+    color: var(--white);
   }
 </style>
 </head>
@@ -161,7 +221,7 @@
       </div>
 
       <div class="hp-contact-form-wrap">
-        <p class="hp-contact-note">This form is not yet connected to email delivery — see the note in the page source for what's needed to make it functional. For now, please reach us directly at <strong>social@crash2claim.com</strong>.</p>
+        <p class="hp-contact-note">Prefer email? Reach us anytime at <a href="mailto:social@crash2claim.com">social@crash2claim.com</a>.</p>
 
         <!--
           NOTE FOR DEVELOPER / SITE OWNER:
@@ -200,10 +260,41 @@
             <textarea id="contactMessage" name="message"></textarea>
           </div>
           <button type="submit" class="hp-btn hp-btn-primary" style="width:100%; justify-content:center;" id="hpContactSubmit">Send Message</button>
+          <p class="hp-contact-form-msg" id="hpContactFormMsg" role="status" aria-live="polite"></p>
         </form>
       </div>
 
-      <p class="hp-contact-email">Prefer email? Reach us at <a href="mailto:social@crash2claim.com">social@crash2claim.com</a></p>
+      <p class="hp-contact-email">You can also reach us directly at <a href="mailto:social@crash2claim.com">social@crash2claim.com</a></p>
+
+      <!--
+        SOCIAL URLS NEEDED:
+        None of the four hrefs below are real yet — no confirmed
+        Crash2Claim social profile URLs were found anywhere in this
+        project. A planned handle, "@crash2claim", appears in
+        social_v2/crash2claim-first5-captions.md as an intended
+        username for Instagram/Facebook/TikTok/YouTube, but that is
+        a content-plan reference, not a verified live URL, so it was
+        NOT used to construct a link here. Please provide the real,
+        live URL for each platform below and swap the href="#"
+        placeholders (and remove this comment once done).
+      -->
+      <div class="hp-contact-social">
+        <p class="hp-contact-social-label">Follow Crash2Claim</p>
+        <div class="hp-contact-social-row">
+          <a href="#" class="hp-contact-social-link" data-needs-url="instagram" target="_blank" rel="noopener noreferrer" aria-label="Crash2Claim on Instagram (link pending)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="1"></circle></svg>
+          </a>
+          <a href="#" class="hp-contact-social-link" data-needs-url="tiktok" target="_blank" rel="noopener noreferrer" aria-label="Crash2Claim on TikTok (link pending)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5c.35 0 .69.04 1 .12"></path><path d="M14 3c0 3 2 5 5 5"></path></svg>
+          </a>
+          <a href="#" class="hp-contact-social-link" data-needs-url="youtube" target="_blank" rel="noopener noreferrer" aria-label="Crash2Claim on YouTube (link pending)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><rect x="2" y="6" width="20" height="12" rx="4"></rect><path d="M10 9.5l5 2.5-5 2.5z" fill="currentColor" stroke="none"></path></svg>
+          </a>
+          <a href="#" class="hp-contact-social-link" data-needs-url="facebook" target="_blank" rel="noopener noreferrer" aria-label="Crash2Claim on Facebook (link pending)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M15 3h-2a4 4 0 0 0-4 4v3H7v4h2v7h4v-7h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+          </a>
+        </div>
+      </div>
     </div>
   </section>
 </main>
@@ -236,14 +327,16 @@
 
 <script src="home.js?v=20260822-1"></script>
 <script>
-  // Contact-form UX only — deliberately does NOT send data anywhere.
-  // See the developer note above the <form> for what real wiring
-  // requires. This just gives the button honest, non-misleading
-  // feedback instead of silently doing nothing.
+  // Contact-form UX only — deliberately does NOT send data anywhere
+  // and does NOT claim the message was sent. Shows a clean, honest
+  // note directing the visitor to email instead. Backend wiring
+  // (Netlify Forms or a new serverless function) is a separate,
+  // future change — not part of this update.
   document.getElementById("hpContactForm").addEventListener("submit", function () {
-    var btn = document.getElementById("hpContactSubmit");
-    btn.textContent = "Form not yet connected — email social@crash2claim.com";
-    btn.disabled = true;
+    var msg = document.getElementById("hpContactFormMsg");
+    if (msg) {
+      msg.innerHTML = 'This form isn\'t connected yet — please email us directly at <a href="mailto:social@crash2claim.com">social@crash2claim.com</a>.';
+    }
   });
 </script>
 </body>
