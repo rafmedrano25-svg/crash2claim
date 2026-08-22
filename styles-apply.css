@@ -7,7 +7,7 @@
    font stack, radii) so it still looks like the same brand, but
    every rule here is scoped to recruitment-page classes only.
    ================================================================= */
- 
+
 :root {
   --navy: #0f2540;
   --navy-2: #16324f;
@@ -29,17 +29,17 @@
   --max-width: 560px;
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
- 
+
 * {
   box-sizing: border-box;
 }
- 
+
 html,
 body {
   margin: 0;
   padding: 0;
 }
- 
+
 body.apply-page {
   font-family: var(--font);
   background: var(--lblue);
@@ -47,17 +47,17 @@ body.apply-page {
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
- 
+
 .apply-page img,
 .apply-page svg {
   display: block;
   max-width: 100%;
 }
- 
+
 .apply-page button {
   font-family: inherit;
 }
- 
+
 /* ---------------------------------------------------------------
    Test-mode banner
    --------------------------------------------------------------- */
@@ -74,7 +74,7 @@ body.apply-page {
   top: 0;
   z-index: 50;
 }
- 
+
 /* ---------------------------------------------------------------
    Shell
    --------------------------------------------------------------- */
@@ -85,7 +85,7 @@ body.apply-page {
   align-items: center;
   padding: 0 16px 40px;
 }
- 
+
 .apply-header {
   width: 100%;
   max-width: var(--max-width);
@@ -93,7 +93,7 @@ body.apply-page {
   justify-content: center;
   padding: 24px 0 8px;
 }
- 
+
 .apply-wordmark {
   display: inline-flex;
   align-items: center;
@@ -104,7 +104,7 @@ body.apply-page {
   color: var(--navy);
   text-decoration: none;
 }
- 
+
 .apply-wordmark .apply-badge {
   display: inline-flex;
   align-items: center;
@@ -118,7 +118,7 @@ body.apply-page {
   font-weight: 800;
   margin: 0 1px;
 }
- 
+
 /* ---------------------------------------------------------------
    Hero
    --------------------------------------------------------------- */
@@ -128,24 +128,31 @@ body.apply-page {
   text-align: center;
   padding: 8px 0 20px;
 }
- 
+
 .apply-hero-eyebrow {
-  font-size: 14px;
+  font-size: 34px;
+  line-height: 1.1;
   font-weight: 800;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.01em;
   color: var(--navy);
   text-transform: uppercase;
-  margin: 0 0 2px;
-}
- 
-.apply-hero-dollar {
-  font-size: 64px;
-  line-height: 1;
-  font-weight: 800;
-  color: var(--coral);
   margin: 0 0 4px;
 }
- 
+
+.apply-hero-dollar {
+  /* Mobile/base size — EXACT per spec: 22px. Only one rule below
+     (in the min-width:640px media query) overrides this, to 24px
+     on desktop. There is no other rule anywhere in this file that
+     touches .apply-hero-dollar's font-size — confirmed by grepping
+     the whole file and by inspecting document.styleSheets directly
+     on the live page. */
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--coral);
+  margin: 0 0 10px;
+}
+
 .apply-hero-headline {
   font-size: 24px;
   line-height: 1.25;
@@ -153,13 +160,13 @@ body.apply-page {
   color: var(--navy);
   margin: 0 0 8px;
 }
- 
+
 .apply-hero-sub {
   font-size: 15px;
   color: var(--gray-600);
   margin: 0 0 12px;
 }
- 
+
 .apply-hero-disclaimer {
   font-size: 12px;
   line-height: 1.5;
@@ -167,12 +174,12 @@ body.apply-page {
   margin: 10px auto 0;
   max-width: 440px;
 }
- 
+
 .apply-hero-cta {
   margin: 18px auto 0;
   max-width: 340px;
 }
- 
+
 /* ---------------------------------------------------------------
    How it works strip
    --------------------------------------------------------------- */
@@ -184,7 +191,7 @@ body.apply-page {
   gap: 8px;
   margin: 8px 0 24px;
 }
- 
+
 .apply-step-chip {
   background: var(--white);
   border-radius: var(--radius-sm);
@@ -192,7 +199,7 @@ body.apply-page {
   text-align: center;
   box-shadow: var(--shadow-card);
 }
- 
+
 .apply-step-chip .num {
   display: inline-flex;
   align-items: center;
@@ -206,14 +213,14 @@ body.apply-page {
   font-weight: 800;
   margin-bottom: 6px;
 }
- 
+
 .apply-step-chip .label {
   font-size: 11px;
   font-weight: 700;
   color: var(--navy-2);
   line-height: 1.3;
 }
- 
+
 /* ---------------------------------------------------------------
    Info sections (eligibility / disclosure)
    --------------------------------------------------------------- */
@@ -226,14 +233,14 @@ body.apply-page {
   padding: 22px 22px 20px;
   margin-bottom: 16px;
 }
- 
+
 .apply-info-card h2 {
   font-size: 16px;
   font-weight: 800;
   color: var(--navy);
   margin: 0 0 10px;
 }
- 
+
 .apply-info-card ol,
 .apply-info-card ul {
   margin: 0;
@@ -242,18 +249,18 @@ body.apply-page {
   line-height: 1.6;
   color: var(--navy-2);
 }
- 
+
 .apply-info-card li {
   margin-bottom: 4px;
 }
- 
+
 .apply-info-card p {
   font-size: 14px;
   line-height: 1.6;
   color: var(--gray-600);
   margin: 8px 0 0;
 }
- 
+
 /* ---------------------------------------------------------------
    Application card / steps (mirrors main survey's card pattern,
    independently defined so it never depends on css/styles.css)
@@ -267,7 +274,7 @@ body.apply-page {
   padding: 28px 20px 24px;
   margin-top: 4px;
 }
- 
+
 .apply-progress {
   width: 100%;
   max-width: var(--max-width);
@@ -278,7 +285,7 @@ body.apply-page {
   display: flex;
   justify-content: space-between;
 }
- 
+
 /* ---------------------------------------------------------------
    Application mode — dedicated full-page experience shown once
    "Start Your Application" is clicked. Landing-only sections are
@@ -289,25 +296,25 @@ body.apply-page {
 body.app-mode .apply-landing-only {
   display: none !important;
 }
- 
+
 body.app-mode #applyRoot {
   width: 100%;
   max-width: 480px;
   margin: 0 auto;
   padding-top: 4px;
 }
- 
+
 #applyRoot .apply-card {
   max-width: 480px;
   margin: 4px auto 0;
 }
- 
+
 .apply-app-header {
   width: 100%;
   max-width: 480px;
   margin: 14px auto 12px;
 }
- 
+
 .apply-app-eyebrow {
   font-size: 11px;
   font-weight: 800;
@@ -317,7 +324,7 @@ body.app-mode #applyRoot {
   text-align: center;
   margin: 0 0 14px;
 }
- 
+
 .apply-progress-row {
   display: flex;
   justify-content: space-between;
@@ -327,7 +334,7 @@ body.app-mode #applyRoot {
   color: var(--gray-600);
   margin-bottom: 8px;
 }
- 
+
 .apply-progress-track {
   width: 100%;
   height: 8px;
@@ -335,20 +342,20 @@ body.app-mode #applyRoot {
   border-radius: 999px;
   overflow: hidden;
 }
- 
+
 .apply-progress-fill {
   height: 8px;
   background: var(--coral);
   border-radius: 999px;
   transition: width 0.3s ease;
 }
- 
+
 @media (min-width: 640px) {
   #applyRoot .apply-card {
     padding: 40px 40px 32px;
   }
 }
- 
+
 .apply-question {
   font-size: 20px;
   font-weight: 800;
@@ -357,11 +364,11 @@ body.app-mode #applyRoot {
   margin: 4px 0 16px;
   text-align: center;
 }
- 
+
 .apply-field-group {
   margin-bottom: 16px;
 }
- 
+
 .apply-field-label {
   display: block;
   font-size: 13px;
@@ -369,7 +376,7 @@ body.app-mode #applyRoot {
   color: var(--navy-2);
   margin-bottom: 6px;
 }
- 
+
 .apply-page input[type="text"],
 .apply-page input[type="tel"],
 .apply-page input[type="email"],
@@ -385,26 +392,26 @@ body.app-mode #applyRoot {
   min-height: 52px;
   font-family: var(--font);
 }
- 
+
 .apply-page textarea {
   min-height: 110px;
   resize: vertical;
 }
- 
+
 .apply-page input:focus,
 .apply-page select:focus,
 .apply-page textarea:focus {
   outline: none;
   border-color: var(--teal);
 }
- 
+
 .apply-char-count {
   font-size: 12px;
   color: var(--gray-400);
   text-align: right;
   margin-top: 4px;
 }
- 
+
 .apply-error-text {
   color: #d92d20;
   font-size: 12px;
@@ -412,14 +419,14 @@ body.app-mode #applyRoot {
   margin-top: 6px;
   min-height: 16px;
 }
- 
+
 .apply-answer-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
   margin: 4px 0 4px;
 }
- 
+
 .apply-answer-btn {
   width: 100%;
   text-align: left;
@@ -433,13 +440,13 @@ body.app-mode #applyRoot {
   cursor: pointer;
   min-height: 56px;
 }
- 
+
 .apply-answer-btn.selected {
   border-color: var(--coral-dark);
   background: var(--coral);
   color: #fff;
 }
- 
+
 /* ---------------------------------------------------------------
    NEW — opening "$50 use" question (icon card grid) and HOT LEAD
    injuries multi-select (checkbox cards). Added for the payment_intent
@@ -455,7 +462,7 @@ body.app-mode #applyRoot {
   text-align: center;
   margin: -10px 0 16px;
 }
- 
+
 /* Opening "$50 use" question — 2x2 icon card grid on wider screens,
    single column on narrow mobile widths. */
 .apply-icon-grid {
@@ -464,13 +471,13 @@ body.app-mode #applyRoot {
   gap: 12px;
   margin: 4px 0 4px;
 }
- 
+
 @media (min-width: 420px) {
   .apply-icon-grid {
     grid-template-columns: 1fr 1fr;
   }
 }
- 
+
 .apply-icon-answer-btn {
   display: flex;
   flex-direction: column;
@@ -488,23 +495,23 @@ body.app-mode #applyRoot {
   cursor: pointer;
   min-height: 104px;
 }
- 
+
 .apply-icon-answer-btn svg {
   width: 28px;
   height: 28px;
   color: var(--navy);
 }
- 
+
 .apply-icon-answer-btn.selected {
   border-color: var(--coral-dark);
   background: var(--coral);
   color: #fff;
 }
- 
+
 .apply-icon-answer-btn.selected svg {
   color: #fff;
 }
- 
+
 /* HOT LEAD injuries question — multi-select checkbox cards. */
 .apply-checkbox-list {
   display: flex;
@@ -512,7 +519,7 @@ body.app-mode #applyRoot {
   gap: 12px;
   margin: 4px 0 4px;
 }
- 
+
 .apply-checkbox-card {
   display: flex;
   align-items: center;
@@ -528,12 +535,12 @@ body.app-mode #applyRoot {
   cursor: pointer;
   min-height: 56px;
 }
- 
+
 .apply-checkbox-card.selected {
   border-color: var(--coral-dark);
   background: #fff0ec;
 }
- 
+
 .apply-checkbox-card input[type="checkbox"] {
   width: 20px;
   height: 20px;
@@ -541,7 +548,7 @@ body.app-mode #applyRoot {
   accent-color: var(--coral);
   cursor: pointer;
 }
- 
+
 .apply-btn {
   display: inline-flex;
   align-items: center;
@@ -555,18 +562,18 @@ body.app-mode #applyRoot {
   cursor: pointer;
   min-height: 56px;
 }
- 
+
 .apply-btn-primary {
   background: var(--coral);
   color: var(--white);
 }
- 
+
 .apply-btn-primary:disabled {
   background: var(--gray-200);
   color: var(--gray-400);
   cursor: not-allowed;
 }
- 
+
 .apply-btn-back {
   background: transparent;
   color: var(--gray-600);
@@ -576,14 +583,14 @@ body.app-mode #applyRoot {
   font-size: 14px;
   font-weight: 600;
 }
- 
+
 .apply-step-actions {
   margin-top: 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
- 
+
 .apply-consent-row {
   display: flex;
   align-items: flex-start;
@@ -593,27 +600,27 @@ body.app-mode #applyRoot {
   background: var(--gray-50);
   border-radius: var(--radius-sm);
 }
- 
+
 .apply-consent-row input[type="checkbox"] {
   margin-top: 3px;
   width: 18px;
   height: 18px;
   flex: none;
 }
- 
+
 .apply-consent-text {
   font-size: 12px;
   line-height: 1.6;
   color: var(--gray-600);
 }
- 
+
 .apply-thankyou-title {
   font-size: 22px;
   font-weight: 800;
   text-align: center;
   margin: 4px 0 12px;
 }
- 
+
 .apply-thankyou-body {
   font-size: 15px;
   line-height: 1.6;
@@ -621,14 +628,14 @@ body.app-mode #applyRoot {
   text-align: center;
   margin: 0 0 14px;
 }
- 
+
 .apply-thankyou-note {
   font-size: 12px;
   color: var(--gray-400);
   text-align: center;
   line-height: 1.6;
 }
- 
+
 .apply-footer {
   width: 100%;
   max-width: var(--max-width);
@@ -637,30 +644,34 @@ body.app-mode #applyRoot {
   border-top: 1px solid var(--gray-200);
   text-align: center;
 }
- 
+
 .apply-footer-links {
   display: flex;
   justify-content: center;
   gap: 14px;
   margin-bottom: 10px;
 }
- 
+
 .apply-footer-links a {
   font-size: 12px;
   color: var(--gray-600);
   text-decoration: none;
 }
- 
+
 .apply-footer-disclaimer {
   font-size: 11px;
   line-height: 1.6;
   color: var(--gray-400);
   padding: 0 8px;
 }
- 
+
 @media (min-width: 640px) {
+  .apply-hero-eyebrow {
+    font-size: 46px;
+  }
   .apply-hero-dollar {
-    font-size: 132px;
+    /* Desktop size — EXACT per spec: 24px. */
+    font-size: 24px;
   }
   .apply-card,
   .apply-info-card {
