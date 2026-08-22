@@ -6,20 +6,20 @@
 <title>Get Paid $50 to Tell Your Car Accident Story | Crash2Claim</title>
 <meta name="description" content="Crash2Claim is looking for real people to share their car accident story in a short recorded interview. $50 is paid only to selected participants whose completed interview is accepted for publication.">
 <meta name="robots" content="noindex, follow">
-<link rel="stylesheet" href="/styles-apply.css">
+<link rel="stylesheet" href="/styles-apply.css?v=20260822-1">
 </head>
 <body class="apply-page">
- 
+
 <div class="apply-test-banner" id="applyTestBanner" style="display:none;">Test Mode &mdash; this submission will be flagged TEST, not a real applicant</div>
- 
+
 <div class="apply-shell">
- 
+
   <header class="apply-header">
     <a href="/" class="apply-wordmark" aria-label="Crash2Claim home">
       Crash<span class="apply-badge">2</span>Claim
     </a>
   </header>
- 
+
   <section class="apply-hero apply-landing-only">
     <p class="apply-hero-eyebrow">Get Paid</p>
     <p class="apply-hero-dollar">$50</p>
@@ -30,9 +30,9 @@
       <button type="button" id="startApplyBtn" class="apply-btn apply-btn-primary">Start Your Application</button>
     </div>
   </section>
- 
+
   <div class="apply-steps apply-landing-only" id="howItWorks"></div>
- 
+
   <!-- JS-driven application flow mounts here: opening $50-use question,
        then 8 more base questions (name through contact/consent), with
        up to 4 additional conditional questions (attorney interest +
@@ -40,19 +40,19 @@
        In application mode this becomes the entire focused experience;
        the sections above/below marked apply-landing-only are hidden. -->
   <main id="applyRoot"></main>
- 
+
   <div class="apply-info-card apply-landing-only">
     <h2>Who we're looking for</h2>
     <ul id="eligibilityList"></ul>
   </div>
- 
+
   <div class="apply-info-card apply-landing-only">
     <h2>How the $50 payment works</h2>
     <p id="disclosureIntro" style="margin:0 0 8px;"></p>
     <ol id="disclosureSteps"></ol>
     <p id="disclosureOutro"></p>
   </div>
- 
+
   <footer class="apply-footer">
     <div class="apply-footer-links">
       <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
@@ -63,32 +63,32 @@
       It is separate from Crash2Claim's accident case-evaluation service.
     </p>
   </footer>
- 
+
 </div>
- 
-<script src="/attribution.js"></script>
-<script src="/config-apply.js"></script>
+
+<script src="/attribution.js?v=20260822-1"></script>
+<script src="/config-apply.js?v=20260822-1"></script>
 <script>
   // Populate the static info sections from APPLY_CONFIG so the copy
   // lives in exactly one place (config-apply.js) and can't drift
   // between the hero, the disclosure card, and the application flow.
   document.getElementById("heroDisclaimer").textContent = APPLY_CONFIG.PAYMENT_DISCLOSURE_SHORT;
- 
+
   document.getElementById("howItWorks").innerHTML = APPLY_CONFIG.HOW_IT_WORKS.map(function (s) {
     return '<div class="apply-step-chip"><span class="num">' + s.num + '</span><div class="label">' + s.label + '</div></div>';
   }).join("");
- 
+
   document.getElementById("eligibilityList").innerHTML = APPLY_CONFIG.ELIGIBILITY_CRITERIA.map(function (c) {
     return "<li>" + c + "</li>";
   }).join("");
- 
+
   document.getElementById("disclosureIntro").textContent = APPLY_CONFIG.PAYMENT_DISCLOSURE_FULL_INTRO;
   document.getElementById("disclosureSteps").innerHTML = APPLY_CONFIG.PAYMENT_DISCLOSURE_STEPS.map(function (s) {
     return "<li>" + s + "</li>";
   }).join("");
   document.getElementById("disclosureOutro").textContent = APPLY_CONFIG.PAYMENT_DISCLOSURE_FULL_OUTRO;
 </script>
-<script src="/apply-payload.js"></script>
-<script src="/apply-app.js"></script>
+<script src="/apply-payload.js?v=20260822-1"></script>
+<script src="/apply-app.js?v=20260822-1"></script>
 </body>
 </html>
