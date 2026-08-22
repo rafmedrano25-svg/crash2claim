@@ -401,6 +401,19 @@ body.hp-page {
   }
 }
 
+/* sample_interview_visual placeholder note:
+   This generic gradient + person-outline icon is the placeholder
+   visual for each story card. It was NOT upgraded to photorealistic
+   "sample interview" imagery of AI-generated or stock people in this
+   pass — no image-generation tool was available in this session, and
+   using real stock photography of identifiable people to depict
+   invented "accident story participants" (even clearly labeled as
+   sample content) carries its own likeness/context risk that wasn't
+   something to introduce without explicit sign-off. See the chat
+   response for what's needed to replace this responsibly. When real
+   or approved sample photos exist, swap this element (or the
+   .hp-story-card background) for an <img class="sample_interview_visual">
+   — no other markup changes should be required. */
 .hp-story-card-avatar {
   position: absolute;
   inset: 0;
