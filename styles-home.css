@@ -243,11 +243,12 @@ body.hp-page {
    --------------------------------------------------------------- */
 .hp-hero {
   background: linear-gradient(180deg, var(--lblue) 0%, var(--white) 100%);
-  padding: 72px 0 56px;
+  padding: 52px 0 40px;
   text-align: center;
 }
 
-.hp-hero-eyebrow {
+.hp-hero-eyebrow,
+.hp-eyebrow-pill {
   display: inline-block;
   font-size: 13px;
   font-weight: 800;
@@ -309,20 +310,20 @@ body.hp-page {
 .hp-btn:hover {
   transform: translateY(-1px);
 }
-.hp-btn-primary {
+.hp-btn.hp-btn-primary {
   background: var(--navy);
   color: var(--white);
   box-shadow: var(--shadow-soft);
 }
-.hp-btn-primary:hover {
+.hp-btn.hp-btn-primary:hover {
   box-shadow: 0 10px 24px rgba(15, 37, 64, 0.3);
 }
-.hp-btn-secondary {
+.hp-btn.hp-btn-secondary {
   background: var(--white);
   color: var(--coral);
   border-color: var(--coral);
 }
-.hp-btn-secondary:hover {
+.hp-btn.hp-btn-secondary:hover {
   background: #fff5f2;
 }
 
@@ -626,7 +627,7 @@ body.hp-page {
   line-height: 1.65;
   margin: 0 0 16px;
 }
-.hp-about-link {
+.hp-about .hp-about-link {
   display: inline-block;
   margin-top: 8px;
   font-weight: 700;
