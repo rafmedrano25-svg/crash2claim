@@ -75,7 +75,7 @@
   <!-- ===========================================================
        FEATURED STORIES
        =========================================================== -->
-  <section class="hp-section" id="stories">
+  <section class="hp-section hp-section-navy" id="stories">
     <div class="hp-container">
       <div class="hp-section-head">
         <h2 class="hp-section-title">Real Stories From Real People</h2>
@@ -90,21 +90,20 @@
         <div class="hp-carousel" id="hpCarousel" role="list" aria-label="Featured participant stories (sample placeholder content)">
           <!-- All 6 cards below are SAMPLE / PLACEHOLDER content only.
                No real participant footage, names, or outcomes are
-               represented — visible card text reads "Sample Interview /
-               Not an actual participant" rather than a fake name/state/
-               story, so nothing here implies these are real Crash2Claim
-               participants. data-name/data-state/data-descriptor are
-               inert placeholder architecture (not rendered) for later
-               real-data wiring. The visual thumbnail area is still a
-               generic gradient + person-outline icon, NOT a photo —
-               see sample_interview_visual note in styles-home.css for
-               why photorealistic sample imagery was not added here.
-               Swap data-video-url to a real hosted video URL (and the
-               thumbnail to a real poster image) and this markup
-               requires no other changes to go live. -->
-          <button type="button" class="hp-story-card" role="listitem"
+               represented. Per explicit user decision, no visible
+               on-card disclosure text/badge is rendered (removed in
+               the visual-redesign round); the modal opened by
+               home.js's initStoryModal() still discloses "Sample
+               Interview / Not an actual participant" the moment a
+               card is clicked, so the honesty check happens at the
+               point of interaction rather than the point of display.
+               data-name/data-state/data-descriptor are inert
+               placeholder architecture (not rendered) for later
+               real-data wiring. Swap data-video-url to a real hosted
+               video URL (and the photo to real footage/poster) and
+               this markup requires no other changes to go live. -->
+          <button type="button" class="hp-story-card" role="listitem" aria-label="Play interview video"
             data-name="Melissa" data-state="Florida" data-descriptor="Rear-end collision" data-video-url="">
-            <span class="hp-story-sample-tag">Sample</span>
             <span class="hp-story-card-avatar" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
             </span>
@@ -113,15 +112,10 @@
             <span class="hp-story-play" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
             </span>
-            <span class="hp-story-card-info">
-              <span class="hp-story-name">Sample Interview</span>
-              <span class="hp-story-meta">Not an actual participant</span>
-            </span>
           </button>
 
-          <button type="button" class="hp-story-card" role="listitem"
+          <button type="button" class="hp-story-card" role="listitem" aria-label="Play interview video"
             data-name="Jonathan" data-state="New York" data-descriptor="Intersection accident" data-video-url="">
-            <span class="hp-story-sample-tag">Sample</span>
             <span class="hp-story-card-avatar" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
             </span>
@@ -130,15 +124,10 @@
             <span class="hp-story-play" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
             </span>
-            <span class="hp-story-card-info">
-              <span class="hp-story-name">Sample Interview</span>
-              <span class="hp-story-meta">Not an actual participant</span>
-            </span>
           </button>
 
-          <button type="button" class="hp-story-card" role="listitem"
+          <button type="button" class="hp-story-card" role="listitem" aria-label="Play interview video"
             data-name="Ashley" data-state="Georgia" data-descriptor="Highway collision" data-video-url="">
-            <span class="hp-story-sample-tag">Sample</span>
             <span class="hp-story-card-avatar" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
             </span>
@@ -147,15 +136,10 @@
             <span class="hp-story-play" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
             </span>
-            <span class="hp-story-card-info">
-              <span class="hp-story-name">Sample Interview</span>
-              <span class="hp-story-meta">Not an actual participant</span>
-            </span>
           </button>
 
-          <button type="button" class="hp-story-card" role="listitem"
+          <button type="button" class="hp-story-card" role="listitem" aria-label="Play interview video"
             data-name="Marcus" data-state="Texas" data-descriptor="Hit and run" data-video-url="">
-            <span class="hp-story-sample-tag">Sample</span>
             <span class="hp-story-card-avatar" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
             </span>
@@ -164,15 +148,10 @@
             <span class="hp-story-play" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
             </span>
-            <span class="hp-story-card-info">
-              <span class="hp-story-name">Sample Interview</span>
-              <span class="hp-story-meta">Not an actual participant</span>
-            </span>
           </button>
 
-          <button type="button" class="hp-story-card" role="listitem"
+          <button type="button" class="hp-story-card" role="listitem" aria-label="Play interview video"
             data-name="Priya" data-state="California" data-descriptor="Motorcycle accident" data-video-url="">
-            <span class="hp-story-sample-tag">Sample</span>
             <span class="hp-story-card-avatar" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
             </span>
@@ -181,15 +160,10 @@
             <span class="hp-story-play" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
             </span>
-            <span class="hp-story-card-info">
-              <span class="hp-story-name">Sample Interview</span>
-              <span class="hp-story-meta">Not an actual participant</span>
-            </span>
           </button>
 
-          <button type="button" class="hp-story-card" role="listitem"
+          <button type="button" class="hp-story-card" role="listitem" aria-label="Play interview video"
             data-name="Daniel" data-state="Ohio" data-descriptor="Serious injury, ongoing case" data-video-url="">
-            <span class="hp-story-sample-tag">Sample</span>
             <span class="hp-story-card-avatar" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
             </span>
@@ -197,10 +171,6 @@
             <img class="hp-story-card-photo sample_interview_visual" src="/images/interviews/interview-sample-06.webp" alt="" aria-hidden="true" loading="lazy" onerror="this.style.display='none'">
             <span class="hp-story-play" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
-            </span>
-            <span class="hp-story-card-info">
-              <span class="hp-story-name">Sample Interview</span>
-              <span class="hp-story-meta">Not an actual participant</span>
             </span>
           </button>
         </div>
