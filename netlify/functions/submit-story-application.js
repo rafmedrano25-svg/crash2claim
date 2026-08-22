@@ -19,12 +19,12 @@
  * submit-lead.js.
  * -----------------------------------------------------------------
  */
- 
+
 const crypto = require("crypto");
- 
+
 const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
- 
+
 // Column order MUST match the header row in the RECRUITMENT Google
 // Sheet exactly. This is a completely separate column set from
 // submit-lead.js's COLUMNS array.
@@ -95,19 +95,19 @@ const COLUMNS = [
   "server_submission_id", // NEW — server-generated, authoritative (client applicant_id can't be trusted alone)
   "server_received_at", // NEW — server clock timestamp, authoritative
 ];
- 
+
 // Duplicate-detection is keyed off these two columns. Resolved by
 // COLUMNS index rather than hard-coded letters, so if a column is
 // ever inserted/removed above, the duplicate check automatically
 // keeps checking the right columns.
 const PHONE_COLUMN_INDEX = COLUMNS.indexOf("phone");
 const EMAIL_COLUMN_INDEX = COLUMNS.indexOf("email");
- 
+
 exports.handler = async function (event) {
   if (event.httpMethod !== "POST") {
     return jsonResponse(405, { ok: false, error: "method_not_allowed" });
   }
- 
+
   var applicant;
   try {
     applicant = JSON.parse(event.body || "{}");
@@ -117,29 +117,49 @@ exports.handler = async function (event) {
   if (!applicant || typeof applicant !== "object") {
     return jsonResponse(400, { ok: false, error: "invalid_payload" });
   }
- 
-  var email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  var privateKeyRaw = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
-  var sheetId = process.env.RECRUITMENT_SHEET_ID;
- 
-  if (!email || !privateKeyRaw || !sheetId) {
-    console.error("[submit-story-application] Missing one or more required environment variables.");
-    return jsonResponse(500, { ok: false, error: "server_not_configured" });
-  }
- 
-  var privateKey = normalizePrivateKey(privateKeyRaw);
-  if (privateKey.indexOf("BEGIN PRIVATE KEY") === -1 && privateKey.indexOf("BEGIN RSA PRIVATE KEY") === -1) {
-    console.error("[submit-story-application] GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY does not look like a valid PEM key after normalization (no BEGIN marker found).");
-    return jsonResponse(500, { ok: false, error: "private_key_malformed" });
-  }
- 
+
   // Traceability: every log line and response includes applicant_id
   // (a random, non-PII identifier generated client-side — see
   // apply-payload.js's generateApplicantId()) so a failure can always
   // be matched back to the specific submission attempt. Never logs
   // the applicant's name, phone, email, or story text.
   var applicantIdForLogging = (applicant && applicant.applicant_id) || "(missing)";
- 
+
+  // Phone validation — independent of, and prior to, everything else
+  // below (including the Google credential/env checks), so a malformed
+  // submission is rejected immediately and never reaches Sheets at
+  // all. Never relies on the client's own validation (apply-app.js):
+  // re-normalizes the same way — strip non-digits, then drop a leading
+  // US "1" only when exactly 11 digits remain — and independently
+  // requires exactly 10 digits remain. This only confirms the number
+  // has a valid 10-digit structure; it does not verify the number is
+  // real, active, or belongs to the applicant.
+  var normalizedEmail = normalizeEmail(applicant.email);
+  var normalizedPhone = normalizePhone(applicant.phone);
+  if (normalizedPhone.length !== 10) {
+    console.log("[submit-story-application] Rejected: invalid phone number after normalization. applicant_id=" + applicantIdForLogging);
+    return jsonResponse(400, { ok: false, error: "invalid_phone" });
+  }
+  // The value written to the Sheet is always this normalized 10-digit
+  // form — never whatever raw formatting the client sent — regardless
+  // of what the client did or didn't normalize on its end.
+  applicant.phone = normalizedPhone;
+
+  var email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  var privateKeyRaw = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+  var sheetId = process.env.RECRUITMENT_SHEET_ID;
+
+  if (!email || !privateKeyRaw || !sheetId) {
+    console.error("[submit-story-application] Missing one or more required environment variables.");
+    return jsonResponse(500, { ok: false, error: "server_not_configured" });
+  }
+
+  var privateKey = normalizePrivateKey(privateKeyRaw);
+  if (privateKey.indexOf("BEGIN PRIVATE KEY") === -1 && privateKey.indexOf("BEGIN RSA PRIVATE KEY") === -1) {
+    console.error("[submit-story-application] GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY does not look like a valid PEM key after normalization (no BEGIN marker found).");
+    return jsonResponse(500, { ok: false, error: "private_key_malformed" });
+  }
+
   // Server-authoritative submission ID + timestamp. The client already
   // sends applicant_id/application_date, but those are client-generated
   // and can't be fully trusted (clock skew, replay, tampering). These
@@ -147,14 +167,11 @@ exports.handler = async function (event) {
   // as the source of truth for "when was this really received."
   var serverSubmissionId = "SRV-" + crypto.randomUUID();
   var serverReceivedAt = new Date().toISOString();
- 
-  var normalizedEmail = normalizeEmail(applicant.email);
-  var normalizedPhone = normalizePhone(applicant.phone);
- 
+
   try {
     var accessToken = await getGoogleAccessToken(email, privateKey);
     var sheetTabName = await getFirstSheetTitle(sheetId, accessToken);
- 
+
     // Duplicate check: same email OR same phone as an existing row.
     // Fails OPEN — if the check itself errors (permissions, transient
     // API issue, etc.) we log it and fall through to a normal append
@@ -165,12 +182,12 @@ exports.handler = async function (event) {
     } catch (dupErr) {
       console.error("[submit-story-application] Duplicate check failed, proceeding as non-duplicate. applicant_id=" + applicantIdForLogging + " reason=" + (dupErr && dupErr.message));
     }
- 
+
     if (isDuplicate) {
       console.log("[submit-story-application] Duplicate detected, no row written. applicant_id=" + applicantIdForLogging);
       return jsonResponse(200, { ok: true, duplicate: true, applicant_id: applicantIdForLogging });
     }
- 
+
     var row = buildRow(applicant, serverSubmissionId, serverReceivedAt);
     await appendRow(sheetId, sheetTabName, accessToken, row);
     return jsonResponse(200, { ok: true, duplicate: false, applicant_id: applicantIdForLogging });
@@ -179,14 +196,14 @@ exports.handler = async function (event) {
     return jsonResponse(502, { ok: false, error: "sheet_write_failed", applicant_id: applicantIdForLogging });
   }
 };
- 
+
 // Lower-case + trim. Doesn't attempt full RFC validation — the client
 // already requires a non-empty value; this just makes comparison
 // case/whitespace-insensitive (Jane@X.com === jane@x.com).
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
- 
+
 // Digits only, then strip a leading US country code (1) so
 // "+1 (512) 555-1234", "15125551234", and "512-555-1234" all
 // normalize to the same 10-digit value for comparison.
@@ -197,7 +214,7 @@ function normalizePhone(phone) {
   }
   return digits;
 }
- 
+
 function columnIndexToLetter(index) {
   var letter = "";
   var n = index + 1;
@@ -208,18 +225,18 @@ function columnIndexToLetter(index) {
   }
   return letter;
 }
- 
+
 // Reads the phone and email columns (row 2 onward, skipping the
 // header) and checks whether the incoming normalized email or phone
 // matches any existing row. One batchGet covers both columns.
 async function checkForDuplicate(sheetId, sheetTabName, accessToken, normalizedEmail, normalizedPhone) {
   if (!normalizedEmail && !normalizedPhone) return false;
- 
+
   var phoneLetter = columnIndexToLetter(PHONE_COLUMN_INDEX);
   var emailLetter = columnIndexToLetter(EMAIL_COLUMN_INDEX);
   var phoneRange = sheetTabName + "!" + phoneLetter + "2:" + phoneLetter;
   var emailRange = sheetTabName + "!" + emailLetter + "2:" + emailLetter;
- 
+
   var url =
     "https://sheets.googleapis.com/v4/spreadsheets/" +
     sheetId +
@@ -227,7 +244,7 @@ async function checkForDuplicate(sheetId, sheetTabName, accessToken, normalizedE
     encodeURIComponent(phoneRange) +
     "&ranges=" +
     encodeURIComponent(emailRange);
- 
+
   var res = await fetch(url, { headers: { Authorization: "Bearer " + accessToken } });
   if (!res.ok) {
     throw new Error("duplicate_check_read_failed_" + res.status);
@@ -236,24 +253,24 @@ async function checkForDuplicate(sheetId, sheetTabName, accessToken, normalizedE
   var valueRanges = (data && data.valueRanges) || [];
   var existingPhones = flattenColumn(valueRanges[0]);
   var existingEmails = flattenColumn(valueRanges[1]);
- 
+
   var phoneMatch = normalizedPhone && existingPhones.some(function (p) {
     return normalizePhone(p) === normalizedPhone;
   });
   var emailMatch = normalizedEmail && existingEmails.some(function (e) {
     return normalizeEmail(e) === normalizedEmail;
   });
- 
+
   return !!(phoneMatch || emailMatch);
 }
- 
+
 function flattenColumn(valueRange) {
   var rows = (valueRange && valueRange.values) || [];
   return rows.map(function (r) {
     return (r && r[0]) || "";
   });
 }
- 
+
 // HOT LEAD = accident within the last 2 years AND situation still
 // ongoing AND applicant said Yes to speaking with an attorney. ALL
 // THREE must be true. Computed here, server-side, at submission time
@@ -267,7 +284,7 @@ function computeLeadStatus(applicant) {
   var wantsAttorney = applicant.interested_in_attorney === "Yes";
   return withinTwoYears && stillOngoing && wantsAttorney ? "HOT LEAD" : "";
 }
- 
+
 function buildRow(applicant, serverSubmissionId, serverReceivedAt) {
   return COLUMNS.map(function (key) {
     if (key === "test_submission_label") {
@@ -282,32 +299,32 @@ function buildRow(applicant, serverSubmissionId, serverReceivedAt) {
     return String(value);
   });
 }
- 
+
 function base64url(input) {
   return Buffer.from(input).toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
 }
- 
+
 // Same private-key normalization as submit-lead.js — handles the
 // realistic variations a service-account key can arrive in via a
 // Netlify environment variable. Safe no-op on an already-clean key.
 function normalizePrivateKey(raw) {
   var key = String(raw || "").trim();
- 
+
   if ((key.charAt(0) === '"' && key.charAt(key.length - 1) === '"') ||
       (key.charAt(0) === "'" && key.charAt(key.length - 1) === "'")) {
     key = key.slice(1, -1);
   }
- 
+
   key = key.replace(/\\n/g, "\n");
   key = key.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
- 
+
   key = key.trim();
   if (key.charAt(key.length - 1) !== "\n") {
     key += "\n";
   }
   return key;
 }
- 
+
 async function getGoogleAccessToken(clientEmail, privateKey) {
   var nowSeconds = Math.floor(Date.now() / 1000);
   var header = { alg: "RS256", typ: "JWT" };
@@ -318,9 +335,9 @@ async function getGoogleAccessToken(clientEmail, privateKey) {
     iat: nowSeconds,
     exp: nowSeconds + 3600,
   };
- 
+
   var unsigned = base64url(JSON.stringify(header)) + "." + base64url(JSON.stringify(claims));
- 
+
   var signature;
   try {
     var signer = crypto.createSign("RSA-SHA256");
@@ -335,20 +352,20 @@ async function getGoogleAccessToken(clientEmail, privateKey) {
   } catch (signErr) {
     throw new Error("jwt_signing_failed: " + (signErr && signErr.message));
   }
- 
+
   var assertion = unsigned + "." + signature;
- 
+
   var body = new URLSearchParams({
     grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
     assertion: assertion,
   });
- 
+
   var res = await fetch(TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: body.toString(),
   });
- 
+
   if (!res.ok) {
     var detail = "error=non_json_response";
     try {
@@ -366,7 +383,7 @@ async function getGoogleAccessToken(clientEmail, privateKey) {
     } catch (readErr) {
       detail = "error=body_read_failed";
     }
- 
+
     throw new Error("token_request_failed_" + res.status + " " + detail);
   }
   var data = await res.json();
@@ -375,14 +392,14 @@ async function getGoogleAccessToken(clientEmail, privateKey) {
   }
   return data.access_token;
 }
- 
+
 async function getFirstSheetTitle(sheetId, accessToken) {
   var url =
     "https://sheets.googleapis.com/v4/spreadsheets/" +
     sheetId +
     "?fields=" +
     encodeURIComponent("sheets.properties.title");
- 
+
   var res = await fetch(url, {
     headers: { Authorization: "Bearer " + accessToken },
   });
@@ -396,7 +413,7 @@ async function getFirstSheetTitle(sheetId, accessToken) {
   }
   return title;
 }
- 
+
 async function appendRow(sheetId, sheetTabName, accessToken, row) {
   var range = encodeURIComponent(sheetTabName + "!A1");
   var url =
@@ -405,7 +422,7 @@ async function appendRow(sheetId, sheetTabName, accessToken, row) {
     "/values/" +
     range +
     ":append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS";
- 
+
   var res = await fetch(url, {
     method: "POST",
     headers: {
@@ -414,13 +431,13 @@ async function appendRow(sheetId, sheetTabName, accessToken, row) {
     },
     body: JSON.stringify({ values: [row] }),
   });
- 
+
   if (!res.ok) {
     var text = await res.text();
     throw new Error("sheets_append_failed_" + res.status + ": " + text.slice(0, 300));
   }
 }
- 
+
 function jsonResponse(statusCode, bodyObj) {
   return {
     statusCode: statusCode,
@@ -428,7 +445,7 @@ function jsonResponse(statusCode, bodyObj) {
     body: JSON.stringify(bodyObj),
   };
 }
- 
+
 // Test-only export surface (mirrors the pattern used in config-apply.js
 // and apply-payload.js). Netlify only ever calls exports.handler at
 // runtime — these extra exports just let the pure normalization /
@@ -441,4 +458,3 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports.computeLeadStatus = computeLeadStatus;
   module.exports.COLUMNS = COLUMNS;
 }
- 
