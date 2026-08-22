@@ -105,14 +105,17 @@ body.hp-page {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 0;
+  padding: 26px 0;
 }
 
+/* Logo scaled up substantially (22px -> 34px) and header padding
+   doubled (14px -> 26px vertical) per the visual-redesign reference —
+   the previous header read as too small/compressed. */
 .hp-wordmark {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  font-size: 22px;
+  gap: 3px;
+  font-size: 34px;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--navy);
@@ -124,25 +127,25 @@ body.hp-page {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: var(--coral);
   color: var(--white);
-  font-size: 14px;
+  font-size: 21px;
   font-weight: 800;
-  margin: 0 1px;
+  margin: 0 2px;
 }
 
 .hp-nav-links {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 36px;
 }
 
 .hp-nav-link {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   color: var(--navy);
   text-decoration: none;
   opacity: 0.85;
@@ -159,8 +162,8 @@ body.hp-page {
   background: var(--coral);
   color: var(--white);
   font-weight: 700;
-  font-size: 14px;
-  padding: 10px 18px;
+  font-size: 16px;
+  padding: 14px 28px;
   border-radius: 999px;
   text-decoration: none;
   box-shadow: var(--shadow-soft);
@@ -336,20 +339,47 @@ body.hp-page {
 .hp-section-alt {
   background: var(--gray-50);
 }
+
+/* Dark navy band for the "Real Stories From Real People" carousel
+   section. Reuses the same navy background + white heading +
+   rgba(255,255,255,.7-ish) subtext pattern already established by
+   .hp-cta-band further down this file, so this isn't a new color
+   introduced to the design system. Section padding is left at the
+   standard .hp-section 64px 0 (no extra bottom padding added) so the
+   navy band hugs the heading + carousel and ends right after it,
+   rather than leaving empty navy space beneath the cards. */
+/* Top padding increased (64px -> 96px) for the more generous band the
+   reference shows above the heading; bottom padding stays close to
+   the original 64px specifically so the band still ends shortly
+   after the carousel with no oversized empty navy area beneath it. */
+.hp-section-navy {
+  background: var(--navy);
+  padding: 96px 0 68px;
+}
+.hp-section-navy .hp-section-title {
+  color: var(--white);
+}
+.hp-section-navy .hp-section-sub {
+  color: rgba(255, 255, 255, 0.72);
+}
+.hp-section-navy .hp-swipe-hint {
+  color: rgba(255, 255, 255, 0.5);
+}
+
 .hp-section-head {
   text-align: center;
   max-width: 640px;
   margin: 0 auto 40px;
 }
 .hp-section-title {
-  font-size: clamp(26px, 3.4vw, 36px);
+  font-size: clamp(30px, 4.2vw, 48px);
   font-weight: 800;
   letter-spacing: -0.01em;
   color: var(--navy);
-  margin: 0 0 10px;
+  margin: 0 0 12px;
 }
 .hp-section-sub {
-  font-size: 16px;
+  font-size: 17px;
   color: var(--gray-600);
   margin: 0;
   line-height: 1.5;
@@ -364,7 +394,7 @@ body.hp-page {
 
 .hp-carousel {
   display: flex;
-  gap: 18px;
+  gap: 16px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   padding: 4px 4px 16px;
@@ -379,10 +409,18 @@ body.hp-page {
   border-radius: 8px;
 }
 
+/* Desktop card width (180px) is sized so ~6 compact portrait cards
+   read across the container width, per the visual-redesign
+   reference — still well under the original 240px "oversized"
+   cards. aspect-ratio 9/16 keeps height scaling proportionally.
+   Mobile is intentionally NOT the old 78vw/max-300px rule (that
+   read as oversized on phones); it now uses a viewport-relative
+   width tuned so ~2 cards plus a peek of the next one are visible,
+   signalling that the row scrolls. */
 .hp-story-card {
   scroll-snap-align: start;
   flex: none;
-  width: 240px;
+  width: 180px;
   aspect-ratio: 9 / 16;
   border-radius: var(--radius-lg);
   position: relative;
@@ -396,27 +434,29 @@ body.hp-page {
 }
 @media (max-width: 640px) {
   .hp-story-card {
-    width: 78vw;
-    max-width: 300px;
+    width: 42vw;
+    min-width: 130px;
+    max-width: 170px;
   }
 }
 
-/* sample_interview_visual placeholder note:
-   This generic gradient + person-outline icon is the placeholder
-   visual for each story card. It was NOT upgraded to photorealistic
-   "sample interview" imagery of AI-generated or stock people in this
-   pass — no image-generation tool was available in this session, and
-   using real stock photography of identifiable people to depict
-   invented "accident story participants" (even clearly labeled as
-   sample content) carries its own likeness/context risk that wasn't
-   something to introduce without explicit sign-off. See the chat
-   response for what's needed to replace this responsibly. When real
-   or approved sample photos exist, swap this element (or the
-   .hp-story-card background) for an <img class="sample_interview_visual">
-   — no other markup changes should be required. */
+/* sample_interview_visual — interview image layer:
+   Each card gets an <img class="hp-story-card-photo sample_interview_visual">
+   pointing at /images/interviews/interview-sample-0N.webp, layered
+   (z-index 1) on top of the .hp-story-card-avatar silhouette
+   (z-index 0). If the file hasn't been uploaded yet, the <img>'s
+   inline onerror handler hides it, and the silhouette underneath
+   shows through automatically — no JS/markup change needed once
+   real files exist, they just need to be uploaded to that path.
+   The play button is pinned to z-index 2 so it always stays above
+   both. Per the visual-redesign round, the SAMPLE badge and bottom
+   caption bar were removed entirely (both markup and the CSS rules
+   that styled them) — the photo + play button is now the whole
+   visual treatment, matching the reference. */
 .hp-story-card-avatar {
   position: absolute;
   inset: 0;
+  z-index: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -428,68 +468,46 @@ body.hp-page {
   color: rgba(255, 255, 255, 0.35);
 }
 
-.hp-story-sample-tag {
+.hp-story-card-photo {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  background: rgba(15, 37, 64, 0.55);
-  color: var(--white);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 4px 9px;
-  border-radius: 999px;
-  backdrop-filter: blur(2px);
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .hp-story-play {
   position: absolute;
   top: 50%;
   left: 50%;
+  z-index: 2;
   transform: translate(-50%, -50%);
-  width: 56px;
-  height: 56px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.94);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 }
 .hp-story-play svg {
-  width: 20px;
-  height: 20px;
+  width: 17px;
+  height: 17px;
   color: var(--navy);
-  margin-left: 3px;
+  margin-left: 2px;
 }
 
-.hp-story-card-info {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 16px 14px;
-  background: linear-gradient(0deg, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0) 100%);
-  color: var(--white);
-}
-.hp-story-name {
-  font-weight: 800;
-  font-size: 15px;
-  margin: 0 0 2px;
-}
-.hp-story-meta {
-  font-size: 12.5px;
-  opacity: 0.9;
-  margin: 0;
-}
-
+/* White circular controls positioned just outside the card edges,
+   sized to sit comfortably next to the 180px cards. */
 .hp-carousel-arrow {
   position: absolute;
-  top: 40%;
+  top: 45%;
   transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   background: var(--white);
   border: 1px solid var(--gray-200);
@@ -500,14 +518,18 @@ body.hp-page {
   cursor: pointer;
   z-index: 5;
 }
+.hp-carousel-arrow svg {
+  width: 17px;
+  height: 17px;
+}
 .hp-carousel-arrow:hover {
   background: var(--gray-50);
 }
 .hp-carousel-arrow.prev {
-  left: -6px;
+  left: -14px;
 }
 .hp-carousel-arrow.next {
-  right: -6px;
+  right: -14px;
 }
 @media (max-width: 860px) {
   .hp-carousel-arrow {
