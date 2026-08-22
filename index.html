@@ -90,9 +90,18 @@
         <div class="hp-carousel" id="hpCarousel" role="list" aria-label="Featured participant stories (sample placeholder content)">
           <!-- All 6 cards below are SAMPLE / PLACEHOLDER content only.
                No real participant footage, names, or outcomes are
-               represented. See data-story attributes — swap
-               data-video-url to a real hosted video URL and this
-               markup requires no other changes to go live. -->
+               represented — visible card text reads "Sample Interview /
+               Not an actual participant" rather than a fake name/state/
+               story, so nothing here implies these are real Crash2Claim
+               participants. data-name/data-state/data-descriptor are
+               inert placeholder architecture (not rendered) for later
+               real-data wiring. The visual thumbnail area is still a
+               generic gradient + person-outline icon, NOT a photo —
+               see sample_interview_visual note in styles-home.css for
+               why photorealistic sample imagery was not added here.
+               Swap data-video-url to a real hosted video URL (and the
+               thumbnail to a real poster image) and this markup
+               requires no other changes to go live. -->
           <button type="button" class="hp-story-card" role="listitem"
             data-name="Melissa" data-state="Florida" data-descriptor="Rear-end collision" data-video-url="">
             <span class="hp-story-sample-tag">Sample</span>
@@ -103,8 +112,8 @@
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
             </span>
             <span class="hp-story-card-info">
-              <span class="hp-story-name">Melissa &middot; Florida</span>
-              <span class="hp-story-meta">Rear-end collision</span>
+              <span class="hp-story-name">Sample Interview</span>
+              <span class="hp-story-meta">Not an actual participant</span>
             </span>
           </button>
 
@@ -118,8 +127,8 @@
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
             </span>
             <span class="hp-story-card-info">
-              <span class="hp-story-name">Jonathan &middot; New York</span>
-              <span class="hp-story-meta">Intersection accident</span>
+              <span class="hp-story-name">Sample Interview</span>
+              <span class="hp-story-meta">Not an actual participant</span>
             </span>
           </button>
 
@@ -133,8 +142,8 @@
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
             </span>
             <span class="hp-story-card-info">
-              <span class="hp-story-name">Ashley &middot; Georgia</span>
-              <span class="hp-story-meta">Highway collision</span>
+              <span class="hp-story-name">Sample Interview</span>
+              <span class="hp-story-meta">Not an actual participant</span>
             </span>
           </button>
 
@@ -148,8 +157,8 @@
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
             </span>
             <span class="hp-story-card-info">
-              <span class="hp-story-name">Marcus &middot; Texas</span>
-              <span class="hp-story-meta">Hit and run</span>
+              <span class="hp-story-name">Sample Interview</span>
+              <span class="hp-story-meta">Not an actual participant</span>
             </span>
           </button>
 
@@ -163,8 +172,8 @@
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
             </span>
             <span class="hp-story-card-info">
-              <span class="hp-story-name">Priya &middot; California</span>
-              <span class="hp-story-meta">Motorcycle accident</span>
+              <span class="hp-story-name">Sample Interview</span>
+              <span class="hp-story-meta">Not an actual participant</span>
             </span>
           </button>
 
@@ -178,8 +187,8 @@
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
             </span>
             <span class="hp-story-card-info">
-              <span class="hp-story-name">Daniel &middot; Ohio</span>
-              <span class="hp-story-meta">Serious injury, ongoing case</span>
+              <span class="hp-story-name">Sample Interview</span>
+              <span class="hp-story-meta">Not an actual participant</span>
             </span>
           </button>
         </div>
@@ -308,52 +317,58 @@
     </div>
   </section>
 
-  <!-- ===========================================================
-       TESTIMONIALS
-       =========================================================== -->
-  <section class="hp-section hp-section-alt">
-    <div class="hp-container">
-      <div class="hp-section-head">
-        <h2 class="hp-section-title">What Participants Say</h2>
-        <p class="hp-section-sub">Placeholder / demo content — not real testimonials yet.</p>
+  <!-- TESTIMONIAL SECTION DISABLED UNTIL REAL PARTICIPANT TESTIMONIALS ARE AVAILABLE
+       Kept in source inside a <template> tag (never rendered, not in the
+       accessibility tree, no visible "placeholder" language on the public
+       page) instead of deleted, so it's easy to re-enable later by moving
+       this content back out into a real <section>. To re-enable: replace
+       real names/quotes/states with actual participant testimonials first,
+       then swap the <template> wrapper below for a plain <section>. -->
+  <template id="hpTestimonialsDisabled">
+    <section class="hp-section hp-section-alt">
+      <div class="hp-container">
+        <div class="hp-section-head">
+          <h2 class="hp-section-title">What Participants Say</h2>
+          <p class="hp-section-sub">Placeholder / demo content — not real testimonials yet.</p>
+        </div>
+        <div class="hp-testimonial-grid">
+          <div class="hp-testimonial-card">
+            <span class="hp-testimonial-tag">Placeholder</span>
+            <p class="hp-testimonial-quote">"It felt good to actually talk through what happened instead of just filling out another form."</p>
+            <div class="hp-testimonial-person">
+              <span class="hp-testimonial-avatar" aria-hidden="true">R</span>
+              <div>
+                <p class="hp-testimonial-name">Rachel</p>
+                <p class="hp-testimonial-state">North Carolina</p>
+              </div>
+            </div>
+          </div>
+          <div class="hp-testimonial-card">
+            <span class="hp-testimonial-tag">Placeholder</span>
+            <p class="hp-testimonial-quote">"I wish I'd seen something like this right after my accident. It would've made the whole thing less confusing."</p>
+            <div class="hp-testimonial-person">
+              <span class="hp-testimonial-avatar" aria-hidden="true">T</span>
+              <div>
+                <p class="hp-testimonial-name">Tyrell</p>
+                <p class="hp-testimonial-state">Arizona</p>
+              </div>
+            </div>
+          </div>
+          <div class="hp-testimonial-card">
+            <span class="hp-testimonial-tag">Placeholder</span>
+            <p class="hp-testimonial-quote">"The process was easy and nobody pressured me about anything. I just told my story."</p>
+            <div class="hp-testimonial-person">
+              <span class="hp-testimonial-avatar" aria-hidden="true">S</span>
+              <div>
+                <p class="hp-testimonial-name">Samantha</p>
+                <p class="hp-testimonial-state">Illinois</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="hp-testimonial-grid">
-        <div class="hp-testimonial-card">
-          <span class="hp-testimonial-tag">Placeholder</span>
-          <p class="hp-testimonial-quote">"It felt good to actually talk through what happened instead of just filling out another form."</p>
-          <div class="hp-testimonial-person">
-            <span class="hp-testimonial-avatar" aria-hidden="true">R</span>
-            <div>
-              <p class="hp-testimonial-name">Rachel</p>
-              <p class="hp-testimonial-state">North Carolina</p>
-            </div>
-          </div>
-        </div>
-        <div class="hp-testimonial-card">
-          <span class="hp-testimonial-tag">Placeholder</span>
-          <p class="hp-testimonial-quote">"I wish I'd seen something like this right after my accident. It would've made the whole thing less confusing."</p>
-          <div class="hp-testimonial-person">
-            <span class="hp-testimonial-avatar" aria-hidden="true">T</span>
-            <div>
-              <p class="hp-testimonial-name">Tyrell</p>
-              <p class="hp-testimonial-state">Arizona</p>
-            </div>
-          </div>
-        </div>
-        <div class="hp-testimonial-card">
-          <span class="hp-testimonial-tag">Placeholder</span>
-          <p class="hp-testimonial-quote">"The process was easy and nobody pressured me about anything. I just told my story."</p>
-          <div class="hp-testimonial-person">
-            <span class="hp-testimonial-avatar" aria-hidden="true">S</span>
-            <div>
-              <p class="hp-testimonial-name">Samantha</p>
-              <p class="hp-testimonial-state">Illinois</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+    </section>
+  </template>
 
   <!-- ===========================================================
        SHARE YOUR STORY CTA
