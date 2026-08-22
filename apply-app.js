@@ -14,10 +14,10 @@
  * opening payment-intent question (see qPaymentIntentTemplate()).
  * -----------------------------------------------------------------
  */
- 
+
 (function () {
   "use strict";
- 
+
   // Base step count is 7 (opening payment-intent question + the 6
   // fixed questions: name, age, state, timeframe, story, situation)
   // plus the 2 trailing questions (on-camera comfort, contact/consent)
@@ -27,10 +27,10 @@
   // insurance). Nothing in this file assumes a fixed total — see
   // getTotalSteps() and currentSequence() below.
   var applyRoot = document.getElementById("applyRoot");
- 
+
   var params = new URLSearchParams(window.location.search);
   var isTestMode = params.get("test") === "1";
- 
+
   // Answer choices kept to 2–3 options per question (state selector is
   // exempt) so the application is fast to complete on mobile.
   // TIMEFRAME_OPTIONS is intentionally a strict 2-year boundary (not a
@@ -44,7 +44,7 @@
   var NEW_YORK = "New York";
   var WITHIN_2_YEARS = "Within the last 2 years";
   var STILL_ONGOING = "Still ongoing";
- 
+
   // Opening question — asked of EVERY applicant, before anything else.
   // Intentionally 4 options (an explicit exception to the general
   // 2–3 option guideline). Icons are small inline SVGs (dark navy line
@@ -55,19 +55,19 @@
     { label: "Go shopping", icon: "shopping" },
     { label: "Save it", icon: "piggy" },
   ];
- 
+
   var ICONS = {
     meal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="28" height="28" aria-hidden="true"><path d="M6 3v4M8 3v4M10 3v4M8 7v12"/><path d="M16 3c1.5 0 2.5 1.8 2.5 4S17.5 11 16 11v8"/></svg>',
     bill: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="28" height="28" aria-hidden="true"><path d="M6 2h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5V2z"/><path d="M9 7h6M9 10.5h6M9 14h4"/></svg>',
     shopping: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="28" height="28" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>',
     piggy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="28" height="28" aria-hidden="true"><path d="M4 12a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1a2 2 0 0 1-2 2h-1v3h-3v-2H9v2H6v-3a6 6 0 0 1-2-3z"/><circle cx="9" cy="9" r="0.6" fill="currentColor" stroke="none"/><path d="M11 6V4"/></svg>',
   };
- 
+
   // HOT LEAD-only questions (see isHotLead()) — kept short by design.
   var INJURY_OPTIONS = ["Back or neck pain", "Broken bones", "Cuts or bruises", "Head injury", "Other"];
   var TREATMENT_TIMING_OPTIONS = ["Within the first week", "More than a week later", "I didn't get treatment"];
   var INSURANCE_OPTIONS = ["Yes", "No"];
- 
+
   var STATE = {
     // 0 = nothing rendered (static hero button starts flow)
     // -1 = age-gate stop (under 18)
@@ -99,7 +99,7 @@
       consent_timestamp: "",
     },
   };
- 
+
   // The attorney-interest question requires BOTH conditions to be true:
   //   1. Accident happened within the last 2 years (Q4)
   //   2. Situation is "Still ongoing" (Q6) — "Settled" and "Not sure"
@@ -109,7 +109,7 @@
   function isAttorneyQuestionQualified() {
     return STATE.answers.accident_timeframe === WITHIN_2_YEARS && STATE.answers.situation_status === STILL_ONGOING;
   }
- 
+
   // HOT LEAD = within 2 years + still ongoing + answered Yes to the
   // attorney question. Written out in full (rather than just checking
   // interested_in_attorney) so it stays correct even if the applicant
@@ -121,7 +121,7 @@
   function isHotLead() {
     return isAttorneyQuestionQualified() && STATE.answers.interested_in_attorney === true;
   }
- 
+
   // Ordered list of logical question keys for the CURRENT applicant.
   // "paymentIntent" always comes first. 1–6 are the fixed base
   // questions (name, age, state, timeframe, story, situation).
@@ -137,25 +137,25 @@
     seq.push(7, 8);
     return seq;
   }
- 
+
   function getTotalSteps() {
     return currentSequence().length;
   }
- 
+
   document.addEventListener("DOMContentLoaded", function () {
     if (typeof captureAttribution === "function") {
       captureAttribution();
     }
- 
+
     if (isTestMode) {
       var banner = document.getElementById("applyTestBanner");
       if (banner) banner.style.display = "block";
     }
- 
+
     bindStaticHeroButton();
     render();
   });
- 
+
   function bindStaticHeroButton() {
     var btn = document.getElementById("startApplyBtn");
     if (!btn) return;
@@ -171,7 +171,7 @@
       scrollToTop();
     });
   }
- 
+
   // Layout-only: header shown above each question card while in
   // application mode ("Your Story Application" + "Question X of 8"
   // + percentage + progress bar). Not shown on the age-gate stop or
@@ -187,10 +187,10 @@
       "</div>"
     );
   }
- 
+
   function render() {
     if (!applyRoot) return;
- 
+
     if (STATE.step === 0) {
       applyRoot.innerHTML = "";
       return;
@@ -218,7 +218,7 @@
       return;
     }
   }
- 
+
   // Layout-only: keeps the current question the dominant thing on
   // screen as the visitor moves between steps, instead of leaving
   // them scrolled to wherever the previous question left off.
@@ -227,7 +227,7 @@
       scrollToTop();
     }
   }
- 
+
   // Guarded scroll helper — some environments (older browsers, test
   // harnesses) don't implement the smooth-scroll options object.
   function scrollToTop() {
@@ -242,7 +242,7 @@
       }
     }
   }
- 
+
   // Layout-only: focuses the primary input on questions that have
   // one, so mobile/desktop visitors can start typing immediately.
   // No-op on button-only questions (Q2, Q4, Q6, Q7).
@@ -256,7 +256,7 @@
       el.focus({ preventScroll: true });
     }
   }
- 
+
   // -----------------------------------------------------------------
   // Age-gate stop (Q2 answered "No")
   // -----------------------------------------------------------------
@@ -268,7 +268,7 @@
       "</div>"
     );
   }
- 
+
   // -----------------------------------------------------------------
   // New York disqualification stop (Q3 state = New York)
   // -----------------------------------------------------------------
@@ -280,7 +280,7 @@
       "</div>"
     );
   }
- 
+
   // -----------------------------------------------------------------
   // Question steps
   // -----------------------------------------------------------------
@@ -308,7 +308,7 @@
     }
     return '<div class="apply-card">' + body + "</div>";
   }
- 
+
   function bindStepEvents(step) {
     var key = currentSequence()[step - 1];
     switch (key) {
@@ -327,7 +327,7 @@
       case 8: bindQ8(); break;
     }
   }
- 
+
   // Back always returns to the immediately previous position. Positions
   // resolve to logical questions dynamically via currentSequence(), so
   // this stays correct whether or not the attorney-interest question is
@@ -344,7 +344,7 @@
       });
     }
   }
- 
+
   // Opening question — payment intent. Always the very first thing
   // every applicant sees (no back button — nothing comes before it).
   // 2x2 icon grid, 4 options (an intentional exception to the
@@ -373,7 +373,7 @@
     });
     // Intentionally no bindBack() — this is always the first step.
   }
- 
+
   // Q1 — first name
   function q1Template() {
     return (
@@ -403,7 +403,7 @@
     });
     bindBack();
   }
- 
+
   // Q2 — 18+ confirmation
   function q2Template() {
     return (
@@ -428,7 +428,7 @@
     });
     bindBack();
   }
- 
+
   // Q3 — state (New York is immediately disqualified — see bindQ3)
   function q3Template() {
     var options = (typeof APPLY_CONFIG !== "undefined" && APPLY_CONFIG.STATES) || [];
@@ -466,7 +466,7 @@
     });
     bindBack();
   }
- 
+
   // Q4 — accident timeframe
   function q4Template() {
     var optionsHtml = TIMEFRAME_OPTIONS.map(function (label, i) {
@@ -488,7 +488,7 @@
     });
     bindBack();
   }
- 
+
   // Q5 — story summary
   function q5Template() {
     var val = STATE.answers.story_summary || "";
@@ -523,7 +523,7 @@
     });
     bindBack();
   }
- 
+
   // Q6 — situation status. "Still ongoing" (combined with an
   // accident within the last 2 years — see isAttorneyQuestionQualified())
   // triggers the attorney-interest question next. "Not sure" is
@@ -558,7 +558,7 @@
     });
     bindBack();
   }
- 
+
   // Attorney-interest question — only shown when both conditions in
   // isAttorneyQuestionQualified() are true (see currentSequence()).
   // Does not disqualify either way.
@@ -586,13 +586,13 @@
     });
     bindBack();
   }
- 
+
   function clearHotLeadAnswers() {
     STATE.answers.injuries = [];
     STATE.answers.medical_treatment_timing = "";
     STATE.answers.had_car_insurance = "";
   }
- 
+
   // HOT LEAD Question 1 — injuries (multi-select). Only reachable when
   // isHotLead() is true (see currentSequence()).
   function qInjuriesTemplate() {
@@ -639,7 +639,7 @@
     });
     bindBack();
   }
- 
+
   // HOT LEAD Question 2 — medical treatment timing (single-select).
   function qTreatmentTemplate() {
     var optionsHtml = TREATMENT_TIMING_OPTIONS.map(function (label, i) {
@@ -661,7 +661,7 @@
     });
     bindBack();
   }
- 
+
   // HOT LEAD Question 3 — had car insurance (single-select).
   function qInsuranceTemplate() {
     var optionsHtml = INSURANCE_OPTIONS.map(function (label, i) {
@@ -683,7 +683,7 @@
     });
     bindBack();
   }
- 
+
   // Q7 — on-camera comfort (does NOT disqualify on "No")
   function q7Template() {
     var optionsHtml = COMFORT_OPTIONS.map(function (label, i) {
@@ -705,7 +705,7 @@
     });
     bindBack();
   }
- 
+
   // Q8 — contact info + consent + submit
   function q8Template() {
     var steps = (typeof APPLY_CONFIG !== "undefined" && APPLY_CONFIG.PAYMENT_DISCLOSURE_STEPS) || [];
@@ -745,13 +745,26 @@
     });
     bindBack();
   }
- 
+
   function validateAndSubmit(phoneVal, emailVal, consentChecked) {
-    var phone = (phoneVal || "").trim();
+    var normalizedPhone = normalizePhone(phoneVal);
     var email = (emailVal || "").trim();
     var errorEl = document.getElementById("q8Error");
- 
-    if (!phone || !email) {
+
+    // Checked first, and with its own specific message, so an
+    // applicant with a malformed number gets an actionable error
+    // instead of the generic "enter both" message. This only confirms
+    // the number has 10 digits after normalization — it does not (and
+    // is not claimed to) verify the number belongs to the applicant or
+    // is active. The server independently re-normalizes and
+    // re-validates this exact same way (see normalizePhone() in
+    // netlify/functions/submit-story-application.js) rather than
+    // trusting this client-side check.
+    if (normalizedPhone.length !== 10) {
+      if (errorEl) errorEl.textContent = "Please enter a valid 10-digit phone number.";
+      return;
+    }
+    if (!email) {
       if (errorEl) errorEl.textContent = "Please enter both a phone number and an email address.";
       return;
     }
@@ -760,21 +773,25 @@
       return;
     }
     if (STATE.isSubmitting || STATE.hasSubmitted) return;
- 
-    STATE.answers.phone = phone;
+
+    // Store the normalized 10-digit form — never the raw, differently
+    // formatted value the applicant typed — so this is exactly what
+    // gets submitted (and independently re-validated + written to the
+    // Sheet server-side).
+    STATE.answers.phone = normalizedPhone;
     STATE.answers.email = email;
     STATE.answers.consent = true;
     STATE.answers.consent_timestamp = new Date().toISOString();
- 
+
     handleSubmit();
   }
- 
+
   function handleSubmit() {
     STATE.isSubmitting = true;
     STATE.applicantId = generateApplicantId();
- 
+
     var payload = buildApplicationPayload(STATE.answers, STATE.applicantId, isTestMode);
- 
+
     sendApplicationPayload(payload).then(function (result) {
       STATE.isSubmitting = false;
       STATE.hasSubmitted = true;
@@ -789,7 +806,7 @@
       render();
     });
   }
- 
+
   // -----------------------------------------------------------------
   // Thank-you (final) screen
   // -----------------------------------------------------------------
@@ -811,10 +828,26 @@
       "</div>"
     );
   }
- 
+
   // -----------------------------------------------------------------
   // Helpers
   // -----------------------------------------------------------------
+  // Strips formatting (parentheses, spaces, hyphens, etc.) down to
+  // digits only, then drops a leading US country-code "1" when exactly
+  // 11 digits remain — so "5615551234", "(561) 555-1234", and
+  // "+1 (561) 555-1234" all normalize to the identical 10-digit value
+  // "5615551234". Deliberately mirrors normalizePhone() in
+  // netlify/functions/submit-story-application.js byte-for-byte; the
+  // server independently re-normalizes and re-validates rather than
+  // ever trusting this client-side result.
+  function normalizePhone(phone) {
+    var digits = String(phone || "").replace(/\D/g, "");
+    if (digits.length === 11 && digits.charAt(0) === "1") {
+      digits = digits.slice(1);
+    }
+    return digits;
+  }
+
   function escapeHtml(str) {
     return String(str || "")
       .replace(/&/g, "&amp;")
