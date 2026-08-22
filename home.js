@@ -85,13 +85,15 @@
     var cards = document.querySelectorAll(".hp-story-card");
     cards.forEach(function (card) {
       card.addEventListener("click", function () {
-        var name = card.getAttribute("data-name") || "";
-        var state = card.getAttribute("data-state") || "";
-        var descriptor = card.getAttribute("data-descriptor") || "";
         var videoUrl = card.getAttribute("data-video-url") || "";
 
-        if (nameEl) nameEl.textContent = name && state ? name + " · " + state : "Story preview";
-        if (metaEl) metaEl.textContent = descriptor || "Sample placeholder";
+        // Intentionally NOT displaying data-name/data-state/data-descriptor
+        // here — those attributes are inert placeholder architecture for
+        // later real-participant data, not content meant to be shown to
+        // visitors. Showing a neutral, honest label instead so the modal
+        // never implies these are real Crash2Claim participants.
+        if (nameEl) nameEl.textContent = "Sample Interview";
+        if (metaEl) metaEl.textContent = "Not an actual participant";
 
         // As soon as a real hosted video URL is present on a card
         // (data-video-url), this is the one spot that needs updating
