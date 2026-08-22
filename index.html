@@ -3,68 +3,432 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Crash2Claim | Free Auto Accident Case Evaluation</title>
-<meta name="description" content="Injured in a recent auto accident? Complete the Crash2Claim 60-Second Accident Check to see if you may qualify for a free case evaluation.">
+<title>Crash2Claim | Real Car Accident &amp; Claim Stories</title>
+<meta name="description" content="Real people share what happened after their car accidents — from the crash and injuries to insurance, claims and what happened next.">
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Crash2Claim">
-<meta property="og:title" content="Crash2Claim | Free Auto Accident Case Evaluation">
-<meta property="og:description" content="Injured in a recent auto accident? Complete the Crash2Claim 60-Second Accident Check to see if you may qualify for a free case evaluation.">
+<meta property="og:title" content="Crash2Claim | Real Car Accident & Claim Stories">
+<meta property="og:description" content="Real people share what happened after their car accidents — from the crash and injuries to insurance, claims and what happened next.">
 <meta property="og:url" content="https://crash2claim.com">
 <meta property="og:image" content="https://crash2claim.com/og-image.png">
 
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Crash2Claim | Free Auto Accident Case Evaluation">
-<meta name="twitter:description" content="Injured in a recent auto accident? Complete the Crash2Claim 60-Second Accident Check to see if you may qualify for a free case evaluation.">
+<meta name="twitter:title" content="Crash2Claim | Real Car Accident & Claim Stories">
+<meta name="twitter:description" content="Real people share what happened after their car accidents — from the crash and injuries to insurance, claims and what happened next.">
 
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles-home.css?v=20260822-1">
 </head>
-<body>
+<body class="hp-page">
+<a class="hp-skip-link" href="#hp-main">Skip to content</a>
 
-<div class="page" id="page">
-  <div class="road-decor" aria-hidden="true"></div>
+<!-- =============================================================
+     STICKY NAV
+     ============================================================= -->
+<header class="hp-nav">
+  <div class="hp-container hp-nav-inner">
+    <a class="hp-wordmark" href="/" aria-label="Crash2Claim home">Crash<span class="hp-badge">2</span>Claim</a>
 
-  <header class="site-header">
-    <span class="wordmark" aria-label="Crash2Claim">Crash<span class="badge">2</span>Claim</span>
-    <div class="tagline">Your 60-Second Accident Check</div>
-  </header>
+    <nav class="hp-nav-links" aria-label="Primary">
+      <a class="hp-nav-link" href="#stories">Stories</a>
+      <a class="hp-nav-link" href="#about">About</a>
+      <a class="hp-nav-link" href="#how-it-works">How It Works</a>
+      <a class="hp-nav-link" href="/contact">Contact</a>
+      <a class="hp-nav-cta" href="/apply">Share Your Story</a>
+    </nav>
 
-  <div class="progress-wrap" id="progressWrap" style="display:none;" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-    <div class="progress-eyebrow">Your Claim Check</div>
-    <div class="progress-label">
-      <span id="progressText">Question 1 of 5</span>
-      <span id="progressPercent">20%</span>
-    </div>
-    <div class="progress-track">
-      <div class="progress-fill" id="progressFill" style="width:0%"></div>
-    </div>
-    <div class="progress-beads" id="progressBeads" aria-hidden="true"></div>
+    <button class="hp-hamburger" id="hpHamburger" aria-label="Open menu" aria-expanded="false" aria-controls="hpMobileMenu">
+      <span></span>
+    </button>
   </div>
 
-  <main class="card" id="cardRoot" aria-live="polite">
-    <noscript>
-      <p>Please enable JavaScript to complete the Crash2Claim Accident Check.</p>
-    </noscript>
-  </main>
+  <nav class="hp-container hp-mobile-menu" id="hpMobileMenu" aria-label="Mobile">
+    <a class="hp-nav-link" href="#stories">Stories</a>
+    <a class="hp-nav-link" href="#about">About</a>
+    <a class="hp-nav-link" href="#how-it-works">How It Works</a>
+    <a class="hp-nav-link" href="/contact">Contact</a>
+    <a class="hp-nav-cta" href="/apply">Share Your Story</a>
+  </nav>
+</header>
 
-  <footer class="site-footer">
-    <div class="footer-links">
-      <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
-      <a href="terms.html" target="_blank" rel="noopener noreferrer">Terms of Use</a>
+<main id="hp-main">
+
+  <!-- ===========================================================
+       HERO
+       =========================================================== -->
+  <section class="hp-hero">
+    <div class="hp-container">
+      <span class="hp-hero-eyebrow">Real people. Real accidents. Real stories.</span>
+      <h1 class="hp-hero-headline">Every Accident Has a Story.</h1>
+      <p class="hp-hero-sub">Real people share their accident stories — what happened, what they went through, and what came next.</p>
+      <p class="hp-hero-secondary">Real people. Real experiences. Any outcome.</p>
+      <div class="hp-hero-ctas">
+        <a class="hp-btn hp-btn-primary" href="#stories">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg>
+          Watch Stories
+        </a>
+        <a class="hp-btn hp-btn-secondary" href="/apply">Share Your Story</a>
+      </div>
     </div>
-    <p class="footer-disclaimer">
-      Crash2Claim is not a law firm and does not provide legal advice or legal representation.
-      Using Crash2Claim does not create an attorney-client relationship or guarantee any outcome.
-      Crash2Claim may be compensated for connecting consumers with participating third parties.
-    </p>
-  </footer>
+  </section>
+
+  <!-- ===========================================================
+       FEATURED STORIES
+       =========================================================== -->
+  <section class="hp-section" id="stories">
+    <div class="hp-container">
+      <div class="hp-section-head">
+        <h2 class="hp-section-title">Real Stories From Real People</h2>
+        <p class="hp-section-sub">Hear what happened — in their own words.</p>
+      </div>
+
+      <div class="hp-carousel-wrap">
+        <button class="hp-carousel-arrow prev" id="hpCarouselPrev" aria-label="Scroll stories left">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
+        </button>
+
+        <div class="hp-carousel" id="hpCarousel" role="list" aria-label="Featured participant stories (sample placeholder content)">
+          <!-- All 6 cards below are SAMPLE / PLACEHOLDER content only.
+               No real participant footage, names, or outcomes are
+               represented. See data-story attributes — swap
+               data-video-url to a real hosted video URL and this
+               markup requires no other changes to go live. -->
+          <button type="button" class="hp-story-card" role="listitem"
+            data-name="Melissa" data-state="Florida" data-descriptor="Rear-end collision" data-video-url="">
+            <span class="hp-story-sample-tag">Sample</span>
+            <span class="hp-story-card-avatar" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
+            </span>
+            <span class="hp-story-play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+            </span>
+            <span class="hp-story-card-info">
+              <span class="hp-story-name">Melissa &middot; Florida</span>
+              <span class="hp-story-meta">Rear-end collision</span>
+            </span>
+          </button>
+
+          <button type="button" class="hp-story-card" role="listitem"
+            data-name="Jonathan" data-state="New York" data-descriptor="Intersection accident" data-video-url="">
+            <span class="hp-story-sample-tag">Sample</span>
+            <span class="hp-story-card-avatar" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
+            </span>
+            <span class="hp-story-play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+            </span>
+            <span class="hp-story-card-info">
+              <span class="hp-story-name">Jonathan &middot; New York</span>
+              <span class="hp-story-meta">Intersection accident</span>
+            </span>
+          </button>
+
+          <button type="button" class="hp-story-card" role="listitem"
+            data-name="Ashley" data-state="Georgia" data-descriptor="Highway collision" data-video-url="">
+            <span class="hp-story-sample-tag">Sample</span>
+            <span class="hp-story-card-avatar" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
+            </span>
+            <span class="hp-story-play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+            </span>
+            <span class="hp-story-card-info">
+              <span class="hp-story-name">Ashley &middot; Georgia</span>
+              <span class="hp-story-meta">Highway collision</span>
+            </span>
+          </button>
+
+          <button type="button" class="hp-story-card" role="listitem"
+            data-name="Marcus" data-state="Texas" data-descriptor="Hit and run" data-video-url="">
+            <span class="hp-story-sample-tag">Sample</span>
+            <span class="hp-story-card-avatar" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
+            </span>
+            <span class="hp-story-play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+            </span>
+            <span class="hp-story-card-info">
+              <span class="hp-story-name">Marcus &middot; Texas</span>
+              <span class="hp-story-meta">Hit and run</span>
+            </span>
+          </button>
+
+          <button type="button" class="hp-story-card" role="listitem"
+            data-name="Priya" data-state="California" data-descriptor="Motorcycle accident" data-video-url="">
+            <span class="hp-story-sample-tag">Sample</span>
+            <span class="hp-story-card-avatar" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
+            </span>
+            <span class="hp-story-play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+            </span>
+            <span class="hp-story-card-info">
+              <span class="hp-story-name">Priya &middot; California</span>
+              <span class="hp-story-meta">Motorcycle accident</span>
+            </span>
+          </button>
+
+          <button type="button" class="hp-story-card" role="listitem"
+            data-name="Daniel" data-state="Ohio" data-descriptor="Serious injury, ongoing case" data-video-url="">
+            <span class="hp-story-sample-tag">Sample</span>
+            <span class="hp-story-card-avatar" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
+            </span>
+            <span class="hp-story-play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+            </span>
+            <span class="hp-story-card-info">
+              <span class="hp-story-name">Daniel &middot; Ohio</span>
+              <span class="hp-story-meta">Serious injury, ongoing case</span>
+            </span>
+          </button>
+        </div>
+
+        <button class="hp-carousel-arrow next" id="hpCarouselNext" aria-label="Scroll stories right">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>
+        </button>
+      </div>
+      <p class="hp-swipe-hint">Swipe to see more stories &rarr;</p>
+    </div>
+  </section>
+
+  <!-- ===========================================================
+       STORY CATEGORIES
+       =========================================================== -->
+  <section class="hp-section hp-section-alt">
+    <div class="hp-container">
+      <div class="hp-section-head">
+        <h2 class="hp-section-title">Every Crash Is Different.</h2>
+        <p class="hp-section-sub">Browse stories by what happened.</p>
+      </div>
+      <div class="hp-categories">
+        <span class="hp-category-chip">Rear-End Accidents</span>
+        <span class="hp-category-chip">Highway Accidents</span>
+        <span class="hp-category-chip">Motorcycle Accidents</span>
+        <span class="hp-category-chip">Intersection Accidents</span>
+        <span class="hp-category-chip">Hit &amp; Runs</span>
+        <span class="hp-category-chip">Serious Injuries</span>
+        <span class="hp-category-chip">Settled Claims</span>
+        <span class="hp-category-chip">Ongoing Cases</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===========================================================
+       WHAT PEOPLE TALK ABOUT
+       =========================================================== -->
+  <section class="hp-section">
+    <div class="hp-container">
+      <div class="hp-section-head">
+        <h2 class="hp-section-title">The Parts of an Accident Nobody Talks About</h2>
+        <p class="hp-section-sub">Every story touches on a few of the same moments.</p>
+      </div>
+      <div class="hp-editorial-grid">
+        <div class="hp-editorial-card">
+          <span class="hp-editorial-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7l-1 8 11-13h-7l1-7z"></path></svg>
+          </span>
+          <h3>The Crash</h3>
+          <p>The moment itself — what people remember, and what's still a blur.</p>
+        </div>
+        <div class="hp-editorial-card">
+          <span class="hp-editorial-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
+          </span>
+          <h3>The Aftermath</h3>
+          <p>The first hours and days — calls to make, decisions no one prepares you for.</p>
+        </div>
+        <div class="hp-editorial-card">
+          <span class="hp-editorial-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.5-1.4 3-3.1 3-5.5A5.5 5.5 0 0 0 12 5a5.5 5.5 0 0 0-10 3.5c0 2.4 1.5 4.1 3 5.5l7 7 7-7z"></path></svg>
+          </span>
+          <h3>Treatment</h3>
+          <p>Doctors, appointments, and recovery that doesn't follow a straight line.</p>
+        </div>
+        <div class="hp-editorial-card">
+          <span class="hp-editorial-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 9h10M7 13h10M7 17h6"></path></svg>
+          </span>
+          <h3>The Claim</h3>
+          <p>Insurance calls, paperwork, and figuring out what happens next.</p>
+        </div>
+        <div class="hp-editorial-card">
+          <span class="hp-editorial-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12l5 5L20 6"></path></svg>
+          </span>
+          <h3>The Outcome</h3>
+          <p>Where things landed — settled, ongoing, or somewhere in between.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===========================================================
+       HOW IT WORKS
+       =========================================================== -->
+  <section class="hp-section hp-section-alt" id="how-it-works">
+    <div class="hp-container">
+      <div class="hp-section-head">
+        <h2 class="hp-section-title">How It Works</h2>
+        <p class="hp-section-sub">Sharing your story is simple.</p>
+      </div>
+      <div class="hp-steps">
+        <div class="hp-step">
+          <div class="hp-step-num">1</div>
+          <h3>Apply</h3>
+          <p>Tell us a bit about your accident and what happened.</p>
+        </div>
+        <div class="hp-step">
+          <div class="hp-step-num">2</div>
+          <h3>Interview</h3>
+          <p>Selected applicants are invited to record their story with our team.</p>
+        </div>
+        <div class="hp-step">
+          <div class="hp-step-num">3</div>
+          <h3>Story Goes Live</h3>
+          <p>Your story joins the Crash2Claim library, in your own words.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===========================================================
+       ABOUT
+       =========================================================== -->
+  <section class="hp-section" id="about">
+    <div class="hp-container hp-about">
+      <h2 class="hp-section-title">Why Crash2Claim Exists</h2>
+      <p>Car accidents happen to real people, but most of what you find online about them is written by companies trying to sell you something. Crash2Claim is different — it's a growing library of first-person accounts from people who've actually been through it.</p>
+      <p>We're not a law firm, and we don't promise any outcome. We just believe there's value in hearing what really happened, straight from the people who lived it — the confusion, the paperwork, the waiting, and everything in between.</p>
+      <a class="hp-about-link" href="#about">Learn About Crash2Claim &rarr;</a>
+    </div>
+  </section>
+
+  <!-- ===========================================================
+       TESTIMONIALS
+       =========================================================== -->
+  <section class="hp-section hp-section-alt">
+    <div class="hp-container">
+      <div class="hp-section-head">
+        <h2 class="hp-section-title">What Participants Say</h2>
+        <p class="hp-section-sub">Placeholder / demo content — not real testimonials yet.</p>
+      </div>
+      <div class="hp-testimonial-grid">
+        <div class="hp-testimonial-card">
+          <span class="hp-testimonial-tag">Placeholder</span>
+          <p class="hp-testimonial-quote">"It felt good to actually talk through what happened instead of just filling out another form."</p>
+          <div class="hp-testimonial-person">
+            <span class="hp-testimonial-avatar" aria-hidden="true">R</span>
+            <div>
+              <p class="hp-testimonial-name">Rachel</p>
+              <p class="hp-testimonial-state">North Carolina</p>
+            </div>
+          </div>
+        </div>
+        <div class="hp-testimonial-card">
+          <span class="hp-testimonial-tag">Placeholder</span>
+          <p class="hp-testimonial-quote">"I wish I'd seen something like this right after my accident. It would've made the whole thing less confusing."</p>
+          <div class="hp-testimonial-person">
+            <span class="hp-testimonial-avatar" aria-hidden="true">T</span>
+            <div>
+              <p class="hp-testimonial-name">Tyrell</p>
+              <p class="hp-testimonial-state">Arizona</p>
+            </div>
+          </div>
+        </div>
+        <div class="hp-testimonial-card">
+          <span class="hp-testimonial-tag">Placeholder</span>
+          <p class="hp-testimonial-quote">"The process was easy and nobody pressured me about anything. I just told my story."</p>
+          <div class="hp-testimonial-person">
+            <span class="hp-testimonial-avatar" aria-hidden="true">S</span>
+            <div>
+              <p class="hp-testimonial-name">Samantha</p>
+              <p class="hp-testimonial-state">Illinois</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===========================================================
+       SHARE YOUR STORY CTA
+       =========================================================== -->
+  <section class="hp-cta-band">
+    <div class="hp-container">
+      <h2 class="hp-section-title">Your Story Could Help Someone Else.</h2>
+      <p class="hp-cta-band-sub">If you've been through a car accident, your experience — whatever the outcome — could help someone else going through the same thing right now.</p>
+      <a class="hp-btn hp-btn-primary" href="/apply" style="background:var(--coral);">Apply to Share Your Story &rarr;</a>
+      <p class="hp-cta-band-fine">Selected interviews may be eligible for payment if completed and accepted for publication. See the application for full details.</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- =============================================================
+     VIDEO PLACEHOLDER MODAL
+     ============================================================= -->
+<div class="hp-modal-overlay" id="hpModalOverlay">
+  <div class="hp-modal" role="dialog" aria-modal="true" aria-labelledby="hpModalName">
+    <button class="hp-modal-close" id="hpModalClose" aria-label="Close">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </button>
+    <div class="hp-modal-video-area">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 5v14l11-7z"></path></svg>
+      <p class="hp-modal-video-note" id="hpModalNote">This is placeholder content for the Crash2Claim story library. Real interview video will appear here once published.</p>
+    </div>
+    <div class="hp-modal-info">
+      <h3 id="hpModalName">Story preview</h3>
+      <p id="hpModalMeta">Sample placeholder</p>
+    </div>
+  </div>
 </div>
 
-<script src="config.js"></script>
-<script src="qualification.js"></script>
-<script src="attribution.js"></script>
-<script src="validation.js"></script>
-<script src="payload.js"></script>
-<script src="app.js"></script>
+<!-- =============================================================
+     FOOTER
+     ============================================================= -->
+<footer class="hp-footer">
+  <div class="hp-container">
+    <div class="hp-footer-top">
+      <div class="hp-footer-brand">
+        <a class="hp-wordmark" href="/" aria-label="Crash2Claim home">Crash<span class="hp-badge">2</span>Claim</a>
+        <p class="hp-footer-desc">Real accident and claim stories, told by the people who lived them.</p>
+        <div class="hp-footer-social" style="margin-top:16px;">
+          <a href="#" aria-label="Crash2Claim on Instagram">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="1"></circle></svg>
+          </a>
+          <a href="#" aria-label="Crash2Claim on TikTok">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5c.35 0 .69.04 1 .12"></path><path d="M14 3c0 3 2 5 5 5"></path></svg>
+          </a>
+          <a href="#" aria-label="Crash2Claim on YouTube">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="12" rx="4"></rect><path d="M10 9.5l5 2.5-5 2.5z" fill="currentColor" stroke="none"></path></svg>
+          </a>
+          <a href="#" aria-label="Crash2Claim on Facebook">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 3h-2a4 4 0 0 0-4 4v3H7v4h2v7h4v-7h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+          </a>
+        </div>
+      </div>
+      <div class="hp-footer-links">
+        <div class="hp-footer-col">
+          <h4>Explore</h4>
+          <a href="#stories">Stories</a>
+          <a href="#about">About</a>
+          <a href="/apply">Share Your Story</a>
+          <a href="/contact">Contact</a>
+        </div>
+        <div class="hp-footer-col">
+          <h4>Legal</h4>
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/terms">Terms of Use</a>
+        </div>
+      </div>
+    </div>
+    <p class="hp-footer-disclaimer">
+      Crash2Claim is not a law firm and does not provide legal advice.
+    </p>
+  </div>
+</footer>
+
+<script src="home.js?v=20260822-1"></script>
 </body>
 </html>
