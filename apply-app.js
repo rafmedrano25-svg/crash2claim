@@ -815,32 +815,40 @@
     handleSubmit();
   }
 
-  // Previously, any synchronous exception thrown while building/sending
-  // the payload (e.g. an unexpected error in buildApplicationPayload())
-  // would leave STATE.isSubmitting permanently true — validateAndSubmit()
-  // silently no-ops on every future click once that flag is stuck (see
-  // its guard above), so the applicant would see the Submit button do
-  // nothing at all, with no request ever reaching the network and
-  // nothing in the Netlify function log, since fetch() was never
-  // reached. This wraps the whole build/send step so any such error
-  // resets isSubmitting, surfaces a visible message instead of a silent
-  // dead button, and logs the real error for diagnosis. No change to
-  // payload contents, endpoint, qualification logic, or Sheet mapping.
+  // Any synchronous exception thrown while preparing/dispatching the
+  // submission (generateApplicantId(), buildApplicationPayload(), or
+  // the sendApplicationPayload() call itself) must never leave
+  // STATE.isSubmitting stuck true — validateAndSubmit() silently
+  // no-ops on every future click once that flag is stuck (see its
+  // guard above), which is exactly what made Submit look completely
+  // dead with nothing reaching the network. Both prep steps (the ID
+  // generator from apply-payload.js and the payload builder) and the
+  // call that kicks off the network request are all covered by the
+  // same try/catch below, so ANY error in this synchronous chain
+  // resets isSubmitting, shows a visible retryable message instead of
+  // a silent dead button, and logs the real error for diagnosis. Only
+  // the .then()/.catch() on the returned promise (the actual
+  // send/response handling) runs outside the try, since that's
+  // asynchronous and already has its own error handling below. No
+  // change to payload contents, applicant ID format, endpoint,
+  // qualification logic, or Sheet mapping.
   function handleSubmit() {
     STATE.isSubmitting = true;
-    STATE.applicantId = generateApplicantId();
 
+    var sendPromise;
     try {
+      STATE.applicantId = generateApplicantId();
       var payload = buildApplicationPayload(STATE.answers, STATE.applicantId, isTestMode);
-    } catch (buildErr) {
+      sendPromise = sendApplicationPayload(payload);
+    } catch (prepErr) {
       STATE.isSubmitting = false;
-      console.error("[apply] Failed to build submission payload:", buildErr);
+      console.error("[apply] Failed to prepare/send submission:", prepErr);
       var errorEl = document.getElementById("q8Error");
       if (errorEl) errorEl.textContent = "Something went wrong preparing your application. Please try again.";
       return;
     }
 
-    sendApplicationPayload(payload)
+    sendPromise
       .then(function (result) {
         STATE.isSubmitting = false;
         STATE.hasSubmitted = true;
