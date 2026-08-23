@@ -1,35 +1,32 @@
 /* =================================================================
-   Crash2Claim — Styles
-   Mobile-first. Desktop is a progressive enhancement (see @media
-   queries at the bottom) — the survey is always a centered card,
-   never a full-width multi-column layout, because it's a focused
-   single task.
+   Crash2Claim — /apply Recruitment Page Styles
+   -----------------------------------------------------------------
+   Deliberately a SEPARATE stylesheet from css/styles.css so the
+   recruitment page can never accidentally affect the production
+   case-evaluation site. Shares the same design tokens (colors,
+   font stack, radii) so it still looks like the same brand, but
+   every rule here is scoped to recruitment-page classes only.
    ================================================================= */
 
 :root {
   --navy: #0f2540;
   --navy-2: #16324f;
-  --navy-soft: #4a6280;
   --coral: #ff5a36;
   --coral-dark: #e04321;
   --teal: #0ea5a4;
   --teal-tint: #eafbfa;
-  --teal-tint-hover: #dcf5f4;
-  --teal-tint-border: #b9e8e6;
-  --green: #16a34a;
-  --green-bg: #eafaf0;
   --gray-50: #f7f9fc;
   --gray-100: #eef1f6;
   --gray-200: #dfe4ec;
   --gray-400: #98a2b3;
   --gray-600: #5b6472;
-  --gray-900: #1a2130;
   --white: #ffffff;
+  --lblue: #eaf4fb;
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
   --shadow-card: 0 12px 32px rgba(15, 37, 64, 0.1);
-  --max-width: 480px;
+  --max-width: 560px;
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -43,170 +40,516 @@ body {
   padding: 0;
 }
 
-body {
+body.apply-page {
   font-family: var(--font);
-  background: #eaf4fb;
+  background: var(--lblue);
   color: var(--navy);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
 
-img,
-svg {
+.apply-page img,
+.apply-page svg {
   display: block;
   max-width: 100%;
 }
 
-button {
+.apply-page button {
   font-family: inherit;
 }
 
 /* ---------------------------------------------------------------
-   Page shell
+   Test-mode banner
    --------------------------------------------------------------- */
+.apply-test-banner {
+  background: var(--coral);
+  color: var(--white);
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 8px 12px;
+  text-transform: uppercase;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
 
-.page {
+/* ---------------------------------------------------------------
+   Shell
+   --------------------------------------------------------------- */
+.apply-shell {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0 16px 24px;
+  padding: 0 16px 40px;
 }
 
-.road-decor {
-  width: 100%;
-  height: 6px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--coral) 0px,
-    var(--coral) 22px,
-    transparent 22px,
-    transparent 40px
-  );
-  opacity: 0.9;
-}
-
-/* ---------------------------------------------------------------
-   Header / wordmark
-   --------------------------------------------------------------- */
-
-.site-header {
+.apply-header {
   width: 100%;
   max-width: var(--max-width);
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px 0 8px;
+  justify-content: center;
+  padding: 24px 0 8px;
 }
 
-.wordmark {
+.apply-wordmark {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  text-decoration: none;
   color: var(--navy);
+  text-decoration: none;
 }
 
-.wordmark .badge {
+.apply-wordmark .apply-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--coral);
   color: var(--white);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   margin: 0 1px;
 }
 
-.tagline {
-  margin-top: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--teal);
+/* ---------------------------------------------------------------
+   Hero
+   --------------------------------------------------------------- */
+.apply-hero {
+  width: 100%;
+  max-width: var(--max-width);
+  text-align: center;
+  padding: 8px 0 20px;
+}
+
+.apply-hero-eyebrow {
+  font-size: 34px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: var(--navy);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  margin: 0 0 4px;
+}
+
+.apply-hero-dollar {
+  /* Mobile/base size — EXACT per spec: 22px. Only one rule below
+     (in the min-width:640px media query) overrides this, to 24px
+     on desktop. There is no other rule anywhere in this file that
+     touches .apply-hero-dollar's font-size — confirmed by grepping
+     the whole file and by inspecting document.styleSheets directly
+     on the live page. */
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 700;
+  color: var(--coral);
+  margin: 0 0 10px;
+}
+
+.apply-hero-headline {
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 800;
+  color: var(--navy);
+  margin: 0 0 8px;
+}
+
+.apply-hero-sub {
+  font-size: 15px;
+  color: var(--gray-600);
+  margin: 0 0 12px;
+}
+
+.apply-hero-disclaimer {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--gray-400);
+  margin: 10px auto 0;
+  max-width: 440px;
+}
+
+.apply-hero-cta {
+  margin: 18px auto 0;
+  max-width: 340px;
 }
 
 /* ---------------------------------------------------------------
-   Card shell shared by hero / survey / result
+   How it works strip
    --------------------------------------------------------------- */
+.apply-steps {
+  width: 100%;
+  max-width: var(--max-width);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 8px 0 24px;
+}
 
-.card {
+.apply-step-chip {
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  padding: 12px 6px;
+  text-align: center;
+  box-shadow: var(--shadow-card);
+}
+
+.apply-step-chip .num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--teal-tint);
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.apply-step-chip .label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--navy-2);
+  line-height: 1.3;
+}
+
+/* ---------------------------------------------------------------
+   Info sections (eligibility / disclosure)
+   --------------------------------------------------------------- */
+.apply-info-card {
+  width: 100%;
+  max-width: var(--max-width);
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 22px 22px 20px;
+  margin-bottom: 16px;
+}
+
+.apply-info-card h2 {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--navy);
+  margin: 0 0 10px;
+}
+
+.apply-info-card ol,
+.apply-info-card ul {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--navy-2);
+}
+
+.apply-info-card li {
+  margin-bottom: 4px;
+}
+
+.apply-info-card p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--gray-600);
+  margin: 8px 0 0;
+}
+
+/* ---------------------------------------------------------------
+   Application card / steps (mirrors main survey's card pattern,
+   independently defined so it never depends on css/styles.css)
+   --------------------------------------------------------------- */
+.apply-card {
   width: 100%;
   max-width: var(--max-width);
   background: var(--white);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   padding: 28px 20px 24px;
-  margin-top: 12px;
+  margin-top: 4px;
+}
+
+.apply-progress {
+  width: 100%;
+  max-width: var(--max-width);
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-600);
+  display: flex;
+  justify-content: space-between;
 }
 
 /* ---------------------------------------------------------------
-   Hero
+   Application mode — dedicated full-page experience shown once
+   "Start Your Application" is clicked. Landing-only sections are
+   hidden via body.app-mode; #applyRoot becomes the focused surface,
+   sized and proportioned to match the case-evaluation funnel's
+   question UX (max-width ~480px, 20px radius card, same shadow).
    --------------------------------------------------------------- */
+body.app-mode .apply-landing-only {
+  display: none !important;
+}
 
-.hero-headline {
-  font-size: 26px;
-  line-height: 1.25;
+body.app-mode #applyRoot {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding-top: 4px;
+}
+
+#applyRoot .apply-card {
+  max-width: 480px;
+  margin: 4px auto 0;
+}
+
+.apply-app-header {
+  width: 100%;
+  max-width: 480px;
+  margin: 14px auto 12px;
+}
+
+.apply-app-eyebrow {
+  font-size: 11px;
   font-weight: 800;
-  color: var(--navy);
-  margin: 0 0 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gray-400);
   text-align: center;
+  margin: 0 0 14px;
 }
 
-.hero-sub {
-  font-size: 16px;
-  line-height: 1.5;
+.apply-progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--gray-600);
-  margin: 0 0 22px;
+  margin-bottom: 8px;
+}
+
+.apply-progress-track {
+  width: 100%;
+  height: 8px;
+  background: var(--gray-200);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.apply-progress-fill {
+  height: 8px;
+  background: var(--coral);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+@media (min-width: 640px) {
+  #applyRoot .apply-card {
+    padding: 40px 40px 32px;
+  }
+}
+
+.apply-question {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--navy);
+  margin: 4px 0 16px;
   text-align: center;
 }
 
-.hero-points {
-  list-style: none;
-  margin: 0 0 22px;
-  padding: 0;
+.apply-field-group {
+  margin-bottom: 16px;
+}
+
+.apply-field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy-2);
+  margin-bottom: 6px;
+}
+
+.apply-page input[type="text"],
+.apply-page input[type="tel"],
+.apply-page input[type="email"],
+.apply-page textarea,
+.apply-page select {
+  width: 100%;
+  font-size: 16px;
+  padding: 14px;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  color: var(--navy);
+  min-height: 52px;
+  font-family: var(--font);
+}
+
+.apply-page textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.apply-page input:focus,
+.apply-page select:focus,
+.apply-page textarea:focus {
+  outline: none;
+  border-color: var(--teal);
+}
+
+.apply-char-count {
+  font-size: 12px;
+  color: var(--gray-400);
+  text-align: right;
+  margin-top: 4px;
+}
+
+.apply-error-text {
+  color: #d92d20;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 6px;
+  min-height: 16px;
+}
+
+.apply-answer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 4px 0 4px;
+}
+
+.apply-answer-btn {
+  width: 100%;
+  text-align: center;
+  background: var(--teal-tint);
+  border: 2px solid #b9e8e6;
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+  min-height: 56px;
+}
+
+.apply-answer-btn.selected {
+  border-color: var(--coral-dark);
+  background: var(--coral);
+  color: #fff;
+}
+
+/* ---------------------------------------------------------------
+   NEW — opening "$50 use" question (icon card grid) and HOT LEAD
+   injuries multi-select (checkbox cards). Added for the payment_intent
+   / HOT LEAD branch update. Pure additions — nothing above this
+   block was changed. Reuses the same pale-aqua/coral design tokens
+   as .apply-answer-btn above so it stays visually consistent with
+   the existing design system.
+   --------------------------------------------------------------- */
+.apply-subtext {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-600);
+  text-align: center;
+  margin: -10px 0 16px;
+}
+
+/* Opening "$50 use" question — 2x2 icon card grid on wider screens,
+   single column on narrow mobile widths. */
+.apply-icon-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin: 4px 0 4px;
+}
+
+@media (min-width: 420px) {
+  .apply-icon-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.apply-icon-answer-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  text-align: center;
   gap: 10px;
+  background: var(--teal-tint);
+  border: 2px solid #b9e8e6;
+  border-radius: var(--radius-md);
+  padding: 20px 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy);
+  cursor: pointer;
+  min-height: 104px;
 }
 
-.hero-points li {
+.apply-icon-answer-btn svg {
+  width: 28px;
+  height: 28px;
+  color: var(--navy);
+}
+
+.apply-icon-answer-btn.selected {
+  border-color: var(--coral-dark);
+  background: var(--coral);
+  color: #fff;
+}
+
+.apply-icon-answer-btn.selected svg {
+  color: #fff;
+}
+
+/* HOT LEAD injuries question — multi-select checkbox cards. */
+.apply-checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 4px 0 4px;
+}
+
+.apply-checkbox-card {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: var(--navy-2);
+  gap: 12px;
+  width: 100%;
+  background: var(--teal-tint);
+  border: 2px solid #b9e8e6;
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+  min-height: 56px;
 }
 
-.hero-points .dot {
-  flex: none;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--teal);
+.apply-checkbox-card.selected {
+  border-color: var(--coral-dark);
+  background: #fff0ec;
 }
 
-.hero-disclaimer {
-  margin-top: 16px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--gray-400);
-  text-align: center;
+.apply-checkbox-card input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  accent-color: var(--coral);
+  cursor: pointer;
 }
 
-/* ---------------------------------------------------------------
-   Buttons
-   --------------------------------------------------------------- */
-
-.btn {
+.apply-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -217,36 +560,21 @@ button {
   font-weight: 700;
   padding: 16px 20px;
   cursor: pointer;
-  transition: transform 0.08s ease, background 0.15s ease, opacity 0.15s ease;
   min-height: 56px;
 }
 
-.btn:active {
-  transform: scale(0.98);
-}
-
-.btn-primary {
+.apply-btn-primary {
   background: var(--coral);
   color: var(--white);
 }
 
-.btn-primary:hover {
-  background: var(--coral-dark);
-}
-
-.btn-primary:disabled {
+.apply-btn-primary:disabled {
   background: var(--gray-200);
   color: var(--gray-400);
   cursor: not-allowed;
-  transform: none;
 }
 
-.btn-secondary {
-  background: var(--gray-100);
-  color: var(--navy);
-}
-
-.btn-back {
+.apply-btn-back {
   background: transparent;
   color: var(--gray-600);
   width: auto;
@@ -254,181 +582,30 @@ button {
   padding: 8px 4px;
   font-size: 14px;
   font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
 }
 
-.btn-back:hover {
-  color: var(--navy);
-}
-
-/* Large mobile-friendly answer buttons */
-.answer-list {
+.apply-step-actions {
+  margin-top: 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin: 20px 0 4px;
 }
 
-.answer-btn {
-  width: 100%;
+/* Attorney-interest question only — plain footer-style fine print,
+   pushed well below the Back button toward the bottom of the card.
+   Matches .apply-footer-disclaimer's visual treatment (same size,
+   color, weight, line-height) but scoped to this one screen. No
+   border, no background, no badge — text only. */
+.apply-attorney-disclosure {
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--gray-400);
   text-align: left;
-  background: var(--teal-tint);
-  border: 2px solid var(--teal-tint-border);
-  border-radius: var(--radius-md);
-  padding: 16px 18px;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--navy);
-  cursor: pointer;
-  min-height: 56px;
-  transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease, transform 0.08s ease;
+  margin: 56px 0 0;
 }
 
-.answer-btn:hover {
-  border-color: var(--teal);
-  background: var(--teal-tint-hover);
-}
-
-.answer-btn:active {
-  transform: scale(0.99);
-}
-
-.answer-btn.selected {
-  border-color: var(--coral-dark);
-  background: var(--coral);
-  color: #fff;
-}
-
-/* ---------------------------------------------------------------
-   Progress bar
-   --------------------------------------------------------------- */
-
-.progress-wrap {
-  width: 100%;
-  max-width: var(--max-width);
-  margin-top: 14px;
-}
-
-.progress-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--gray-600);
-  margin-bottom: 6px;
-  display: flex;
-  justify-content: space-between;
-}
-
-.progress-track {
-  width: 100%;
-  height: 8px;
-  background: var(--gray-200);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--teal), var(--coral));
-  border-radius: 999px;
-  transition: width 0.35s ease;
-}
-
-/* ---------------------------------------------------------------
-   Survey step
-   --------------------------------------------------------------- */
-
-.step-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 28px;
-  margin-bottom: 4px;
-}
-
-.step-question {
-  font-size: 21px;
-  font-weight: 800;
-  line-height: 1.3;
-  color: var(--navy);
-  margin: 10px 0 4px;
-  text-align: center;
-}
-
-.step-help {
-  font-size: 14px;
-  color: var(--gray-600);
-  margin: 0 0 14px;
-  text-align: center;
-}
-
-.field-group {
-  margin-bottom: 16px;
-}
-
-.field-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--navy-2);
-  margin-bottom: 6px;
-}
-
-.field-row {
-  display: flex;
-  gap: 10px;
-}
-
-.field-row > * {
-  flex: 1;
-  min-width: 0;
-}
-
-input[type="text"],
-input[type="date"],
-input[type="tel"],
-input[type="email"],
-select {
-  width: 100%;
-  font-size: 16px;
-  padding: 14px 14px;
-  border: 2px solid var(--gray-200);
-  border-radius: var(--radius-sm);
-  background: var(--white);
-  color: var(--navy);
-  min-height: 52px;
-  appearance: none;
-  -webkit-appearance: none;
-}
-
-select {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9'><path d='M1 1l6 6 6-6' stroke='%235B6472' stroke-width='2' fill='none' fill-rule='evenodd'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-  padding-right: 36px;
-}
-
-input:focus,
-select:focus {
-  outline: none;
-  border-color: var(--teal);
-}
-
-input.input-error,
-select.input-error {
-  border-color: #d92d20;
-}
-
-.error-text {
-  color: #d92d20;
-  font-size: 12px;
-  font-weight: 600;
-  margin-top: 6px;
-  min-height: 16px;
-}
-
-.consent-row {
+.apply-consent-row {
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -438,822 +615,80 @@ select.input-error {
   border-radius: var(--radius-sm);
 }
 
-.consent-row input[type="checkbox"] {
+.apply-consent-row input[type="checkbox"] {
   margin-top: 3px;
   width: 18px;
   height: 18px;
   flex: none;
 }
 
-.consent-text {
+.apply-consent-text {
   font-size: 12px;
   line-height: 1.6;
   color: var(--gray-600);
 }
 
-.consent-placeholder-tag {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  color: var(--coral-dark);
-  background: #ffe8e1;
-  border-radius: 4px;
-  padding: 2px 6px;
-  margin-bottom: 6px;
-}
-
-.step-actions {
-  margin-top: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* ---------------------------------------------------------------
-   Result screen
-   --------------------------------------------------------------- */
-
-.result-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 4px auto 18px;
-}
-
-.result-icon.qualified {
-  background: var(--green-bg);
-  color: var(--green);
-}
-
-.result-icon.unqualified {
-  background: var(--gray-100);
-  color: var(--gray-600);
-}
-
-.result-title {
+.apply-thankyou-title {
   font-size: 22px;
   font-weight: 800;
   text-align: center;
-  margin: 0 0 10px;
+  margin: 4px 0 12px;
 }
 
-.result-body {
+.apply-thankyou-body {
   font-size: 15px;
   line-height: 1.6;
   color: var(--gray-600);
   text-align: center;
-  margin: 0 0 18px;
+  margin: 0 0 14px;
 }
 
-.result-note {
+.apply-thankyou-note {
   font-size: 12px;
   color: var(--gray-400);
   text-align: center;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
-.webhook-warning {
-  margin-top: 14px;
-  font-size: 12px;
-  color: var(--gray-600);
-  background: var(--gray-50);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  text-align: center;
-}
-
-/* ---------------------------------------------------------------
-   Transitions between steps
-   --------------------------------------------------------------- */
-
-.step-enter {
-  animation: stepIn 0.25s ease both;
-}
-
-@keyframes stepIn {
-  from {
-    opacity: 0;
-    transform: translateX(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* ---------------------------------------------------------------
-   Footer
-   --------------------------------------------------------------- */
-
-.site-footer {
+.apply-footer {
   width: 100%;
   max-width: var(--max-width);
-  margin-top: 22px;
+  margin-top: 24px;
   padding-top: 16px;
   border-top: 1px solid var(--gray-200);
   text-align: center;
 }
 
-.footer-links {
+.apply-footer-links {
   display: flex;
   justify-content: center;
   gap: 14px;
   margin-bottom: 10px;
 }
 
-.footer-links a {
+.apply-footer-links a {
   font-size: 12px;
   color: var(--gray-600);
   text-decoration: none;
 }
 
-.footer-links a:hover {
-  text-decoration: underline;
-}
-
-.footer-disclaimer {
+.apply-footer-disclaimer {
   font-size: 11px;
   line-height: 1.6;
   color: var(--gray-400);
-  padding: 0 8px 8px;
+  padding: 0 8px;
 }
-
-/* ---------------------------------------------------------------
-   Legal placeholder pages
-   --------------------------------------------------------------- */
-
-.legal-page {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 32px 20px 60px;
-  font-family: var(--font);
-  color: var(--navy);
-}
-
-.legal-back {
-  display: inline-block;
-  margin-bottom: 18px;
-  color: var(--teal);
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.legal-page h1 {
-  font-size: 24px;
-}
-
-.legal-placeholder {
-  background: #fff4f1;
-  border: 1px dashed var(--coral);
-  color: var(--coral-dark);
-  font-weight: 700;
-  font-size: 13px;
-  padding: 12px 14px;
-  border-radius: var(--radius-sm);
-}
-
-/* ---------------------------------------------------------------
-   Screen-reader only
-   --------------------------------------------------------------- */
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* ---------------------------------------------------------------
-   Desktop enhancement — still a single focused card, just with
-   breathing room around it instead of a different layout.
-   --------------------------------------------------------------- */
 
 @media (min-width: 640px) {
-  .page {
-    padding-top: 32px;
+  .apply-hero-eyebrow {
+    font-size: 46px;
   }
-
-  .card {
-    padding: 40px 40px 32px;
+  .apply-hero-dollar {
+    /* Desktop size — EXACT per spec: 24px. */
+    font-size: 24px;
   }
-
-  .hero-headline {
-    font-size: 32px;
-  }
-
-  .wordmark {
-    font-size: 30px;
-  }
-
-  body {
-    background: #eaf4fb;
-  }
-}
-
-/* =================================================================
-   Gamification layer
-   Purely presentational polish (progress meter shine, card-style
-   answers, feedback chips, milestone toasts, checking animation).
-   Nothing here touches survey logic, field values, or element IDs
-   relied on by js/qualification.js or the test suite. Deleting this
-   whole block reverts to the plain visual style.
-   ================================================================= */
-
-.progress-eyebrow {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--gray-400);
-  margin-bottom: 4px;
-}
-
-#cardRoot {
-  position: relative;
-  overflow: visible;
-}
-
-/* Progress bar shine + glow pulse, replayed on every step change */
-.progress-fill {
-  position: relative;
-  overflow: hidden;
-}
-
-.progress-fill.pulse-glow {
-  animation: c2cProgressGlow 450ms ease;
-}
-
-.progress-fill::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 40%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
-  transform: translateX(-140%);
-}
-
-.progress-fill.pulse-glow::after {
-  animation: c2cShine 500ms ease;
-}
-
-@keyframes c2cProgressGlow {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 90, 54, 0);
-  }
-  40% {
-    box-shadow: 0 0 10px 2px rgba(255, 90, 54, 0.55);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 90, 54, 0);
-  }
-}
-
-@keyframes c2cShine {
-  0% {
-    transform: translateX(-140%);
-  }
-  100% {
-    transform: translateX(240%);
-  }
-}
-
-/* Answer "cards": hover lift, selection pop + glow + checkmark */
-.answer-btn {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 10px;
-  padding-left: 40px;
-  padding-right: 40px;
-  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, background 140ms ease;
-}
-
-.answer-btn:hover:not(:disabled) {
-  transform: translateY(-2px) scale(1.01);
-  box-shadow: 0 6px 16px rgba(15, 37, 64, 0.12);
-}
-
-.answer-btn:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-.answer-btn:disabled:not(.selected) {
-  opacity: 0.55;
-}
-
-.answer-btn.selected {
-  animation: c2cPop 260ms ease;
-  box-shadow: 0 0 0 3px rgba(255, 90, 54, 0.22), 0 6px 16px rgba(15, 37, 64, 0.16);
-}
-
-@keyframes c2cPop {
-  0% {
-    transform: scale(1);
-  }
-  45% {
-    transform: scale(1.045);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-.answer-check {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  margin-top: -10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #fff;
-  color: var(--coral-dark);
-  font-size: 11px;
-  font-weight: 800;
-  flex: none;
-  opacity: 0;
-  transform: scale(0.4);
-  animation: c2cCheckIn 220ms ease forwards;
-}
-
-@keyframes c2cCheckIn {
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Icon answer cards — Question 1 (settlement intent) + Question 3 (vehicle type) */
-.icon-card-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin: 18px 0 4px;
-}
-
-.icon-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background: var(--teal-tint);
-  border: 2px solid var(--teal-tint-border);
-  border-radius: var(--radius-md);
-  padding: 22px 10px;
-  cursor: pointer;
-  min-height: 122px;
-  text-align: center;
-  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, background 140ms ease;
-}
-
-.icon-card:hover:not(:disabled) {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 8px 18px rgba(15, 37, 64, 0.14);
-  background: var(--teal-tint-hover);
-}
-
-.icon-card:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
-.icon-card:disabled:not(.selected) {
-  opacity: 0.55;
-}
-
-.icon-card.selected {
-  animation: c2cPop 260ms ease;
-  border-color: var(--coral-dark);
-  background: var(--coral);
-  box-shadow: 0 0 0 3px rgba(255, 90, 54, 0.22);
-}
-
-.icon-card svg {
-  width: 42px;
-  height: 42px;
-  stroke-width: 1.6;
-  color: var(--navy-2);
-}
-
-.icon-card.selected svg {
-  color: #fff;
-}
-
-.icon-card-label {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--navy);
-}
-
-.icon-card.selected .icon-card-label {
-  color: #fff;
-}
-
-.icon-card-check {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-}
-
-/* Per-answer feedback chip ("Got it ✓" / "Locked in ✓" / "Nice ✓") */
-.c2c-toast {
-  position: absolute;
-  left: 50%;
-  top: -6px;
-  transform: translate(-50%, -100%);
-  background: var(--navy);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 6px 14px;
-  border-radius: 999px;
-  opacity: 0;
-  pointer-events: none;
-  white-space: nowrap;
-  animation: c2cToastIn 380ms ease forwards;
-  z-index: 5;
-}
-
-@keyframes c2cToastIn {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -90%) scale(0.9);
-  }
-  20% {
-    opacity: 1;
-    transform: translate(-50%, -100%) scale(1);
-  }
-  75% {
-    opacity: 1;
-    transform: translate(-50%, -100%) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -110%) scale(0.96);
-  }
-}
-
-/* Milestone banners ("Halfway there ✓" / "Almost done") */
-.c2c-milestone {
-  text-align: center;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--teal);
-  background: #e8faf9;
-  border-radius: 999px;
-  padding: 6px 12px;
-  margin: 0 0 12px;
-  opacity: 0;
-  animation: c2cMilestoneIn 1700ms ease forwards;
-}
-
-@keyframes c2cMilestoneIn {
-  0% {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  12% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  82% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-/* Injury tile selection counter */
-.injury-counter {
-  text-align: center;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--gray-600);
-  min-height: 16px;
-  margin: 2px 0 12px;
-}
-
-.injury-counter strong {
-  color: var(--coral-dark);
-}
-
-/* Directional step transitions (forward / back) — swap in for the
-   default .step-enter fade whenever navigation has a direction. */
-.step-slide-fwd {
-  animation: c2cSlideFromRight 300ms ease both;
-}
-
-.step-slide-back {
-  animation: c2cSlideFromLeft 300ms ease both;
-}
-
-@keyframes c2cSlideFromRight {
-  from {
-    opacity: 0;
-    transform: translateX(18px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes c2cSlideFromLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-18px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-
-/* ---------------------------------------------------------------
-   Level-meter beads (secondary progress indicator under the bar)
-   --------------------------------------------------------------- */
-
-.progress-beads {
-  display: flex;
-  gap: 4px;
-  margin-top: 6px;
-}
-
-.progress-bead {
-  flex: 1;
-  height: 4px;
-  border-radius: 999px;
-  background: var(--gray-200);
-  transition: background 220ms ease;
-}
-
-.progress-bead.lit {
-  background: linear-gradient(90deg, var(--teal), var(--coral));
-}
-
-.progress-bead.current {
-  animation: c2cBeadPop 380ms ease;
-}
-
-@keyframes c2cBeadPop {
-  0% {
-    transform: scaleY(1);
-  }
-  45% {
-    transform: scaleY(2.2);
-  }
-  100% {
-    transform: scaleY(1);
-  }
-}
-
-/* ---------------------------------------------------------------
-   Bigger "Checking your answers…" reveal — charging ring +
-   anticipation beat before the result appears.
-   --------------------------------------------------------------- */
-
-.checking-wrap {
-  text-align: center;
-  padding: 8px 4px 4px;
-}
-
-.checking-wrap.climax {
-  animation: c2cClimaxPulse 250ms ease;
-}
-
-@keyframes c2cClimaxPulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.035);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-.checking-ring {
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 16px;
-}
-
-.checking-ring svg {
-  transform: rotate(-90deg);
-  width: 72px;
-  height: 72px;
-}
-
-.ring-track {
-  fill: none;
-  stroke: var(--gray-200);
-  stroke-width: 5;
-}
-
-.ring-fill {
-  fill: none;
-  stroke: var(--coral);
-  stroke-width: 5;
-  stroke-linecap: round;
-  stroke-dasharray: 170;
-  stroke-dashoffset: 170;
-  animation: c2cRingFill 1.85s cubic-bezier(0.3, 0.6, 0.2, 1) forwards;
-}
-
-@keyframes c2cRingFill {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-.checking-title {
-  font-size: 17px;
-  font-weight: 800;
-  margin: 0 0 16px;
-  transition: color 150ms ease;
-}
-
-.checking-list {
-  list-style: none;
-  margin: 0 auto;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  text-align: left;
-  max-width: 220px;
-}
-
-.checking-line {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--gray-400);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.checking-line::before {
-  content: "";
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 2px solid var(--gray-200);
-  flex: none;
-  transition: border-color 150ms ease, background 150ms ease;
-}
-
-.checking-line.checked {
-  color: var(--navy);
-}
-
-.checking-line.checked::before {
-  content: "✓";
-  border-color: var(--teal);
-  background: var(--teal);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 800;
-}
-
-/* ---------------------------------------------------------------
-   Result badge + confetti burst (qualified only). Abstract shapes
-   in brand colors — no coins, cash, or prize iconography.
-   --------------------------------------------------------------- */
-
-.result-badge-wrap {
-  position: relative;
-  width: 88px;
-  height: 88px;
-  margin: 4px auto 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.result-badge {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  z-index: 2;
-  animation: c2cBadgeIn 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
-}
-
-.result-badge svg {
-  width: 32px;
-  height: 32px;
-}
-
-.result-badge.qualified {
-  background: var(--green-bg);
-  color: var(--green);
-  box-shadow: 0 0 0 6px rgba(22, 163, 74, 0.12);
-}
-
-.result-badge.unqualified {
-  background: var(--gray-100);
-  color: var(--gray-600);
-}
-
-@keyframes c2cBadgeIn {
-  from {
-    transform: scale(0.5);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.confetti-burst {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.confetti-piece {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 6px;
-  height: 10px;
-  border-radius: 2px;
-  opacity: 0;
-  transform: translate(-50%, -50%) rotate(var(--ang)) translateY(0) scale(0.6);
-  animation: c2cConfetti 650ms ease-out forwards;
-}
-
-.confetti-piece.c-teal {
-  background: var(--teal);
-}
-
-.confetti-piece.c-coral {
-  background: var(--coral);
-}
-
-.confetti-piece.c-navy {
-  background: var(--navy-2);
-}
-
-@keyframes c2cConfetti {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) rotate(var(--ang)) translateY(0) scale(0.6);
-  }
-  15% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) rotate(var(--ang)) translateY(calc(-1 * var(--dist))) scale(1);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .progress-fill.pulse-glow,
-  .progress-fill.pulse-glow::after,
-  .answer-btn.selected,
-  .icon-card.selected,
-  .answer-check,
-  .c2c-toast,
-  .c2c-milestone,
-  .step-slide-fwd,
-  .step-slide-back,
-  .progress-bead.current,
-  .checking-wrap.climax,
-  .ring-fill,
-  .result-badge,
-  .confetti-piece {
-    animation: none !important;
+  .apply-card,
+  .apply-info-card {
+    padding: 34px 34px 28px;
   }
 }
