@@ -295,8 +295,20 @@ body.hp-page {
 }
 
 @media (max-width: 640px) {
-  .hp-hero-eyebrow {
-    display: none;
+  .hp-nav-inner {
+    position: relative;
+    justify-content: flex-end;
+  }
+  .hp-wordmark {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 29px;
+  }
+  .hp-wordmark .hp-badge {
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
   }
 }
 
