@@ -58,7 +58,7 @@ const COLUMNS = [
   "accident_timeframe",
   "story_summary",
   "situation_status",
-  "interested_in_attorney", // "Yes" / "No" / "" (blank unless within 2yrs + still ongoing)
+  "interested_in_attorney", // "Yes" / "No" / "" (blank unless within 2yrs + still ongoing/not sure)
   "lead_status", // NEW — server-computed "HOT LEAD" or "" (see computeLeadStatus())
   "injuries", // NEW — HOT LEAD only, comma-separated; "" otherwise
   "medical_treatment_timing", // NEW — HOT LEAD only; "" otherwise
@@ -271,18 +271,19 @@ function flattenColumn(valueRange) {
   });
 }
 
-// HOT LEAD = accident within the last 2 years AND situation still
-// ongoing AND applicant said Yes to speaking with an attorney. ALL
-// THREE must be true. Computed here, server-side, at submission time
-// — a lead_status value is never read from the client payload, so
-// there is nothing for a tampered/spoofed browser value to override.
-// Every other applicant gets "" (never "Cold Lead", "Not Qualified",
-// or any other label).
+// HOT LEAD = accident within the last 2 years AND situation is either
+// "Still ongoing" OR "Not sure" AND applicant said Yes to speaking
+// with an attorney. ALL THREE must be true (only "Settled" excludes
+// the situation-status leg). Computed here, server-side, at
+// submission time — a lead_status value is never read from the
+// client payload, so there is nothing for a tampered/spoofed browser
+// value to override. Every other applicant gets "" (never "Cold
+// Lead", "Not Qualified", or any other label).
 function computeLeadStatus(applicant) {
   var withinTwoYears = applicant.accident_timeframe === "Within the last 2 years";
-  var stillOngoing = applicant.situation_status === "Still ongoing";
+  var qualifyingStatus = applicant.situation_status === "Still ongoing" || applicant.situation_status === "Not sure";
   var wantsAttorney = applicant.interested_in_attorney === "Yes";
-  return withinTwoYears && stillOngoing && wantsAttorney ? "HOT LEAD" : "";
+  return withinTwoYears && qualifyingStatus && wantsAttorney ? "HOT LEAD" : "";
 }
 
 function buildRow(applicant, serverSubmissionId, serverReceivedAt) {
