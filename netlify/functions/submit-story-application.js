@@ -286,13 +286,40 @@ function computeLeadStatus(applicant) {
   return withinTwoYears && qualifyingStatus && wantsAttorney ? "HOT LEAD" : "";
 }
 
+// Formats a raw ISO 8601 UTC timestamp (e.g. "2026-08-23T11:25:36.069Z")
+// as "MM/DD/YYYY h:mm AM/PM" in America/New_York local time, for the
+// "server_received_at" Sheet column only. Uses Intl.DateTimeFormat's
+// IANA timezone support so EST/EDT (daylight saving) is handled
+// automatically — no hardcoded UTC offset. Seconds/milliseconds are
+// dropped intentionally (not part of the requested display format).
+// This only changes what's WRITTEN to the sheet; the raw ISO value
+// (serverReceivedAt, generated in the handler) is left untouched and
+// is still what's passed around internally.
+function formatEasternTimestamp(isoString) {
+  var date = new Date(isoString);
+  var parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).formatToParts(date);
+  var map = {};
+  parts.forEach(function (p) {
+    map[p.type] = p.value;
+  });
+  return map.month + "/" + map.day + "/" + map.year + " " + map.hour + ":" + map.minute + " " + map.dayPeriod;
+}
+
 function buildRow(applicant, serverSubmissionId, serverReceivedAt) {
   return COLUMNS.map(function (key) {
     if (key === "test_submission_label") {
       return applicant.test_submission ? "TEST" : "LIVE";
     }
     if (key === "server_submission_id") return serverSubmissionId;
-    if (key === "server_received_at") return serverReceivedAt;
+    if (key === "server_received_at") return formatEasternTimestamp(serverReceivedAt);
     if (key === "lead_status") return computeLeadStatus(applicant);
     var value = applicant[key];
     if (Array.isArray(value)) return value.join(", ");
@@ -458,4 +485,6 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports.checkForDuplicate = checkForDuplicate;
   module.exports.computeLeadStatus = computeLeadStatus;
   module.exports.COLUMNS = COLUMNS;
+  module.exports.formatEasternTimestamp = formatEasternTimestamp;
+  module.exports.buildRow = buildRow;
 }
