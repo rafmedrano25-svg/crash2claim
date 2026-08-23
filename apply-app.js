@@ -815,25 +815,54 @@
     handleSubmit();
   }
 
+  // Previously, any synchronous exception thrown while building/sending
+  // the payload (e.g. an unexpected error in buildApplicationPayload())
+  // would leave STATE.isSubmitting permanently true — validateAndSubmit()
+  // silently no-ops on every future click once that flag is stuck (see
+  // its guard above), so the applicant would see the Submit button do
+  // nothing at all, with no request ever reaching the network and
+  // nothing in the Netlify function log, since fetch() was never
+  // reached. This wraps the whole build/send step so any such error
+  // resets isSubmitting, surfaces a visible message instead of a silent
+  // dead button, and logs the real error for diagnosis. No change to
+  // payload contents, endpoint, qualification logic, or Sheet mapping.
   function handleSubmit() {
     STATE.isSubmitting = true;
     STATE.applicantId = generateApplicantId();
 
-    var payload = buildApplicationPayload(STATE.answers, STATE.applicantId, isTestMode);
-
-    sendApplicationPayload(payload).then(function (result) {
+    try {
+      var payload = buildApplicationPayload(STATE.answers, STATE.applicantId, isTestMode);
+    } catch (buildErr) {
       STATE.isSubmitting = false;
-      STATE.hasSubmitted = true;
-      STATE.webhookWarning = !result.ok;
-      // The server checks email/phone against existing applicants and
-      // reports duplicate:true instead of writing a second row — see
-      // netlify/functions/submit-story-application.js. The applicant
-      // still reaches a clean final screen either way, just with
-      // different copy (never an accusatory error).
-      STATE.isDuplicate = !!result.duplicate;
-      STATE.step = STATE.step + 1;
-      render();
-    });
+      console.error("[apply] Failed to build submission payload:", buildErr);
+      var errorEl = document.getElementById("q8Error");
+      if (errorEl) errorEl.textContent = "Something went wrong preparing your application. Please try again.";
+      return;
+    }
+
+    sendApplicationPayload(payload)
+      .then(function (result) {
+        STATE.isSubmitting = false;
+        STATE.hasSubmitted = true;
+        STATE.webhookWarning = !result.ok;
+        // The server checks email/phone against existing applicants and
+        // reports duplicate:true instead of writing a second row — see
+        // netlify/functions/submit-story-application.js. The applicant
+        // still reaches a clean final screen either way, just with
+        // different copy (never an accusatory error).
+        STATE.isDuplicate = !!result.duplicate;
+        STATE.step = STATE.step + 1;
+        render();
+      })
+      .catch(function (sendErr) {
+        // sendApplicationPayload() already catches its own network
+        // errors internally and resolves rather than rejects, so this
+        // is a last-resort safety net in case that ever changes.
+        STATE.isSubmitting = false;
+        console.error("[apply] Unexpected error sending submission:", sendErr);
+        var errorEl = document.getElementById("q8Error");
+        if (errorEl) errorEl.textContent = "Something went wrong submitting your application. Please try again.";
+      });
   }
 
   // -----------------------------------------------------------------
