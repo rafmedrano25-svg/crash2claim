@@ -140,13 +140,14 @@ body.apply-page {
 }
 
 .apply-hero-dollar {
-  /* Mobile/base size — EXACT per spec: 22px. Only one rule below
-     (in the min-width:640px media query) overrides this, to 24px
-     on desktop. There is no other rule anywhere in this file that
-     touches .apply-hero-dollar's font-size — confirmed by grepping
-     the whole file and by inspecting document.styleSheets directly
-     on the live page. */
-  font-size: 22px;
+  /* Mobile/base size — 33px (50% larger than the prior 22px). Only
+     one rule below (in the min-width:640px media query) overrides
+     this, to 36px on desktop (50% larger than the prior 24px). There
+     is no other rule anywhere in this file that touches
+     .apply-hero-dollar's font-size — confirmed by grepping the whole
+     file and by inspecting document.styleSheets directly on the live
+     page. Font family, weight, and color are unchanged. */
+  font-size: 33px;
   line-height: 1.2;
   font-weight: 700;
   color: var(--coral);
@@ -679,13 +680,27 @@ body.app-mode #applyRoot {
   padding: 0 8px;
 }
 
+/* Mobile-only extra breathing room above the footer. On narrow
+   screens the footer's own disclaimer sits directly below the
+   attorney-interest disclosure (both use the same muted fine-print
+   styling), so the base 24px/16px spacing above reads as one blended
+   block of legal text. This widens the gap and keeps everything in
+   normal document flow — no absolute/fixed positioning anywhere.
+   Desktop keeps the original 24px/16px spacing (untouched below). */
+@media (max-width: 639px) {
+  .apply-footer {
+    margin-top: 44px;
+    padding-top: 20px;
+  }
+}
+
 @media (min-width: 640px) {
   .apply-hero-eyebrow {
     font-size: 46px;
   }
   .apply-hero-dollar {
-    /* Desktop size — EXACT per spec: 24px. */
-    font-size: 24px;
+    /* Desktop size — 36px (50% larger than the prior 24px). */
+    font-size: 36px;
   }
   .apply-card,
   .apply-info-card {
