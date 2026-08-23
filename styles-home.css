@@ -27,7 +27,7 @@
   --radius-lg: 20px;
   --shadow-card: 0 12px 32px rgba(15, 37, 64, 0.1);
   --shadow-soft: 0 4px 16px rgba(15, 37, 64, 0.08);
-  --max-width: 1180px;
+  --max-width: 1280px;
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -142,7 +142,7 @@ body.hp-page {
 
 .hp-nav-link {
   font-size: 17px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--navy);
   text-decoration: none;
   opacity: 0.85;
@@ -298,9 +298,6 @@ body.hp-page {
   .hp-hero-eyebrow {
     display: none;
   }
-  .hp-hero-sub {
-    display: none;
-  }
 }
 
 .hp-btn {
@@ -347,7 +344,7 @@ body.hp-page {
 }
 .hp-section-head {
   text-align: center;
-  max-width: 640px;
+  max-width: 760px;
   margin: 0 auto 40px;
 }
 .hp-section-navy {
@@ -365,7 +362,7 @@ body.hp-page {
 }
 .hp-section-title {
   font-size: clamp(30px, 4.2vw, 48px);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--navy);
   margin: 0 0 12px;
