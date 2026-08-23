@@ -299,13 +299,18 @@ body.hp-page {
     position: relative;
     justify-content: flex-end;
   }
-  .hp-wordmark {
+  /* Scoped to the header nav only. Previously this was a bare
+     .hp-wordmark selector, which also matched the footer's reuse of
+     the same class and absolutely-positioned/oversized the footer
+     logo on top of the footer copy. See .hp-footer-brand rules below
+     for the footer's own, separately-scoped mobile treatment. */
+  .hp-nav-inner .hp-wordmark {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
     font-size: 29px;
   }
-  .hp-wordmark .hp-badge {
+  .hp-nav-inner .hp-wordmark .hp-badge {
     width: 34px;
     height: 34px;
     font-size: 18px;
@@ -839,6 +844,56 @@ body.hp-page {
   border-top: 1px solid var(--gray-200);
   padding-top: 20px;
   margin: 0;
+}
+
+/* Mobile-only footer layout fix. Reorders the description copy above
+   the logo (via flex + order, no HTML change) so the visual sequence
+   reads: description, spacing, logo, spacing, social icons — all in
+   normal document flow, horizontally centered. The logo itself is
+   scaled down to a footer-appropriate size (it's a text+badge
+   wordmark, not an image, so there's no literal max-width to set;
+   this is the visual equivalent of a small footer logo rather than
+   the larger header-sized one). No absolute/fixed positioning,
+   negative margins, or transforms are used anywhere in this block. */
+@media (max-width: 640px) {
+  .hp-footer-top {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .hp-footer-brand {
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .hp-footer-brand .hp-wordmark {
+    order: 2;
+    font-size: 22px;
+    margin-top: 18px;
+  }
+  .hp-footer-brand .hp-wordmark .hp-badge {
+    width: 26px;
+    height: 26px;
+    font-size: 13px;
+  }
+  .hp-footer-desc {
+    order: 1;
+    margin-top: 0;
+  }
+  .hp-footer-social {
+    order: 3;
+    justify-content: center;
+    margin-top: 20px !important;
+  }
+  .hp-footer-links {
+    justify-content: center;
+    text-align: center;
+    margin-top: 8px;
+  }
+  .hp-footer-col a {
+    margin-bottom: 8px;
+  }
 }
 
 /* ---------------------------------------------------------------
