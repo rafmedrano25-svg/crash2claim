@@ -44,6 +44,7 @@
   var NEW_YORK = "New York";
   var WITHIN_2_YEARS = "Within the last 2 years";
   var STILL_ONGOING = "Still ongoing";
+  var NOT_SURE = "Not sure";
 
   // Opening question — asked of EVERY applicant, before anything else.
   // Intentionally 4 options (an explicit exception to the general
@@ -102,21 +103,24 @@
 
   // The attorney-interest question requires BOTH conditions to be true:
   //   1. Accident happened within the last 2 years (Q4)
-  //   2. Situation is "Still ongoing" (Q6) — "Settled" and "Not sure"
-  //      are both excluded. "Not sure" is deliberately NOT treated as
-  //      unsettled; situation_status is still recorded either way so
-  //      those applicants remain reviewable in the Sheet.
+  //   2. Situation is "Still ongoing" OR "Not sure" (Q6) — only
+  //      "Settled" is excluded. situation_status is always recorded
+  //      regardless, so every applicant remains reviewable in the
+  //      Sheet either way.
   function isAttorneyQuestionQualified() {
-    return STATE.answers.accident_timeframe === WITHIN_2_YEARS && STATE.answers.situation_status === STILL_ONGOING;
+    return (
+      STATE.answers.accident_timeframe === WITHIN_2_YEARS &&
+      (STATE.answers.situation_status === STILL_ONGOING || STATE.answers.situation_status === NOT_SURE)
+    );
   }
 
-  // HOT LEAD = within 2 years + still ongoing + answered Yes to the
-  // attorney question. Written out in full (rather than just checking
-  // interested_in_attorney) so it stays correct even if the applicant
-  // backs up and changes an earlier answer. This is a CLIENT-side
-  // mirror only, used purely to decide which questions to show next —
-  // the authoritative lead_status is computed server-side at
-  // submission time (see netlify/functions/submit-story-application.js)
+  // HOT LEAD = within 2 years + (still ongoing OR not sure) + answered
+  // Yes to the attorney question. Written out in full (rather than
+  // just checking interested_in_attorney) so it stays correct even if
+  // the applicant backs up and changes an earlier answer. This is a
+  // CLIENT-side mirror only, used purely to decide which questions to
+  // show next — the authoritative lead_status is computed server-side
+  // at submission time (see netlify/functions/submit-story-application.js)
   // and never trusts a value sent from the browser.
   function isHotLead() {
     return isAttorneyQuestionQualified() && STATE.answers.interested_in_attorney === true;
@@ -374,12 +378,16 @@
     // Intentionally no bindBack() — this is always the first step.
   }
 
-  // Q1 — first name
+  // Q1 — full name. Displayed copy asks for the applicant's full name;
+  // the underlying answer key/field remains "first_name" (unchanged)
+  // so the existing payload shape and Google Sheets column alignment
+  // are not affected — it now simply holds whatever full-name string
+  // the applicant enters.
   function q1Template() {
     return (
-      '<p class="apply-question">What\'s your first name?</p>' +
+      '<p class="apply-question">What\'s your full name?</p>' +
       '<div class="apply-field-group">' +
-      '<input type="text" id="q1Input" maxlength="60" placeholder="First name" value="' + escapeAttr(STATE.answers.first_name) + '">' +
+      '<input type="text" id="q1Input" maxlength="80" placeholder="Full name" value="' + escapeAttr(STATE.answers.first_name) + '">' +
       '<p class="apply-error-text" id="q1Error"></p>' +
       "</div>" +
       '<div class="apply-step-actions">' +
@@ -394,7 +402,7 @@
     btn.addEventListener("click", function () {
       var val = (input.value || "").trim();
       if (!val) {
-        document.getElementById("q1Error").textContent = "Please enter your first name.";
+        document.getElementById("q1Error").textContent = "Please enter your full name.";
         return;
       }
       STATE.answers.first_name = val;
@@ -524,10 +532,10 @@
     bindBack();
   }
 
-  // Q6 — situation status. "Still ongoing" (combined with an
-  // accident within the last 2 years — see isAttorneyQuestionQualified())
-  // triggers the attorney-interest question next. "Not sure" is
-  // deliberately NOT treated as unsettled/qualifying.
+  // Q6 — situation status. "Still ongoing" OR "Not sure" (combined with
+  // an accident within the last 2 years — see
+  // isAttorneyQuestionQualified()) triggers the attorney-interest
+  // question next. Only "Settled" is excluded.
   function q6Template() {
     var optionsHtml = SITUATION_OPTIONS.map(function (label, i) {
       return '<button type="button" class="apply-answer-btn" id="q6Opt' + i + '">' + label + "</button>";
@@ -716,6 +724,12 @@
       '<div class="apply-field-group">' +
       '<label class="apply-field-label" for="q8Phone">Phone</label>' +
       '<input type="tel" id="q8Phone" placeholder="(555) 555-5555" value="' + escapeAttr(STATE.answers.phone) + '">' +
+      // Dedicated phone-specific error, placed immediately after the
+      // phone input and inside its own field-group — so it renders
+      // directly beneath the phone field and above the email
+      // label/input, never intermixed with email/consent errors (see
+      // the shared #q8Error below, which those still use unchanged).
+      '<p class="apply-error-text" id="q8PhoneError"></p>' +
       "</div>" +
       '<div class="apply-field-group">' +
       '<label class="apply-field-label" for="q8Email">Email</label>' +
@@ -749,19 +763,28 @@
   function validateAndSubmit(phoneVal, emailVal, consentChecked) {
     var normalizedPhone = normalizePhone(phoneVal);
     var email = (emailVal || "").trim();
+    var phoneErrorEl = document.getElementById("q8PhoneError");
     var errorEl = document.getElementById("q8Error");
 
-    // Checked first, and with its own specific message, so an
-    // applicant with a malformed number gets an actionable error
-    // instead of the generic "enter both" message. This only confirms
-    // the number has 10 digits after normalization — it does not (and
-    // is not claimed to) verify the number belongs to the applicant or
-    // is active. The server independently re-normalizes and
-    // re-validates this exact same way (see normalizePhone() in
+    // Clear both error slots on every attempt so a stale message from a
+    // previous failed attempt (e.g. a phone error) doesn't linger once
+    // that specific problem has been fixed.
+    if (phoneErrorEl) phoneErrorEl.textContent = "";
+    if (errorEl) errorEl.textContent = "";
+
+    // Checked first, and rendered into its own element directly below
+    // the phone field (q8PhoneError — see q8Template()) rather than the
+    // shared q8Error used by the other checks below, so an applicant
+    // with a malformed number sees the message right where the problem
+    // is instead of down near email/consent. This only confirms the
+    // number has 10 digits after normalization — it does not (and is
+    // not claimed to) verify the number belongs to the applicant or is
+    // active. The server independently re-normalizes and re-validates
+    // this exact same way (see normalizePhone() in
     // netlify/functions/submit-story-application.js) rather than
     // trusting this client-side check.
     if (normalizedPhone.length !== 10) {
-      if (errorEl) errorEl.textContent = "Please enter a valid 10-digit phone number.";
+      if (phoneErrorEl) phoneErrorEl.textContent = "Please enter a valid 10-digit phone number.";
       return;
     }
     if (!email) {
