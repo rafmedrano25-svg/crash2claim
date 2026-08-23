@@ -429,7 +429,7 @@ body.app-mode #applyRoot {
 
 .apply-answer-btn {
   width: 100%;
-  text-align: left;
+  text-align: center;
   background: var(--teal-tint);
   border: 2px solid #b9e8e6;
   border-radius: var(--radius-md);
@@ -589,6 +589,20 @@ body.app-mode #applyRoot {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* Attorney-interest question only — plain footer-style fine print,
+   pushed well below the Back button toward the bottom of the card.
+   Matches .apply-footer-disclaimer's visual treatment (same size,
+   color, weight, line-height) but scoped to this one screen. No
+   border, no background, no badge — text only. */
+.apply-attorney-disclosure {
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--gray-400);
+  text-align: left;
+  margin: 56px 0 0;
 }
 
 .apply-consent-row {
