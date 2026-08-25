@@ -71,8 +71,9 @@ function buildApplicationPayload(answers, applicantId, isTest) {
     story_summary: answers.story_summary || "",
     situation_status: answers.situation_status || "",
     // Only asked (and only ever true/false) when recency is within the
-    // last 12 months AND situation_status is "Still ongoing" — see
-    // isAttorneyRepQualified() in apply-app.js. Stays "" otherwise.
+    // last 12 months AND situation_status is "Still ongoing" or "Not
+    // sure" — see isAttorneyRepQualified() in apply-app.js. Stays ""
+    // otherwise.
     has_hired_attorney: answers.has_hired_attorney === true ? "Yes" : answers.has_hired_attorney === false ? "No" : "",
     // Only asked (and only ever true/false) when the applicant is also
     // unrepresented (has_hired_attorney === "No") — see
@@ -97,6 +98,10 @@ function buildApplicationPayload(answers, applicantId, isTest) {
     on_camera_comfort: answers.on_camera_comfort || "",
     phone: answers.phone || "",
     email: answers.email || "",
+    // NEW — collected on the contact/payment page (Q8) alongside
+    // phone/email. Plain string pass-through, same pattern as
+    // story_summary.
+    address: answers.address || "",
 
     // Initial status values — every new applicant starts here.
     applicant_status: "New",
@@ -109,10 +114,22 @@ function buildApplicationPayload(answers, applicantId, isTest) {
     content_status: "Not Started",
     episode_number: "",
 
+    // Application Agreement — the required consent checkbox, now on
+    // its own dedicated consent step (see qConsentTemplate() in
+    // apply-app.js). Same field names/columns as before this
+    // revision; only the copy shown (APPLY_CONFIG.RECRUITMENT_CONSENT)
+    // and where it's collected changed.
     consent_given: !!answers.consent,
     consent_timestamp: answers.consent_timestamp || "",
     consent_disclosure_shown: APPLY_CONFIG.RECRUITMENT_CONSENT,
     consent_disclosure_version: APPLY_CONFIG.RECRUITMENT_CONSENT_VERSION,
+    // NEW — Attorney Contact Consent, the separate/optional checkbox
+    // on the same consent step. Always "Yes" or "No" once the
+    // consent step is reached (never blank) — unlike the other
+    // conditional Yes/No fields above, this one is asked of every
+    // applicant regardless of branch, so there's no unanswered state
+    // to represent as "".
+    attorney_contact_consent: answers.attorney_contact_consent === true ? "Yes" : answers.attorney_contact_consent === false ? "No" : "",
 
     landing_page_url: (typeof window !== "undefined" && window.location) ? window.location.href : "",
     referrer: (typeof document !== "undefined" && document.referrer) ? document.referrer : "",
