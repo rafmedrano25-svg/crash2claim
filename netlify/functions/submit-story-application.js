@@ -105,8 +105,14 @@ const COLUMNS = [
   "fbclid",
   "msclkid",
   "ttclid",
-  "server_submission_id", // NEW — server-generated, authoritative (client applicant_id can't be trusted alone)
-  "server_received_at", // NEW — server clock timestamp, authoritative
+  "server_submission_id", // server-generated, authoritative (client applicant_id can't be trusted alone)
+  "server_received_at", // server clock timestamp, authoritative
+  // NEW (this revision) — appended at the very end rather than
+  // inserted mid-table, so every existing column above keeps its
+  // exact letter/position. Safest option: no reordering, no shifting,
+  // no risk of misaligning historical rows against the new header.
+  "address", // NEW — collected on the contact/payment page (Q8)
+  "attorney_contact_consent", // NEW — "Yes"/"No", from the new consent step; independent of and separate from consent_given (Application Agreement)
 ];
 
 // Duplicate-detection is keyed off these two columns. Resolved by
@@ -297,13 +303,17 @@ function flattenColumn(valueRange) {
 //   2. Recency: accident_timeframe is "Within the last 6 months" OR
 //      "Within the last year" (a 12-month window — "Over a year ago"
 //      never qualifies).
-//   3. Case status: situation_status is exactly "Still ongoing"
-//      ("Settled" and "Not sure" both disqualify — "Not sure" is
-//      intentionally NOT treated as equivalent to "Still ongoing").
+//   3. Case status: situation_status is "Still ongoing" OR "Not
+//      sure" (only "Settled" disqualifies — as of this revision,
+//      "Not sure" is treated as equivalent to "Still ongoing" for
+//      HOT LEAD qualification purposes).
 //   4. Attorney representation: has_hired_attorney is "No".
 //   5. Attorney intent: interested_in_attorney is "Yes".
-//   6. Liability: primary_fault is exactly "Other person" ("Me" and
-//      "Not sure" both disqualify).
+//   6. Liability: primary_fault is exactly "Other person" — "Me"
+//      disqualifies. The client's LIABILITY_OPTIONS no longer offers
+//      "Not sure" as of this revision, but this check still rejects
+//      it (or any other value) too, same as it always has — nothing
+//      here assumes the client only ever sends one of two values.
 // Medical answers (injuries / medical_treatment_timing /
 // had_car_insurance) and the on-camera-comfort answer are pure data
 // collection and never participate in this calculation, so a HOT LEAD
@@ -315,11 +325,11 @@ function flattenColumn(valueRange) {
 function computeLeadStatus(applicant) {
   var isAdult = applicant.age_18_confirmation === "Yes";
   var recentEnough = applicant.accident_timeframe === "Within the last 6 months" || applicant.accident_timeframe === "Within the last year";
-  var stillOngoing = applicant.situation_status === "Still ongoing";
+  var qualifyingStatus = applicant.situation_status === "Still ongoing" || applicant.situation_status === "Not sure";
   var noAttorney = applicant.has_hired_attorney === "No";
   var wantsAttorney = applicant.interested_in_attorney === "Yes";
   var otherPersonAtFault = applicant.primary_fault === "Other person";
-  return isAdult && recentEnough && stillOngoing && noAttorney && wantsAttorney && otherPersonAtFault ? "HOT LEAD" : "";
+  return isAdult && recentEnough && qualifyingStatus && noAttorney && wantsAttorney && otherPersonAtFault ? "HOT LEAD" : "";
 }
 
 // Formats a raw ISO 8601 UTC timestamp (e.g. "2026-08-23T11:25:36.069Z")
