@@ -70,11 +70,19 @@ function buildApplicationPayload(answers, applicantId, isTest) {
     accident_timeframe: answers.accident_timeframe || "",
     story_summary: answers.story_summary || "",
     situation_status: answers.situation_status || "",
-    // Only asked (and only ever true/false) when accident_timeframe is
-    // "within 2 years" AND situation_status is "Still ongoing" or "Not
-    // sure" — see isAttorneyQuestionQualified() in apply-app.js. Stays
-    // "" otherwise.
+    // Only asked (and only ever true/false) when recency is within the
+    // last 12 months AND situation_status is "Still ongoing" — see
+    // isAttorneyRepQualified() in apply-app.js. Stays "" otherwise.
+    has_hired_attorney: answers.has_hired_attorney === true ? "Yes" : answers.has_hired_attorney === false ? "No" : "",
+    // Only asked (and only ever true/false) when the applicant is also
+    // unrepresented (has_hired_attorney === "No") — see
+    // isAttorneyInterestQualified() in apply-app.js. Stays "" otherwise.
     interested_in_attorney: answers.interested_in_attorney === true ? "Yes" : answers.interested_in_attorney === false ? "No" : "",
+    // Only asked when the applicant also wants a free review
+    // (interested_in_attorney === "Yes") — see isLiabilityQualified()
+    // in apply-app.js. Stays "" otherwise. "Other person" is the only
+    // value that satisfies the liability leg of HOT LEAD.
+    primary_fault: answers.primary_fault || "",
     // HOT LEAD-only follow-up questions (see isHotLead() in
     // apply-app.js). Empty/blank for every non-HOT-LEAD applicant.
     // injuries is sent as a raw array — submit-story-application.js's
