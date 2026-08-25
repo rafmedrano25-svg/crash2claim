@@ -29,38 +29,51 @@ const TOKEN_URL = "https://oauth2.googleapis.com/token";
 // Sheet exactly. This is a completely separate column set from
 // submit-lead.js's COLUMNS array.
 //
-// NEW (this revision) — six columns added, at three insertion points.
-// The live Sheet's header row needs new columns inserted at each of
-// these exact positions (not appended at the end) — see the change
-// summary for exactly what to add and where:
-//   1. "payment_intent" — inserted between "campaign" and "first_name"
-//      (it's the very first question every applicant answers).
-//   2. "lead_status", "injuries", "medical_treatment_timing",
-//      "had_car_insurance" — inserted between "interested_in_attorney"
-//      and "on_camera_comfort" (this is where those questions sit in
-//      the flow: right after the attorney question, before on-camera
-//      comfort). lead_status is computed server-side in
-//      computeLeadStatus() below and is never read from the client
-//      payload.
-// ("interested_in_attorney" itself, and "server_submission_id" /
-// "server_received_at" appended at the very end, were added in an
-// earlier revision and are unchanged here.)
+// NEW (this revision) — two columns added, at two insertion points,
+// as part of the qualification-flow update (recency window tightened
+// to 12 months, case-status-gated attorney-representation question
+// added, liability question added). The live Sheet's header row needs
+// new columns inserted at each of these exact positions (not appended
+// at the end):
+//   1. "has_hired_attorney" — inserted between "situation_status" and
+//      "interested_in_attorney" (this is where the attorney-
+//      representation question sits in the flow: right after case
+//      status, before the attorney-interest question).
+//   2. "primary_fault" — inserted between "interested_in_attorney" and
+//      "lead_status" (this is where the liability question sits in
+//      the flow: right after attorney-interest, before the
+//      HOT LEAD-only medical questions).
+// Every column at or after "has_hired_attorney" shifts by 1 position;
+// every column at or after "primary_fault" shifts by 1 further
+// position (net +2 for everything from "lead_status" onward). No
+// other columns move. lead_status is computed server-side in
+// computeLeadStatus() below and is never read from the client
+// payload.
+//
+// (Earlier revisions — "payment_intent" between "campaign" and
+// "first_name"; "lead_status"/"injuries"/"medical_treatment_timing"/
+// "had_car_insurance" between "interested_in_attorney" and
+// "on_camera_comfort"; "interested_in_attorney" itself; and
+// "server_submission_id"/"server_received_at" appended at the very
+// end — are unchanged here.)
 const COLUMNS = [
   "applicant_id",
   "application_date",
   "test_submission_label",
   "source",
   "campaign",
-  "payment_intent", // NEW — answer to "If your interview is published, what would you do with the $50?"
+  "payment_intent", // answer to "If your interview is published, what would you do with the $50?"
   "first_name",
   "age_18_confirmation",
   "state",
   "accident_timeframe",
   "story_summary",
   "situation_status",
-  "interested_in_attorney", // "Yes" / "No" / "" (blank unless within 2yrs + still ongoing/not sure)
-  "lead_status", // NEW — server-computed "HOT LEAD" or "" (see computeLeadStatus())
-  "injuries", // NEW — HOT LEAD only, comma-separated; "" otherwise
+  "has_hired_attorney", // NEW — "Yes" / "No" / "" (blank unless recency within 12mo + situation_status = Still ongoing)
+  "interested_in_attorney", // "Yes" / "No" / "" (blank unless has_hired_attorney = No)
+  "primary_fault", // NEW — "Other person" / "Me" / "Not sure" / "" (blank unless interested_in_attorney = Yes)
+  "lead_status", // server-computed "HOT LEAD" or "" (see computeLeadStatus())
+  "injuries", // HOT LEAD only, comma-separated; "" otherwise
   "medical_treatment_timing", // NEW — HOT LEAD only; "" otherwise
   "had_car_insurance", // NEW — HOT LEAD only; "" otherwise
   "on_camera_comfort",
@@ -271,19 +284,42 @@ function flattenColumn(valueRange) {
   });
 }
 
-// HOT LEAD = accident within the last 2 years AND situation is either
-// "Still ongoing" OR "Not sure" AND applicant said Yes to speaking
-// with an attorney. ALL THREE must be true (only "Settled" excludes
-// the situation-status leg). Computed here, server-side, at
-// submission time — a lead_status value is never read from the
-// client payload, so there is nothing for a tampered/spoofed browser
-// value to override. Every other applicant gets "" (never "Cold
-// Lead", "Not Qualified", or any other label).
+// HOT LEAD (authoritative definition) = ALL of the following:
+//   1. Age: age_18_confirmation is exactly "Yes". Verified HERE,
+//      server-side, independently of client-side routing — a
+//      manipulated/direct payload that satisfies every other
+//      condition below but is under 18 (or omits/falsifies this
+//      field) must never receive HOT LEAD. This is the
+//      authoritative/source-of-truth check; the client-side age gate
+//      in apply-app.js (which stops an underage applicant before they
+//      can even reach the later questions) is a UX convenience only
+//      and is never trusted on its own.
+//   2. Recency: accident_timeframe is "Within the last 6 months" OR
+//      "Within the last year" (a 12-month window — "Over a year ago"
+//      never qualifies).
+//   3. Case status: situation_status is exactly "Still ongoing"
+//      ("Settled" and "Not sure" both disqualify — "Not sure" is
+//      intentionally NOT treated as equivalent to "Still ongoing").
+//   4. Attorney representation: has_hired_attorney is "No".
+//   5. Attorney intent: interested_in_attorney is "Yes".
+//   6. Liability: primary_fault is exactly "Other person" ("Me" and
+//      "Not sure" both disqualify).
+// Medical answers (injuries / medical_treatment_timing /
+// had_car_insurance) and the on-camera-comfort answer are pure data
+// collection and never participate in this calculation, so a HOT LEAD
+// stays a HOT LEAD regardless of what they answer there. Computed
+// here, server-side, at submission time — a lead_status value is
+// never read from the client payload, so there is nothing for a
+// tampered/spoofed browser value to override. Every other applicant
+// gets "" (never "Cold Lead", "Not Qualified", or any other label).
 function computeLeadStatus(applicant) {
-  var withinTwoYears = applicant.accident_timeframe === "Within the last 2 years";
-  var qualifyingStatus = applicant.situation_status === "Still ongoing" || applicant.situation_status === "Not sure";
+  var isAdult = applicant.age_18_confirmation === "Yes";
+  var recentEnough = applicant.accident_timeframe === "Within the last 6 months" || applicant.accident_timeframe === "Within the last year";
+  var stillOngoing = applicant.situation_status === "Still ongoing";
+  var noAttorney = applicant.has_hired_attorney === "No";
   var wantsAttorney = applicant.interested_in_attorney === "Yes";
-  return withinTwoYears && qualifyingStatus && wantsAttorney ? "HOT LEAD" : "";
+  var otherPersonAtFault = applicant.primary_fault === "Other person";
+  return isAdult && recentEnough && stillOngoing && noAttorney && wantsAttorney && otherPersonAtFault ? "HOT LEAD" : "";
 }
 
 // Formats a raw ISO 8601 UTC timestamp (e.g. "2026-08-23T11:25:36.069Z")
