@@ -37,14 +37,24 @@
   // range) — it exists purely to segment applicants by whether the
   // accident falls inside the relevant 2-year window (see
   // isAttorneyQuestionQualified() below).
-  var TIMEFRAME_OPTIONS = ["Within the last 2 years", "More than 2 years ago"];
+  // Recency options — updated from the old 2-year boundary to a
+  // tighter 12-month qualification window (see isRecencyQualified()).
+  // "Over a year ago" never disqualifies from Crash2Claim storytelling
+  // — it only means the applicant skips the attorney/liability
+  // qualification branch below.
+  var TIMEFRAME_OPTIONS = ["Within the last 6 months", "Within the last year", "Over a year ago"];
   var SITUATION_OPTIONS = ["Settled", "Still ongoing", "Not sure"];
-  var COMFORT_OPTIONS = ["Yes", "Maybe", "No"];
+  // "Maybe" removed — only Yes/No going forward. Existing on_camera_comfort
+  // field/column is unchanged; only the accepted answer set shrank. Prior
+  // Sheet rows that already contain "Maybe" are historical data and are
+  // not touched by this change.
+  var COMFORT_OPTIONS = ["Yes", "No"];
+  var ATTORNEY_REP_OPTIONS = ["No", "Yes"];
   var ATTORNEY_INTEREST_OPTIONS = ["Yes", "No"];
+  var LIABILITY_OPTIONS = ["Other person", "Me", "Not sure"];
   var NEW_YORK = "New York";
-  var WITHIN_2_YEARS = "Within the last 2 years";
   var STILL_ONGOING = "Still ongoing";
-  var NOT_SURE = "Not sure";
+  var OTHER_PERSON = "Other person";
 
   // Opening question — asked of EVERY applicant, before anything else.
   // Intentionally 4 options (an explicit exception to the general
@@ -89,7 +99,9 @@
       accident_timeframe: "",
       story_summary: "",
       situation_status: "",
-      interested_in_attorney: null, // true/false/null — only asked when qualified, see isAttorneyQuestionQualified()
+      has_hired_attorney: null, // true/false/null — only asked when qualified, see isAttorneyRepQualified()
+      interested_in_attorney: null, // true/false/null — only asked when qualified, see isAttorneyInterestQualified()
+      primary_fault: "", // "Other person" / "Me" / "Not sure" / "" — only asked when qualified, see isLiabilityQualified()
       injuries: [], // HOT LEAD only — array of selected labels
       medical_treatment_timing: "", // HOT LEAD only
       had_car_insurance: "", // HOT LEAD only
@@ -101,42 +113,72 @@
     },
   };
 
-  // The attorney-interest question requires BOTH conditions to be true:
-  //   1. Accident happened within the last 2 years (Q4)
-  //   2. Situation is "Still ongoing" OR "Not sure" (Q6) — only
-  //      "Settled" is excluded. situation_status is always recorded
-  //      regardless, so every applicant remains reviewable in the
-  //      Sheet either way.
-  function isAttorneyQuestionQualified() {
+  // Recency qualifies HOT LEAD eligibility only when the accident was
+  // within the last 12 months ("Within the last 6 months" OR "Within
+  // the last year"). "Over a year ago" does not disqualify the
+  // applicant from Crash2Claim storytelling — it only means the
+  // attorney/liability qualification branch below is skipped.
+  function isRecencyQualified() {
     return (
-      STATE.answers.accident_timeframe === WITHIN_2_YEARS &&
-      (STATE.answers.situation_status === STILL_ONGOING || STATE.answers.situation_status === NOT_SURE)
+      STATE.answers.accident_timeframe === "Within the last 6 months" ||
+      STATE.answers.accident_timeframe === "Within the last year"
     );
   }
 
-  // HOT LEAD = within 2 years + (still ongoing OR not sure) + answered
-  // Yes to the attorney question. Written out in full (rather than
-  // just checking interested_in_attorney) so it stays correct even if
-  // the applicant backs up and changes an earlier answer. This is a
+  // The attorney-representation question (Q6a) requires BOTH:
+  //   1. Accident happened within the last 12 months (Q4)
+  //   2. Case status is "Still ongoing" (Q6) — "Settled" and "Not
+  //      sure" both skip the rest of the qualification branch
+  //      entirely and go straight to normal storytelling.
+  // situation_status itself is always asked/recorded regardless, so
+  // every applicant remains reviewable in the Sheet either way.
+  function isAttorneyRepQualified() {
+    return isRecencyQualified() && STATE.answers.situation_status === STILL_ONGOING;
+  }
+
+  // The attorney-interest question (Q6b) only follows when the
+  // applicant does NOT already have an attorney. Having one is NOT a
+  // disqualifier from storytelling — it just ends the lead-gen branch
+  // here (see bindQAttorneyRep()).
+  function isAttorneyInterestQualified() {
+    return isAttorneyRepQualified() && STATE.answers.has_hired_attorney === false;
+  }
+
+  // The liability question (Q6c) only follows when the applicant is
+  // both unrepresented and wants a free review.
+  function isLiabilityQualified() {
+    return isAttorneyInterestQualified() && STATE.answers.interested_in_attorney === true;
+  }
+
+  // HOT LEAD = recency (last 12 months) AND still ongoing AND no
+  // attorney AND wants a free review AND the other person was at
+  // fault. Written out via the full qualification chain (rather than
+  // just checking primary_fault) so it stays correct even if the
+  // applicant backs up and changes an earlier answer. This is a
   // CLIENT-side mirror only, used purely to decide which questions to
   // show next — the authoritative lead_status is computed server-side
   // at submission time (see netlify/functions/submit-story-application.js)
   // and never trusts a value sent from the browser.
   function isHotLead() {
-    return isAttorneyQuestionQualified() && STATE.answers.interested_in_attorney === true;
+    return isLiabilityQualified() && STATE.answers.primary_fault === OTHER_PERSON;
   }
 
   // Ordered list of logical question keys for the CURRENT applicant.
   // "paymentIntent" always comes first. 1–6 are the fixed base
   // questions (name, age, state, timeframe, story, situation).
-  // "attorney" is inserted only when isAttorneyQuestionQualified() is
-  // true. "injuries"/"treatment"/"insurance" are inserted only for
-  // HOT LEAD applicants (isHotLead()). 7–8 are the existing
-  // comfort/contact questions, reused unchanged — they just move
-  // position depending on which conditional questions are present.
+  // "attorneyRep" / "attorneyInterest" / "liability" are inserted one
+  // at a time, each only once the previous answer in the chain
+  // qualifies for it (see isAttorneyRepQualified() /
+  // isAttorneyInterestQualified() / isLiabilityQualified() above).
+  // "injuries"/"treatment"/"insurance" are inserted only for HOT LEAD
+  // applicants (isHotLead()). 7–8 are the existing comfort/contact
+  // questions, reused unchanged — they just move position depending
+  // on which conditional questions are present.
   function currentSequence() {
     var seq = ["paymentIntent", 1, 2, 3, 4, 5, 6];
-    if (isAttorneyQuestionQualified()) seq.push("attorney");
+    if (isAttorneyRepQualified()) seq.push("attorneyRep");
+    if (isAttorneyInterestQualified()) seq.push("attorneyInterest");
+    if (isLiabilityQualified()) seq.push("liability");
     if (isHotLead()) seq.push("injuries", "treatment", "insurance");
     seq.push(7, 8);
     return seq;
@@ -303,7 +345,9 @@
       case 4: body = q4Template(); break;
       case 5: body = q5Template(); break;
       case 6: body = q6Template(); break;
-      case "attorney": body = qAttorneyTemplate(); break;
+      case "attorneyRep": body = qAttorneyRepTemplate(); break;
+      case "attorneyInterest": body = qAttorneyInterestTemplate(); break;
+      case "liability": body = qLiabilityTemplate(); break;
       case "injuries": body = qInjuriesTemplate(); break;
       case "treatment": body = qTreatmentTemplate(); break;
       case "insurance": body = qInsuranceTemplate(); break;
@@ -323,7 +367,9 @@
       case 4: bindQ4(); break;
       case 5: bindQ5(); break;
       case 6: bindQ6(); break;
-      case "attorney": bindQAttorney(); break;
+      case "attorneyRep": bindQAttorneyRep(); break;
+      case "attorneyInterest": bindQAttorneyInterest(); break;
+      case "liability": bindQLiability(); break;
       case "injuries": bindQInjuries(); break;
       case "treatment": bindQTreatment(); break;
       case "insurance": bindQInsurance(); break;
@@ -490,6 +536,13 @@
     TIMEFRAME_OPTIONS.forEach(function (label, i) {
       document.getElementById("q4Opt" + i).addEventListener("click", function () {
         STATE.answers.accident_timeframe = label;
+        // If this answer means the attorney/liability branch is no
+        // longer qualified (e.g. it was showing and is now not needed
+        // because the applicant backed up and changed an earlier
+        // answer), drop any previously recorded downstream state so it
+        // never carries a stale value (or a stale HOT LEAD) into the
+        // payload.
+        if (!isAttorneyRepQualified()) clearQualificationAnswers();
         STATE.step = STATE.step + 1;
         render();
       });
@@ -532,16 +585,18 @@
     bindBack();
   }
 
-  // Q6 — situation status. "Still ongoing" OR "Not sure" (combined with
-  // an accident within the last 2 years — see
-  // isAttorneyQuestionQualified()) triggers the attorney-interest
-  // question next. Only "Settled" is excluded.
+  // Q6 — case status. "Still ongoing" (combined with an accident
+  // within the last 12 months — see isAttorneyRepQualified()) is the
+  // only answer that continues into the attorney-representation
+  // question next. "Settled" and "Not sure" both skip the rest of the
+  // qualification branch and go straight to normal storytelling.
+  // situation_status itself is always asked/recorded regardless.
   function q6Template() {
     var optionsHtml = SITUATION_OPTIONS.map(function (label, i) {
       return '<button type="button" class="apply-answer-btn" id="q6Opt' + i + '">' + label + "</button>";
     }).join("");
     return (
-      '<p class="apply-question">What\'s the status of your situation now?</p>' +
+      '<p class="apply-question">What\'s the status of your case?</p>' +
       '<div class="apply-answer-list">' + optionsHtml + "</div>" +
       backButton()
     );
@@ -550,16 +605,12 @@
     SITUATION_OPTIONS.forEach(function (label, i) {
       document.getElementById("q6Opt" + i).addEventListener("click", function () {
         STATE.answers.situation_status = label;
-        // If this answer means the attorney question is no longer
-        // qualified (e.g. it was showing and is now not needed because
-        // the applicant backed up and changed an answer), drop any
-        // previously recorded value so it never carries a stale
-        // interested_in_attorney (or stale HOT LEAD case-detail
-        // answers) into the payload.
-        if (!isAttorneyQuestionQualified()) {
-          STATE.answers.interested_in_attorney = null;
-          clearHotLeadAnswers();
-        }
+        // If this answer means the attorney/liability branch is no
+        // longer qualified (e.g. it was showing and is now not needed
+        // because the applicant backed up and changed an answer), drop
+        // any previously recorded downstream state so it never carries
+        // a stale value (or a stale HOT LEAD) into the payload.
+        if (!isAttorneyRepQualified()) clearQualificationAnswers();
         STATE.step = STATE.step + 1;
         render();
       });
@@ -567,38 +618,118 @@
     bindBack();
   }
 
-  // Attorney-interest question — only shown when both conditions in
-  // isAttorneyQuestionQualified() are true (see currentSequence()).
-  // Does not disqualify either way.
-  //
-  // The plain-text disclosure below is copy-only, purely informational
-  // fine print — it does not gate, branch, or otherwise affect
-  // isAttorneyQuestionQualified()/isHotLead()/currentSequence(), and it
-  // is not read anywhere in apply-payload.js or the Netlify function.
-  function qAttorneyTemplate() {
-    var optionsHtml = ATTORNEY_INTEREST_OPTIONS.map(function (label, i) {
-      return '<button type="button" class="apply-answer-btn" id="qAttorneyOpt' + i + '">' + label + "</button>";
+  // Attorney-representation question — only shown once
+  // isAttorneyRepQualified() is true (see currentSequence()). Having
+  // an attorney does NOT disqualify the applicant from Crash2Claim
+  // storytelling — it just ends the lead-gen branch here, so "Yes"
+  // skips straight past attorney-interest/liability.
+  function qAttorneyRepTemplate() {
+    var optionsHtml = ATTORNEY_REP_OPTIONS.map(function (label, i) {
+      return '<button type="button" class="apply-answer-btn" id="qAttorneyRepOpt' + i + '">' + label + "</button>";
     }).join("");
     return (
-      '<p class="apply-question">Are you interested in speaking with an attorney about your case?</p>' +
+      '<p class="apply-question">Do you currently have an attorney representing you for this accident?</p>' +
       '<div class="apply-answer-list">' + optionsHtml + "</div>" +
-      backButton() +
-      '<p class="apply-attorney-disclosure">If you select Yes, Crash2Claim may share your information with an independent attorney or legal service provider and may receive compensation for making the connection. Crash2Claim is not a law firm and does not provide legal advice.</p>'
+      backButton()
     );
   }
-  function bindQAttorney() {
-    ATTORNEY_INTEREST_OPTIONS.forEach(function (label, i) {
-      document.getElementById("qAttorneyOpt" + i).addEventListener("click", function () {
-        STATE.answers.interested_in_attorney = label === "Yes";
-        // "No" means this applicant is not a HOT LEAD (even if they
-        // previously answered Yes and filled in the case-detail
-        // questions during an earlier pass through this step via Back).
-        if (label !== "Yes") clearHotLeadAnswers();
+  function bindQAttorneyRep() {
+    ATTORNEY_REP_OPTIONS.forEach(function (label, i) {
+      document.getElementById("qAttorneyRepOpt" + i).addEventListener("click", function () {
+        STATE.answers.has_hired_attorney = label === "Yes";
+        // Either answer invalidates whatever was previously recorded
+        // further down the chain (attorney-interest, liability, and
+        // any HOT LEAD medical answers) — it will be re-asked fresh
+        // (if still applicable) or correctly left blank.
+        STATE.answers.interested_in_attorney = null;
+        STATE.answers.primary_fault = "";
+        clearHotLeadAnswers();
         STATE.step = STATE.step + 1;
         render();
       });
     });
     bindBack();
+  }
+
+  // Attorney-interest question — only shown once
+  // isAttorneyInterestQualified() is true (see currentSequence()).
+  // Does not disqualify either way.
+  //
+  // The plain-text disclosure below is copy-only, purely informational
+  // fine print — it does not gate, branch, or otherwise affect
+  // isAttorneyInterestQualified()/isHotLead()/currentSequence(), and
+  // it is not read anywhere in apply-payload.js or the Netlify
+  // function. Preserved verbatim from the previously-approved
+  // attorney-interest disclosure.
+  function qAttorneyInterestTemplate() {
+    var optionsHtml = ATTORNEY_INTEREST_OPTIONS.map(function (label, i) {
+      return '<button type="button" class="apply-answer-btn" id="qAttorneyInterestOpt' + i + '">' + label + "</button>";
+    }).join("");
+    return (
+      '<p class="apply-question">Do you want to speak with an attorney for a free review?</p>' +
+      '<div class="apply-answer-list">' + optionsHtml + "</div>" +
+      backButton() +
+      '<p class="apply-attorney-disclosure">If you select Yes, Crash2Claim may share your information with an independent attorney or legal service provider and may receive compensation for making the connection. Crash2Claim is not a law firm and does not provide legal advice.</p>'
+    );
+  }
+  function bindQAttorneyInterest() {
+    ATTORNEY_INTEREST_OPTIONS.forEach(function (label, i) {
+      document.getElementById("qAttorneyInterestOpt" + i).addEventListener("click", function () {
+        STATE.answers.interested_in_attorney = label === "Yes";
+        // "No" means this applicant is not a HOT LEAD (even if they
+        // previously answered Yes and filled in liability/case-detail
+        // questions during an earlier pass through this step via
+        // Back).
+        STATE.answers.primary_fault = "";
+        clearHotLeadAnswers();
+        STATE.step = STATE.step + 1;
+        render();
+      });
+    });
+    bindBack();
+  }
+
+  // Liability question — only shown once isLiabilityQualified() is
+  // true (see currentSequence()). Only "Other person" satisfies the
+  // liability leg of HOT LEAD; "Me" and "Not sure" both continue
+  // straight into normal storytelling as NOT HOT LEAD.
+  function qLiabilityTemplate() {
+    var optionsHtml = LIABILITY_OPTIONS.map(function (label, i) {
+      return '<button type="button" class="apply-answer-btn" id="qLiabilityOpt' + i + '">' + label + "</button>";
+    }).join("");
+    return (
+      '<p class="apply-question">Who was at fault for the accident?</p>' +
+      '<div class="apply-answer-list">' + optionsHtml + "</div>" +
+      backButton()
+    );
+  }
+  function bindQLiability() {
+    LIABILITY_OPTIONS.forEach(function (label, i) {
+      document.getElementById("qLiabilityOpt" + i).addEventListener("click", function () {
+        STATE.answers.primary_fault = label;
+        // Anything other than "Other person" means this applicant is
+        // not a HOT LEAD (even if they previously answered "Other
+        // person" and filled in medical questions during an earlier
+        // pass through this step via Back).
+        if (label !== OTHER_PERSON) clearHotLeadAnswers();
+        STATE.step = STATE.step + 1;
+        render();
+      });
+    });
+    bindBack();
+  }
+
+  // Clears has_hired_attorney / interested_in_attorney / primary_fault
+  // (the full attorney/liability qualification chain) plus any HOT
+  // LEAD medical answers. Used whenever an upstream answer (recency or
+  // case status) changes such that the whole branch is no longer
+  // qualified — see bindQ4()/bindQ6() above. There must be no
+  // possibility of a hidden stale answer producing a false HOT LEAD.
+  function clearQualificationAnswers() {
+    STATE.answers.has_hired_attorney = null;
+    STATE.answers.interested_in_attorney = null;
+    STATE.answers.primary_fault = "";
+    clearHotLeadAnswers();
   }
 
   function clearHotLeadAnswers() {
