@@ -51,9 +51,18 @@
   var COMFORT_OPTIONS = ["Yes", "No"];
   var ATTORNEY_REP_OPTIONS = ["No", "Yes"];
   var ATTORNEY_INTEREST_OPTIONS = ["Yes", "No"];
-  var LIABILITY_OPTIONS = ["Other person", "Me", "Not sure"];
+  // "Not sure" removed as of this revision — only "Other person" and
+  // "Me" remain. "Other person" is the only value that satisfies the
+  // liability leg of HOT LEAD (see isHotLead() below); "Me" does not.
+  var LIABILITY_OPTIONS = ["Other person", "Me"];
   var NEW_YORK = "New York";
   var STILL_ONGOING = "Still ongoing";
+  // Case-status "Not sure" — as of a prior revision, treated as
+  // equivalent to "Still ongoing" for qualification purposes (see
+  // isAttorneyRepQualified() below). Named distinctly from
+  // primary_fault (a different field) even though LIABILITY_OPTIONS no
+  // longer has its own "Not sure" value to disambiguate from.
+  var SITUATION_NOT_SURE = "Not sure";
   var OTHER_PERSON = "Other person";
 
   // Opening question — asked of EVERY applicant, before anything else.
@@ -108,8 +117,10 @@
       on_camera_comfort: "",
       phone: "",
       email: "",
-      consent: false,
+      address: "", // NEW — collected on the contact/payment page (Q8)
+      consent: false, // Application Agreement checkbox, now on the new consent step
       consent_timestamp: "",
+      attorney_contact_consent: null, // NEW — Attorney Contact Consent checkbox, true/false/null, optional
     },
   };
 
@@ -127,13 +138,20 @@
 
   // The attorney-representation question (Q6a) requires BOTH:
   //   1. Accident happened within the last 12 months (Q4)
-  //   2. Case status is "Still ongoing" (Q6) — "Settled" and "Not
-  //      sure" both skip the rest of the qualification branch
-  //      entirely and go straight to normal storytelling.
+  //   2. Case status is "Still ongoing" OR "Not sure" (Q6) — only
+  //      "Settled" skips the rest of the qualification branch
+  //      entirely and goes straight to normal storytelling. As of
+  //      this revision, "Not sure" is treated as equivalent to
+  //      "Still ongoing" for qualification purposes — an applicant
+  //      who isn't certain whether their case is technically settled
+  //      is not excluded from the attorney-connection branch.
   // situation_status itself is always asked/recorded regardless, so
   // every applicant remains reviewable in the Sheet either way.
   function isAttorneyRepQualified() {
-    return isRecencyQualified() && STATE.answers.situation_status === STILL_ONGOING;
+    return (
+      isRecencyQualified() &&
+      (STATE.answers.situation_status === STILL_ONGOING || STATE.answers.situation_status === SITUATION_NOT_SURE)
+    );
   }
 
   // The attorney-interest question (Q6b) only follows when the
@@ -150,9 +168,10 @@
     return isAttorneyInterestQualified() && STATE.answers.interested_in_attorney === true;
   }
 
-  // HOT LEAD = recency (last 12 months) AND still ongoing AND no
-  // attorney AND wants a free review AND the other person was at
-  // fault. Written out via the full qualification chain (rather than
+  // HOT LEAD = recency (last 12 months) AND case status "Still
+  // ongoing" or "Not sure" AND no attorney AND wants a free review AND
+  // the other person was at fault. Written out via the full
+  // qualification chain (rather than
   // just checking primary_fault) so it stays correct even if the
   // applicant backs up and changes an earlier answer. This is a
   // CLIENT-side mirror only, used purely to decide which questions to
@@ -180,7 +199,7 @@
     if (isAttorneyInterestQualified()) seq.push("attorneyInterest");
     if (isLiabilityQualified()) seq.push("liability");
     if (isHotLead()) seq.push("injuries", "treatment", "insurance");
-    seq.push(7, 8);
+    seq.push(7, 8, "consent");
     return seq;
   }
 
@@ -353,6 +372,7 @@
       case "insurance": body = qInsuranceTemplate(); break;
       case 7: body = q7Template(); break;
       case 8: body = q8Template(); break;
+      case "consent": body = qConsentTemplate(); break;
     }
     return '<div class="apply-card">' + body + "</div>";
   }
@@ -375,6 +395,7 @@
       case "insurance": bindQInsurance(); break;
       case 7: bindQ7(); break;
       case 8: bindQ8(); break;
+      case "consent": bindQConsent(); break;
     }
   }
 
@@ -585,11 +606,11 @@
     bindBack();
   }
 
-  // Q6 — case status. "Still ongoing" (combined with an accident
-  // within the last 12 months — see isAttorneyRepQualified()) is the
-  // only answer that continues into the attorney-representation
-  // question next. "Settled" and "Not sure" both skip the rest of the
-  // qualification branch and go straight to normal storytelling.
+  // Q6 — case status. "Still ongoing" OR "Not sure" (combined with an
+  // accident within the last 12 months — see isAttorneyRepQualified())
+  // continues into the attorney-representation question next. Only
+  // "Settled" skips the rest of the qualification branch and goes
+  // straight to normal storytelling.
   // situation_status itself is always asked/recorded regardless.
   function q6Template() {
     var optionsHtml = SITUATION_OPTIONS.map(function (label, i) {
@@ -691,8 +712,8 @@
 
   // Liability question — only shown once isLiabilityQualified() is
   // true (see currentSequence()). Only "Other person" satisfies the
-  // liability leg of HOT LEAD; "Me" and "Not sure" both continue
-  // straight into normal storytelling as NOT HOT LEAD.
+  // liability leg of HOT LEAD; "Me" continues straight into normal
+  // storytelling as NOT HOT LEAD.
   function qLiabilityTemplate() {
     var optionsHtml = LIABILITY_OPTIONS.map(function (label, i) {
       return '<button type="button" class="apply-answer-btn" id="qLiabilityOpt' + i + '">' + label + "</button>";
@@ -852,10 +873,15 @@
   }
 
   // Q8 — contact info + consent + submit
+  // Q8 — contact/payment info. As of this revision, this step no
+  // longer submits the application or collects consent — see
+  // qConsentTemplate() below, which is now the only place consent is
+  // gathered and the only place handleSubmit() is called from. This
+  // step now only validates phone/email/address and advances to the
+  // new consent step.
   function q8Template() {
     var steps = (typeof APPLY_CONFIG !== "undefined" && APPLY_CONFIG.PAYMENT_DISCLOSURE_STEPS) || [];
     var stepsHtml = steps.map(function (s) { return "<li>" + s + "</li>"; }).join("");
-    var consentText = (typeof APPLY_CONFIG !== "undefined" && APPLY_CONFIG.RECRUITMENT_CONSENT) || "";
     return (
       '<p class="apply-question">Last step &mdash; how can we reach you?</p>' +
       '<div class="apply-field-group">' +
@@ -864,7 +890,7 @@
       // Dedicated phone-specific error, placed immediately after the
       // phone input and inside its own field-group — so it renders
       // directly beneath the phone field and above the email
-      // label/input, never intermixed with email/consent errors (see
+      // label/input, never intermixed with email/address errors (see
       // the shared #q8Error below, which those still use unchanged).
       '<p class="apply-error-text" id="q8PhoneError"></p>' +
       "</div>" +
@@ -872,17 +898,20 @@
       '<label class="apply-field-label" for="q8Email">Email</label>' +
       '<input type="email" id="q8Email" placeholder="you@example.com" value="' + escapeAttr(STATE.answers.email) + '">' +
       "</div>" +
+      // NEW — Address, collected alongside Phone/Email. Plain text
+      // input (no format validation beyond "not empty"), same pattern
+      // Email already uses.
+      '<div class="apply-field-group">' +
+      '<label class="apply-field-label" for="q8Address">Address</label>' +
+      '<input type="text" id="q8Address" placeholder="Street address, city, state" value="' + escapeAttr(STATE.answers.address) + '">' +
+      "</div>" +
       '<p class="apply-error-text" id="q8Error"></p>' +
       '<div class="apply-info-card" style="padding:16px 16px 14px;margin-bottom:0;">' +
       '<h2 style="font-size:14px;">To receive the $50:</h2>' +
       '<ol style="margin:0;">' + stepsHtml + "</ol>" +
       "</div>" +
-      '<div class="apply-consent-row">' +
-      '<input type="checkbox" id="q8Consent">' +
-      '<label class="apply-consent-text" for="q8Consent">' + escapeHtml(consentText) + "</label>" +
-      "</div>" +
       '<div class="apply-step-actions">' +
-      '<button type="button" class="apply-btn apply-btn-primary" id="q8Submit">Submit Application</button>' +
+      '<button type="button" class="apply-btn apply-btn-primary" id="q8Continue">Review &amp; Continue</button>' +
       "</div>" +
       backButton()
     );
@@ -890,16 +919,21 @@
   function bindQ8() {
     var phone = document.getElementById("q8Phone");
     var email = document.getElementById("q8Email");
-    var consent = document.getElementById("q8Consent");
-    document.getElementById("q8Submit").addEventListener("click", function () {
-      validateAndSubmit(phone.value, email.value, consent.checked);
+    var address = document.getElementById("q8Address");
+    document.getElementById("q8Continue").addEventListener("click", function () {
+      validateAndContinue(phone.value, email.value, address.value);
     });
     bindBack();
   }
 
-  function validateAndSubmit(phoneVal, emailVal, consentChecked) {
+  // Validates Phone/Email/Address and advances to the new consent
+  // step — does NOT submit. Renamed from the old validateAndSubmit()
+  // (which both validated AND submitted); submission now only ever
+  // happens from validateAndSubmitFromConsent() below.
+  function validateAndContinue(phoneVal, emailVal, addressVal) {
     var normalizedPhone = normalizePhone(phoneVal);
     var email = (emailVal || "").trim();
+    var address = (addressVal || "").trim();
     var phoneErrorEl = document.getElementById("q8PhoneError");
     var errorEl = document.getElementById("q8Error");
 
@@ -913,13 +947,14 @@
     // the phone field (q8PhoneError — see q8Template()) rather than the
     // shared q8Error used by the other checks below, so an applicant
     // with a malformed number sees the message right where the problem
-    // is instead of down near email/consent. This only confirms the
+    // is instead of down near email/address. This only confirms the
     // number has 10 digits after normalization — it does not (and is
     // not claimed to) verify the number belongs to the applicant or is
     // active. The server independently re-normalizes and re-validates
     // this exact same way (see normalizePhone() in
     // netlify/functions/submit-story-application.js) rather than
-    // trusting this client-side check.
+    // trusting this client-side check. Unchanged from before this
+    // revision.
     if (normalizedPhone.length !== 10) {
       if (phoneErrorEl) phoneErrorEl.textContent = "Please enter a valid 10-digit phone number.";
       return;
@@ -928,11 +963,10 @@
       if (errorEl) errorEl.textContent = "Please enter both a phone number and an email address.";
       return;
     }
-    if (!consentChecked) {
-      if (errorEl) errorEl.textContent = "Please check the box to confirm before submitting.";
+    if (!address) {
+      if (errorEl) errorEl.textContent = "Please enter your address.";
       return;
     }
-    if (STATE.isSubmitting || STATE.hasSubmitted) return;
 
     // Store the normalized 10-digit form — never the raw, differently
     // formatted value the applicant typed — so this is exactly what
@@ -940,6 +974,88 @@
     // Sheet server-side).
     STATE.answers.phone = normalizedPhone;
     STATE.answers.email = email;
+    STATE.answers.address = address;
+    STATE.step = STATE.step + 1;
+    render();
+  }
+
+  // NEW consent step — the only place consent is gathered and the
+  // only place that actually submits the application (see
+  // validateAndSubmitFromConsent() below). Two independent
+  // checkboxes: Attorney Contact Consent (optional — submission is
+  // allowed either way) and Application Agreement (required —
+  // submission is blocked until checked). Neither is pre-checked,
+  // regardless of any earlier answer (e.g. the attorney-interest
+  // question) — this is the applicant's own final affirmative
+  // consent, not inferred from anything upstream.
+  // As of this revision, Attorney Contact Consent is shown ONLY for
+  // HOT LEAD applicants. Non-HOT-LEAD applicants never see that
+  // section at all (no heading, no checkbox, no copy, no gap where it
+  // would normally sit) — the block below is simply an empty string
+  // when isHotLead() is false, so the remaining Application Agreement
+  // section naturally centers as if it were the only section, with no
+  // leftover markup to "collapse". Application Agreement itself is
+  // unconditional and unchanged for every applicant.
+  function qConsentTemplate() {
+    var hotLead = isHotLead();
+    var attorneyBlock = !hotLead ? "" : (
+      '<div class="apply-field-group">' +
+      '<p class="apply-field-label">Attorney Contact Consent</p>' +
+      '<div class="apply-consent-row">' +
+      '<input type="checkbox" id="qConsentAttorney"' + (STATE.answers.attorney_contact_consent === true ? " checked" : "") + '>' +
+      '<label class="apply-consent-text" for="qConsentAttorney">I agree that Crash2Claim may share my contact and accident information with an independent attorney or legal service provider who may contact me by phone, text, or email about my accident or potential case. Crash2Claim may receive compensation for this connection. Consent is not required to apply and does not create an attorney-client relationship.</label>' +
+      "</div>" +
+      "</div>"
+    );
+    return (
+      '<p class="apply-question">Almost done &mdash; one final step</p>' +
+      '<p class="apply-subtext">Review the options below, then submit your application.</p>' +
+      attorneyBlock +
+      '<div class="apply-field-group">' +
+      '<p class="apply-field-label">Application Agreement</p>' +
+      '<div class="apply-consent-row">' +
+      '<input type="checkbox" id="qConsentAgreement"' + (STATE.answers.consent === true ? " checked" : "") + '>' +
+      '<label class="apply-consent-text" for="qConsentAgreement">I confirm that I am 18 or older and that the information I provided is accurate. I understand that applying does not guarantee selection, an interview, publication, or payment. The $50 payment is earned only if Crash2Claim accepts my completed recorded interview for publication. Crash2Claim may contact me about my application and participation. Crash2Claim is not a law firm and does not provide legal advice or representation.</label>' +
+      "</div>" +
+      '<p class="apply-error-text" id="qConsentError"></p>' +
+      "</div>" +
+      '<div class="apply-step-actions">' +
+      '<button type="button" class="apply-btn apply-btn-primary" id="qConsentSubmit">Submit My Application</button>' +
+      "</div>" +
+      backButton()
+    );
+  }
+  function bindQConsent() {
+    // qConsentAttorney only exists in the DOM for HOT LEAD applicants
+    // (see qConsentTemplate() above) — guard against its absence
+    // rather than assuming it's always present.
+    var attorneyCheckbox = document.getElementById("qConsentAttorney");
+    var agreementCheckbox = document.getElementById("qConsentAgreement");
+    document.getElementById("qConsentSubmit").addEventListener("click", function () {
+      validateAndSubmitFromConsent(attorneyCheckbox ? attorneyCheckbox.checked : false, agreementCheckbox.checked);
+    });
+    bindBack();
+  }
+
+  // Application Agreement is required to submit; Attorney Contact
+  // Consent is not — either value (true or false) is a valid,
+  // complete answer for it. This is the ONLY function in the whole
+  // flow that calls handleSubmit().
+  function validateAndSubmitFromConsent(attorneyConsentChecked, agreementChecked) {
+    var errorEl = document.getElementById("qConsentError");
+    if (errorEl) errorEl.textContent = "";
+
+    // Recorded regardless of outcome below — an unchecked Attorney
+    // Contact Consent is itself a valid "No" answer, not a validation
+    // failure.
+    STATE.answers.attorney_contact_consent = attorneyConsentChecked;
+
+    if (!agreementChecked) {
+      if (errorEl) errorEl.textContent = "Please agree to the Application Agreement to submit your application.";
+      return;
+    }
+    if (STATE.isSubmitting || STATE.hasSubmitted) return;
+
     STATE.answers.consent = true;
     STATE.answers.consent_timestamp = new Date().toISOString();
 
@@ -974,7 +1090,10 @@
     } catch (prepErr) {
       STATE.isSubmitting = false;
       console.error("[apply] Failed to prepare/send submission:", prepErr);
-      var errorEl = document.getElementById("q8Error");
+      // handleSubmit() is now only ever called from the consent step
+      // (see validateAndSubmitFromConsent() above), so the error slot
+      // is qConsentError, not the old q8Error.
+      var errorEl = document.getElementById("qConsentError");
       if (errorEl) errorEl.textContent = "Something went wrong preparing your application. Please try again.";
       return;
     }
@@ -999,7 +1118,7 @@
         // is a last-resort safety net in case that ever changes.
         STATE.isSubmitting = false;
         console.error("[apply] Unexpected error sending submission:", sendErr);
-        var errorEl = document.getElementById("q8Error");
+        var errorEl = document.getElementById("qConsentError");
         if (errorEl) errorEl.textContent = "Something went wrong submitting your application. Please try again.";
       });
   }
