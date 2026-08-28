@@ -52,17 +52,20 @@ var APPLY_CONFIG = {
   ],
 
   // Recruitment-specific consent (separate from CONFIG.CONSENT_DISCLOSURE
-  // used on the case-evaluation funnel). As of this revision, shown
-  // on the new dedicated consent step (see qConsentTemplate() in
-  // apply-app.js), not Q8 — and stored verbatim in
-  // consent_disclosure_shown, same as before. Attorney Contact
-  // Consent's copy is a separate, shorter checkbox on the same step
-  // and is NOT tracked via this config value — see
-  // attorney_contact_consent in apply-payload.js.
+  // used on the case-evaluation funnel). Shown on the dedicated
+  // consent step (see qConsentTemplate() in apply-app.js), not Q8 —
+  // and stored verbatim in consent_disclosure_shown, same as before.
+  // As of this revision the consent page was condensed to a single
+  // checkbox; this value holds the universal "Application Agreement"
+  // paragraph shown to every applicant. The HOT-LEAD-only attorney
+  // paragraph shown above it for HOT LEAD applicants is NOT tracked
+  // via this config value — its acceptance is still evidenced by
+  // attorney_contact_consent being "Yes" in apply-payload.js,
+  // correlated with the same consent_timestamp/consent_given.
   RECRUITMENT_CONSENT:
-    "I confirm that I am 18 or older and that the information I provided is accurate. I understand that applying does not guarantee selection, an interview, publication, or payment. The $50 payment is earned only if Crash2Claim accepts my completed recorded interview for publication. Crash2Claim may contact me about my application and participation. Crash2Claim is not a law firm and does not provide legal advice or representation.",
+    "I confirm that I am 18 or older, the information I provided is accurate, and I understand that applying does not guarantee an interview, publication, or payment. The $50 payment is earned only if Crash2Claim accepts my completed recorded interview for publication. Crash2Claim is not a law firm and does not provide legal advice.",
 
-  RECRUITMENT_CONSENT_VERSION: "v7",
+  RECRUITMENT_CONSENT_VERSION: "v8",
 
   // Four-step "how it works" strip. Keeps "Verify" (the pre-screen step
   // still exists in the process) and combines the final step into
