@@ -65,7 +65,15 @@ function buildApplicationPayload(answers, applicantId, isTest) {
     payment_intent: answers.payment_intent || "",
 
     first_name: answers.first_name || "",
+    // is_18 is unchanged in shape (still true/false/null -> "Yes"/"No"/"")
+    // — only how it gets set changed. As of this revision it's derived
+    // from date_of_birth (see bindQ2() in apply-app.js) instead of a
+    // direct Yes/No click, so this mapping needs no change at all.
     age_18_confirmation: answers.is_18 === true ? "Yes" : answers.is_18 === false ? "No" : "",
+    // NEW — the applicant's DOB itself ("YYYY-MM-DD"), collected on the
+    // question that replaced the old 18+ Yes/No click. Plain string
+    // pass-through, same pattern as address/story_summary.
+    date_of_birth: answers.date_of_birth || "",
     state: answers.state || "",
     accident_timeframe: answers.accident_timeframe || "",
     story_summary: answers.story_summary || "",
@@ -90,6 +98,11 @@ function buildApplicationPayload(answers, applicantId, isTest) {
     // buildRow() already joins arrays with ", " when writing to Sheets.
     injuries: Array.isArray(answers.injuries) ? answers.injuries : [],
     medical_treatment_timing: answers.medical_treatment_timing || "",
+    // The "Did you have car insurance...?" question was removed as of
+    // this revision — answers.had_car_insurance is now permanently ""
+    // (nothing in apply-app.js ever sets it anymore). Kept here
+    // unchanged so the field/Sheet column continues to exist and stay
+    // aligned; it just always submits blank now.
     had_car_insurance: answers.had_car_insurance || "",
     // NOTE: lead_status is intentionally NOT included here. It is
     // computed server-side in submit-story-application.js from
@@ -114,21 +127,30 @@ function buildApplicationPayload(answers, applicantId, isTest) {
     content_status: "Not Started",
     episode_number: "",
 
-    // Application Agreement — the required consent checkbox, now on
-    // its own dedicated consent step (see qConsentTemplate() in
-    // apply-app.js). Same field names/columns as before this
-    // revision; only the copy shown (APPLY_CONFIG.RECRUITMENT_CONSENT)
-    // and where it's collected changed.
+    // Application Agreement — the single required consent checkbox on
+    // the consent step (see qConsentTemplate() in apply-app.js). As of
+    // this revision that one checkbox covers both the Application
+    // Agreement and (for HOT LEAD applicants) Attorney Contact
+    // Consent, but this field/column is unchanged: it's still just
+    // "did the applicant give their consent". This IS the Sheet's
+    // persisted "application_agreement_consent" value — verified
+    // against the Sheet schema, no column literally named
+    // application_agreement_consent exists (or is needed): consent_given
+    // already stores exactly this boolean, from exactly this same
+    // checkbox, every submission. No new field/column was added.
     consent_given: !!answers.consent,
     consent_timestamp: answers.consent_timestamp || "",
     consent_disclosure_shown: APPLY_CONFIG.RECRUITMENT_CONSENT,
     consent_disclosure_version: APPLY_CONFIG.RECRUITMENT_CONSENT_VERSION,
-    // NEW — Attorney Contact Consent, the separate/optional checkbox
-    // on the same consent step. Always "Yes" or "No" once the
-    // consent step is reached (never blank) — unlike the other
-    // conditional Yes/No fields above, this one is asked of every
-    // applicant regardless of branch, so there's no unanswered state
-    // to represent as "".
+    // Attorney Contact Consent — as of this revision there is no
+    // separate checkbox for this. It's derived from isHotLead() at
+    // the moment the single consent checkbox is checked (see
+    // validateAndSubmitFromConsent() in apply-app.js): "Yes" for HOT
+    // LEAD applicants (who saw and agreed to the attorney paragraph
+    // as part of that one checkbox), "No" for everyone else (who
+    // never saw that paragraph at all). Still always "Yes"/"No" once
+    // the consent step is reached, never blank — same Sheet
+    // convention as before.
     attorney_contact_consent: answers.attorney_contact_consent === true ? "Yes" : answers.attorney_contact_consent === false ? "No" : "",
 
     landing_page_url: (typeof window !== "undefined" && window.location) ? window.location.href : "",
