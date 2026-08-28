@@ -19,12 +19,13 @@
   "use strict";
 
   // Base step count is 7 (opening payment-intent question + the 6
-  // fixed questions: name, age, state, timeframe, story, situation)
+  // fixed questions: name, DOB, state, timeframe, story, situation)
   // plus the 2 trailing questions (on-camera comfort, contact/consent)
   // = 9 for every applicant. It's 10 when the attorney-interest
-  // question qualifies (see isAttorneyQuestionQualified()), and 13 for
-  // a HOT LEAD applicant (attorney question + injuries + treatment +
-  // insurance). Nothing in this file assumes a fixed total — see
+  // question qualifies (see isAttorneyQuestionQualified()), and 12 for
+  // a HOT LEAD applicant (attorney question + injuries + treatment —
+  // the former "insurance" HOT LEAD-only question was removed as of
+  // this revision). Nothing in this file assumes a fixed total — see
   // getTotalSteps() and currentSequence() below.
   var applyRoot = document.getElementById("applyRoot");
 
@@ -84,9 +85,12 @@
   };
 
   // HOT LEAD-only questions (see isHotLead()) — kept short by design.
+  // The former INSURANCE_OPTIONS / "had you have car insurance"
+  // question was removed as of this revision (see the removal note
+  // near clearHotLeadAnswers() further down) — no options array
+  // needed for it anymore.
   var INJURY_OPTIONS = ["Back or neck pain", "Broken bones", "Cuts or bruises", "Head injury", "Other"];
   var TREATMENT_TIMING_OPTIONS = ["Within the first week", "More than a week later", "I didn't get treatment"];
-  var INSURANCE_OPTIONS = ["Yes", "No"];
 
   var STATE = {
     // 0 = nothing rendered (static hero button starts flow)
@@ -103,7 +107,8 @@
     answers: {
       payment_intent: "",
       first_name: "",
-      is_18: null,
+      is_18: null, // derived from date_of_birth as of this revision — see bindQ2()
+      date_of_birth: "", // NEW — "YYYY-MM-DD", collected via the DOB question that replaced the old 18+ Yes/No click
       state: "",
       accident_timeframe: "",
       story_summary: "",
@@ -189,16 +194,21 @@
   // at a time, each only once the previous answer in the chain
   // qualifies for it (see isAttorneyRepQualified() /
   // isAttorneyInterestQualified() / isLiabilityQualified() above).
-  // "injuries"/"treatment"/"insurance" are inserted only for HOT LEAD
-  // applicants (isHotLead()). 7–8 are the existing comfort/contact
-  // questions, reused unchanged — they just move position depending
-  // on which conditional questions are present.
+  // "injuries"/"treatment" are inserted only for HOT LEAD applicants
+  // (isHotLead()). The former "insurance" HOT LEAD-only question
+  // ("Did you have car insurance when the accident happened?") was
+  // removed as of this revision — see qInsuranceTemplate()'s removal
+  // note further down. had_car_insurance stays a defined field/Sheet
+  // column (submitted permanently blank now) so nothing downstream
+  // shifts. 7–8 are the existing comfort/contact questions, reused
+  // unchanged — they just move position depending on which
+  // conditional questions are present.
   function currentSequence() {
     var seq = ["paymentIntent", 1, 2, 3, 4, 5, 6];
     if (isAttorneyRepQualified()) seq.push("attorneyRep");
     if (isAttorneyInterestQualified()) seq.push("attorneyInterest");
     if (isLiabilityQualified()) seq.push("liability");
-    if (isHotLead()) seq.push("injuries", "treatment", "insurance");
+    if (isHotLead()) seq.push("injuries", "treatment");
     seq.push(7, 8, "consent");
     return seq;
   }
@@ -310,10 +320,11 @@
 
   // Layout-only: focuses the primary input on questions that have
   // one, so mobile/desktop visitors can start typing immediately.
-  // No-op on button-only questions (Q2, Q4, Q6, Q7).
+  // Q2 gained a real input (the DOB field) as of this revision, so
+  // it's now included below. No-op on button-only questions (Q4, Q6, Q7).
   function focusFirstField(step) {
     var key = currentSequence()[step - 1];
-    var idByKey = { 1: "q1Input", 3: "q3Input", 5: "q5Input", 8: "q8Phone" };
+    var idByKey = { 1: "q1Input", 2: "q2Input", 3: "q3Input", 5: "q5Input", 8: "q8Phone" };
     var id = idByKey[key];
     if (!id) return;
     var el = document.getElementById(id);
@@ -369,7 +380,6 @@
       case "liability": body = qLiabilityTemplate(); break;
       case "injuries": body = qInjuriesTemplate(); break;
       case "treatment": body = qTreatmentTemplate(); break;
-      case "insurance": body = qInsuranceTemplate(); break;
       case 7: body = q7Template(); break;
       case 8: body = q8Template(); break;
       case "consent": body = qConsentTemplate(); break;
@@ -392,7 +402,6 @@
       case "liability": bindQLiability(); break;
       case "injuries": bindQInjuries(); break;
       case "treatment": bindQTreatment(); break;
-      case "insurance": bindQInsurance(); break;
       case 7: bindQ7(); break;
       case 8: bindQ8(); break;
       case "consent": bindQConsent(); break;
@@ -479,26 +488,65 @@
     bindBack();
   }
 
-  // Q2 — 18+ confirmation
+  // Q2 — date of birth. Replaced the old "Are you 18 or older?" Yes/No
+  // click as of this revision — age is now derived from the full DOB
+  // (see calculateAge()/parseDob() in the Helpers section) rather than
+  // asked directly. is_18 is still populated here exactly as before
+  // (true/false), so every downstream consumer of is_18 — including
+  // apply-payload.js's age_18_confirmation mapping — is unaffected.
   function q2Template() {
+    var today = new Date();
+    var maxAttr = today.getFullYear() + "-" + pad2(today.getMonth() + 1) + "-" + pad2(today.getDate());
     return (
-      '<p class="apply-question">Are you 18 or older?</p>' +
-      '<div class="apply-answer-list">' +
-      '<button type="button" class="apply-answer-btn" id="q2Yes">Yes</button>' +
-      '<button type="button" class="apply-answer-btn" id="q2No">No</button>' +
+      '<p class="apply-question">What is your date of birth?</p>' +
+      '<div class="apply-field-group">' +
+      '<input type="date" id="q2Input" max="' + maxAttr + '" value="' + escapeAttr(STATE.answers.date_of_birth || "") + '">' +
+      '<p class="apply-error-text" id="q2Error"></p>' +
+      "</div>" +
+      '<div class="apply-step-actions">' +
+      '<button type="button" class="apply-btn apply-btn-primary" id="q2Continue">Continue</button>' +
       "</div>" +
       backButton()
     );
   }
   function bindQ2() {
-    document.getElementById("q2Yes").addEventListener("click", function () {
+    var input = document.getElementById("q2Input");
+    var btn = document.getElementById("q2Continue");
+    btn.addEventListener("click", function () {
+      var errorEl = document.getElementById("q2Error");
+      if (errorEl) errorEl.textContent = "";
+
+      var raw = (input.value || "").trim();
+      if (!raw) {
+        if (errorEl) errorEl.textContent = "Please enter your date of birth.";
+        return;
+      }
+
+      var dob = parseDob(raw);
+      if (!dob) {
+        if (errorEl) errorEl.textContent = "Please enter a valid date of birth.";
+        return;
+      }
+
+      var now = new Date();
+      var todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      if (dob.getTime() > todayMidnight.getTime()) {
+        if (errorEl) errorEl.textContent = "Date of birth can't be in the future.";
+        return;
+      }
+
+      STATE.answers.date_of_birth = raw;
+
+      var age = calculateAge(dob, todayMidnight);
+      if (age < 18) {
+        STATE.answers.is_18 = false;
+        STATE.step = -1;
+        render();
+        return;
+      }
+
       STATE.answers.is_18 = true;
       STATE.step = STATE.step + 1;
-      render();
-    });
-    document.getElementById("q2No").addEventListener("click", function () {
-      STATE.answers.is_18 = false;
-      STATE.step = -1;
       render();
     });
     bindBack();
@@ -756,6 +804,12 @@
   function clearHotLeadAnswers() {
     STATE.answers.injuries = [];
     STATE.answers.medical_treatment_timing = "";
+    // had_car_insurance is no longer collected by any question as of
+    // this revision (the insurance question was removed — see the
+    // removal note below), so this line is now a harmless no-op that
+    // resets an already-always-blank field. Left in place rather than
+    // removed: it costs nothing, and it keeps this function's shape
+    // stable in case the field is ever revisited.
     STATE.answers.had_car_insurance = "";
   }
 
@@ -828,27 +882,15 @@
     bindBack();
   }
 
-  // HOT LEAD Question 3 — had car insurance (single-select).
-  function qInsuranceTemplate() {
-    var optionsHtml = INSURANCE_OPTIONS.map(function (label, i) {
-      return '<button type="button" class="apply-answer-btn" id="qInsuranceOpt' + i + '">' + label + "</button>";
-    }).join("");
-    return (
-      '<p class="apply-question">Did you have car insurance when the accident happened?</p>' +
-      '<div class="apply-answer-list">' + optionsHtml + "</div>" +
-      backButton()
-    );
-  }
-  function bindQInsurance() {
-    INSURANCE_OPTIONS.forEach(function (label, i) {
-      document.getElementById("qInsuranceOpt" + i).addEventListener("click", function () {
-        STATE.answers.had_car_insurance = label;
-        STATE.step = STATE.step + 1;
-        render();
-      });
-    });
-    bindBack();
-  }
+  // HOT LEAD Question 3 — "Did you have car insurance when the
+  // accident happened?" — REMOVED as of this revision. qInsuranceTemplate()
+  // / bindQInsurance() no longer exist; the "insurance" key was also
+  // removed from currentSequence()'s HOT LEAD branch (see above) and
+  // from stepTemplate()/bindStepEvents()'s switch statements, so this
+  // question can no longer be reached from any branch. had_car_insurance
+  // stays a defined answers field/Sheet column, submitted permanently
+  // blank — see clearHotLeadAnswers() above and the COLUMNS comment in
+  // submit-story-application.js.
 
   // Q7 — on-camera comfort (does NOT disqualify on "No")
   function q7Template() {
@@ -979,43 +1021,37 @@
     render();
   }
 
-  // NEW consent step — the only place consent is gathered and the
-  // only place that actually submits the application (see
-  // validateAndSubmitFromConsent() below). Two independent
-  // checkboxes: Attorney Contact Consent (optional — submission is
-  // allowed either way) and Application Agreement (required —
-  // submission is blocked until checked). Neither is pre-checked,
-  // regardless of any earlier answer (e.g. the attorney-interest
-  // question) — this is the applicant's own final affirmative
-  // consent, not inferred from anything upstream.
-  // As of this revision, Attorney Contact Consent is shown ONLY for
-  // HOT LEAD applicants. Non-HOT-LEAD applicants never see that
-  // section at all (no heading, no checkbox, no copy, no gap where it
-  // would normally sit) — the block below is simply an empty string
-  // when isHotLead() is false, so the remaining Application Agreement
-  // section naturally centers as if it were the only section, with no
-  // leftover markup to "collapse". Application Agreement itself is
-  // unconditional and unchanged for every applicant.
+  // Consent step — the only place consent is gathered and the only
+  // place that actually submits the application (see
+  // validateAndSubmitFromConsent() below). As of this revision there
+  // is exactly ONE checkbox on this page (id "qConsentAgreement",
+  // unchanged from before to minimize churn), required to submit.
+  // For HOT LEAD applicants, both the attorney-contact paragraph and
+  // the application-agreement paragraph are shown as plain text above
+  // that single checkbox; checking it constitutes acceptance of BOTH,
+  // so attorney_contact_consent and application_agreement_consent are
+  // both recorded as true. For non-HOT-LEAD applicants, the attorney
+  // paragraph is never shown at all (no heading, no copy, no gap) —
+  // only the application-agreement paragraph appears — and checking
+  // the box records application_agreement_consent = true while
+  // attorney_contact_consent is hardcoded false (never tied to this
+  // checkbox for them, since they were never offered that option).
+  // The checkbox is never pre-checked, regardless of any earlier
+  // answer — this is the applicant's own final affirmative consent.
   function qConsentTemplate() {
     var hotLead = isHotLead();
-    var attorneyBlock = !hotLead ? "" : (
-      '<div class="apply-field-group">' +
-      '<p class="apply-field-label">Attorney Contact Consent</p>' +
-      '<div class="apply-consent-row">' +
-      '<input type="checkbox" id="qConsentAttorney"' + (STATE.answers.attorney_contact_consent === true ? " checked" : "") + '>' +
-      '<label class="apply-consent-text" for="qConsentAttorney">I agree that Crash2Claim may share my contact and accident information with an independent attorney or legal service provider who may contact me by phone, text, or email about my accident or potential case. Crash2Claim may receive compensation for this connection. Consent is not required to apply and does not create an attorney-client relationship.</label>' +
-      "</div>" +
-      "</div>"
+    var attorneyParagraph = !hotLead ? "" : (
+      '<p class="apply-consent-text" style="margin:0 0 10px;">Crash2Claim may share my contact and accident information with an independent attorney or legal service provider who may contact me about my accident. Crash2Claim may receive compensation for this connection. This does not create an attorney-client relationship.</p>'
     );
     return (
       '<p class="apply-question">Almost done &mdash; one final step</p>' +
       '<p class="apply-subtext">Review the options below, then submit your application.</p>' +
-      attorneyBlock +
+      attorneyParagraph +
+      '<p class="apply-consent-text" style="margin:0 0 10px;">I confirm that I am 18 or older, the information I provided is accurate, and I understand that applying does not guarantee an interview, publication, or payment. The $50 payment is earned only if Crash2Claim accepts my completed recorded interview for publication. Crash2Claim is not a law firm and does not provide legal advice.</p>' +
       '<div class="apply-field-group">' +
-      '<p class="apply-field-label">Application Agreement</p>' +
       '<div class="apply-consent-row">' +
       '<input type="checkbox" id="qConsentAgreement"' + (STATE.answers.consent === true ? " checked" : "") + '>' +
-      '<label class="apply-consent-text" for="qConsentAgreement">I confirm that I am 18 or older and that the information I provided is accurate. I understand that applying does not guarantee selection, an interview, publication, or payment. The $50 payment is earned only if Crash2Claim accepts my completed recorded interview for publication. Crash2Claim may contact me about my application and participation. Crash2Claim is not a law firm and does not provide legal advice or representation.</label>' +
+      '<label class="apply-consent-text" for="qConsentAgreement">I agree and consent to the above.</label>' +
       "</div>" +
       '<p class="apply-error-text" id="qConsentError"></p>' +
       "</div>" +
@@ -1026,38 +1062,35 @@
     );
   }
   function bindQConsent() {
-    // qConsentAttorney only exists in the DOM for HOT LEAD applicants
-    // (see qConsentTemplate() above) — guard against its absence
-    // rather than assuming it's always present.
-    var attorneyCheckbox = document.getElementById("qConsentAttorney");
     var agreementCheckbox = document.getElementById("qConsentAgreement");
     document.getElementById("qConsentSubmit").addEventListener("click", function () {
-      validateAndSubmitFromConsent(attorneyCheckbox ? attorneyCheckbox.checked : false, agreementCheckbox.checked);
+      validateAndSubmitFromConsent(agreementCheckbox.checked);
     });
     bindBack();
   }
 
-  // Application Agreement is required to submit; Attorney Contact
-  // Consent is not — either value (true or false) is a valid,
-  // complete answer for it. This is the ONLY function in the whole
-  // flow that calls handleSubmit().
-  function validateAndSubmitFromConsent(attorneyConsentChecked, agreementChecked) {
+  // The single consent checkbox is required to submit. This is the
+  // ONLY function in the whole flow that calls handleSubmit().
+  // attorney_contact_consent is derived from isHotLead() at the
+  // moment of a successful check — true for HOT LEAD applicants
+  // (who saw and agreed to the attorney paragraph), false for
+  // everyone else (who never saw it, so it can't be their consent).
+  function validateAndSubmitFromConsent(agreementChecked) {
     var errorEl = document.getElementById("qConsentError");
     if (errorEl) errorEl.textContent = "";
 
-    // Recorded regardless of outcome below — an unchecked Attorney
-    // Contact Consent is itself a valid "No" answer, not a validation
-    // failure.
-    STATE.answers.attorney_contact_consent = attorneyConsentChecked;
-
     if (!agreementChecked) {
-      if (errorEl) errorEl.textContent = "Please agree to the Application Agreement to submit your application.";
+      if (errorEl) errorEl.textContent = "Please agree and consent to the above to submit your application.";
       return;
     }
     if (STATE.isSubmitting || STATE.hasSubmitted) return;
 
     STATE.answers.consent = true;
     STATE.answers.consent_timestamp = new Date().toISOString();
+    // Derived, not a separate checkbox: HOT LEAD applicants saw and
+    // agreed to the attorney paragraph as part of this single
+    // checkbox, so it's true for them and only them.
+    STATE.answers.attorney_contact_consent = isHotLead();
 
     handleSubmit();
   }
@@ -1172,5 +1205,45 @@
   }
   function escapeAttr(str) {
     return escapeHtml(str).replace(/"/g, "&quot;");
+  }
+
+  // Parses a "YYYY-MM-DD" string (the native <input type="date">
+  // value format) into a local-time Date at midnight, or returns null
+  // for anything that isn't a real calendar date. Explicitly rejects
+  // impossible dates (e.g. "2024-02-30", "2024-04-31") by checking
+  // that the constructed Date's own year/month/day round-trip back to
+  // exactly what was typed — JS's Date constructor silently rolls
+  // impossible dates over into the next valid date instead of
+  // erroring (new Date(2024, 1, 30) becomes March 1), so that
+  // round-trip check is the only reliable way to catch them. Also
+  // rejects blank input and anything not matching the expected shape
+  // (the regex simply won't match).
+  function pad2(n) {
+    return n < 10 ? "0" + n : String(n);
+  }
+  function parseDob(value) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || "").trim());
+    if (!m) return null;
+    var year = parseInt(m[1], 10);
+    var month = parseInt(m[2], 10);
+    var day = parseInt(m[3], 10);
+    var d = new Date(year, month - 1, day);
+    if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) {
+      return null;
+    }
+    return d;
+  }
+
+  // Full-DOB age calculation — NOT a simple year subtraction. Accounts
+  // for whether the birthday has actually occurred yet relative to
+  // "today": an applicant whose 18th birthday is tomorrow is still 17
+  // today; an applicant whose 18th birthday is today already qualifies.
+  function calculateAge(birthDate, today) {
+    var age = today.getFullYear() - birthDate.getFullYear();
+    var monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
   }
 })();
