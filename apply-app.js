@@ -48,7 +48,7 @@
   // ongoing" remain. "Still ongoing" is the only value that satisfies
   // the case-status leg of the attorney/liability qualification branch
   // and of HOT LEAD (see isAttorneyRepQualified()/isHotLead() below).
-  var SITUATION_OPTIONS = ["Settled", "Still ongoing"];
+  var SITUATION_OPTIONS = ["Still ongoing", "Settled"];
   // "Maybe" removed — only Yes/No going forward. Existing on_camera_comfort
   // field/column is unchanged; only the accepted answer set shrank. Prior
   // Sheet rows that already contain "Maybe" are historical data and are
