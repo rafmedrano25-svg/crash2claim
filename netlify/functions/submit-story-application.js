@@ -75,7 +75,7 @@ const COLUMNS = [
   "lead_status", // server-computed "HOT LEAD" or "" (see computeLeadStatus())
   "injuries", // HOT LEAD only, comma-separated; "" otherwise
   "medical_treatment_timing", // NEW — HOT LEAD only; "" otherwise
-  "had_car_insurance", // NEW — HOT LEAD only; "" otherwise
+  "had_car_insurance", // its question was removed in a later revision (see the append-only block below) — always "" going forward; column kept in place, unshifted
   "on_camera_comfort",
   "phone",
   "email",
@@ -113,6 +113,22 @@ const COLUMNS = [
   // no risk of misaligning historical rows against the new header.
   "address", // NEW — collected on the contact/payment page (Q8)
   "attorney_contact_consent", // NEW — "Yes"/"No", from the new consent step; independent of and separate from consent_given (Application Agreement)
+  // NEW (this revision) — the old "Are you 18 or older?" Yes/No click
+  // was replaced by a date-of-birth question; age_18_confirmation
+  // (its existing column, position unchanged) is still populated the
+  // same way it always was, now derived from the DOB client-side. This
+  // column holds the raw DOB itself ("YYYY-MM-DD") as an additional,
+  // append-only field — same safe pattern as address/attorney_contact_consent
+  // above, so nothing existing shifts.
+  "date_of_birth",
+  // The old "Did you have car insurance when the accident happened?"
+  // HOT LEAD-only question was removed entirely as of this revision.
+  // Its column, "had_car_insurance" (see its position further up this
+  // array, between medical_treatment_timing and on_camera_comfort), is
+  // intentionally left in place rather than removed — removing/shifting
+  // it would misalign every column after it against historical Sheet
+  // rows. It will simply always be blank in every row submitted from
+  // here forward.
 ];
 
 // Duplicate-detection is keyed off these two columns. Resolved by
@@ -303,17 +319,22 @@ function flattenColumn(valueRange) {
 //   2. Recency: accident_timeframe is "Within the last 6 months" OR
 //      "Within the last year" (a 12-month window — "Over a year ago"
 //      never qualifies).
-//   3. Case status: situation_status is "Still ongoing" OR "Not
-//      sure" (only "Settled" disqualifies — as of this revision,
-//      "Not sure" is treated as equivalent to "Still ongoing" for
-//      HOT LEAD qualification purposes).
+//   3. Case status: situation_status is exactly "Still ongoing" (only
+//      "Settled" disqualifies). "Not sure" was removed as a case-
+//      status answer as of this revision — SITUATION_OPTIONS in
+//      apply-app.js now offers only "Settled"/"Still ongoing", so the
+//      client can no longer send "Not sure" — but this check still
+//      rejects it (or any other value) too, same defense-in-depth
+//      posture as the liability check below, so a manipulated/replayed
+//      payload with a stale "Not sure" value is never accepted.
 //   4. Attorney representation: has_hired_attorney is "No".
 //   5. Attorney intent: interested_in_attorney is "Yes".
 //   6. Liability: primary_fault is exactly "Other person" — "Me"
 //      disqualifies. The client's LIABILITY_OPTIONS no longer offers
-//      "Not sure" as of this revision, but this check still rejects
-//      it (or any other value) too, same as it always has — nothing
-//      here assumes the client only ever sends one of two values.
+//      "Not sure" as of an earlier revision, but this check still
+//      rejects it (or any other value) too, same as it always has —
+//      nothing here assumes the client only ever sends one of two
+//      values.
 // Medical answers (injuries / medical_treatment_timing /
 // had_car_insurance) and the on-camera-comfort answer are pure data
 // collection and never participate in this calculation, so a HOT LEAD
@@ -325,7 +346,7 @@ function flattenColumn(valueRange) {
 function computeLeadStatus(applicant) {
   var isAdult = applicant.age_18_confirmation === "Yes";
   var recentEnough = applicant.accident_timeframe === "Within the last 6 months" || applicant.accident_timeframe === "Within the last year";
-  var qualifyingStatus = applicant.situation_status === "Still ongoing" || applicant.situation_status === "Not sure";
+  var qualifyingStatus = applicant.situation_status === "Still ongoing";
   var noAttorney = applicant.has_hired_attorney === "No";
   var wantsAttorney = applicant.interested_in_attorney === "Yes";
   var otherPersonAtFault = applicant.primary_fault === "Other person";
