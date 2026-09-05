@@ -17,7 +17,16 @@ var APPLY_CONFIG = {
 
   PAYMENT_AMOUNT_LABEL: "$50",
 
-  // Short line shown directly under the hero.
+  // Short line shown directly under the hero sub ("Real people. Real
+  // stories. Any outcome."). As of this later revision this explicitly
+  // states the $50 amount again — superseding the prior round's
+  // removal — but ONLY here, in this fine-print disclosure. The large
+  // "GET PAID" headline (.apply-hero-eyebrow in apply.html) still says
+  // only "GET PAID" with no dollar figure; the button and other large
+  // copy are untouched. The "How the $50 payment works" info card
+  // further down the landing page, the in-flow "$50 requirements" box,
+  // and the consent-step agreement text are separate surfaces not
+  // covered by this change and already stated $50 unchanged throughout.
   PAYMENT_DISCLOSURE_SHORT:
     "$50 is paid only to selected participants whose completed recorded interview is accepted by Crash2Claim for publication. Applying, being selected to interview, or completing a recording does not guarantee payment.",
 

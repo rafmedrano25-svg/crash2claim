@@ -79,9 +79,9 @@ function buildApplicationPayload(answers, applicantId, isTest) {
     story_summary: answers.story_summary || "",
     situation_status: answers.situation_status || "",
     // Only asked (and only ever true/false) when recency is within the
-    // last 12 months AND situation_status is "Still ongoing" or "Not
-    // sure" — see isAttorneyRepQualified() in apply-app.js. Stays ""
-    // otherwise.
+    // last 12 months AND situation_status is "Still ongoing" — "Not
+    // sure" was removed as a case-status answer as of this revision,
+    // see isAttorneyRepQualified() in apply-app.js. Stays "" otherwise.
     has_hired_attorney: answers.has_hired_attorney === true ? "Yes" : answers.has_hired_attorney === false ? "No" : "",
     // Only asked (and only ever true/false) when the applicant is also
     // unrepresented (has_hired_attorney === "No") — see

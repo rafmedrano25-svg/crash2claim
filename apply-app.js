@@ -44,7 +44,11 @@
   // — it only means the applicant skips the attorney/liability
   // qualification branch below.
   var TIMEFRAME_OPTIONS = ["Within the last 6 months", "Within the last year", "Over a year ago"];
-  var SITUATION_OPTIONS = ["Settled", "Still ongoing", "Not sure"];
+  // "Not sure" removed as of this revision — only "Settled" and "Still
+  // ongoing" remain. "Still ongoing" is the only value that satisfies
+  // the case-status leg of the attorney/liability qualification branch
+  // and of HOT LEAD (see isAttorneyRepQualified()/isHotLead() below).
+  var SITUATION_OPTIONS = ["Settled", "Still ongoing"];
   // "Maybe" removed — only Yes/No going forward. Existing on_camera_comfort
   // field/column is unchanged; only the accepted answer set shrank. Prior
   // Sheet rows that already contain "Maybe" are historical data and are
@@ -58,12 +62,6 @@
   var LIABILITY_OPTIONS = ["Other person", "Me"];
   var NEW_YORK = "New York";
   var STILL_ONGOING = "Still ongoing";
-  // Case-status "Not sure" — as of a prior revision, treated as
-  // equivalent to "Still ongoing" for qualification purposes (see
-  // isAttorneyRepQualified() below). Named distinctly from
-  // primary_fault (a different field) even though LIABILITY_OPTIONS no
-  // longer has its own "Not sure" value to disambiguate from.
-  var SITUATION_NOT_SURE = "Not sure";
   var OTHER_PERSON = "Other person";
 
   // Opening question — asked of EVERY applicant, before anything else.
@@ -90,7 +88,12 @@
   // near clearHotLeadAnswers() further down) — no options array
   // needed for it anymore.
   var INJURY_OPTIONS = ["Back or neck pain", "Broken bones", "Cuts or bruises", "Head injury", "Other"];
-  var TREATMENT_TIMING_OPTIONS = ["Within the first week", "More than a week later", "I didn't get treatment"];
+  // Simple Yes/No as of this revision — replaces the former 3-option
+  // "how soon after the accident" timing question. The field/key
+  // (medical_treatment_timing) and its Sheet column are unchanged; only
+  // the question text and the set of possible answers changed. See
+  // qTreatmentTemplate()/bindQTreatment() below.
+  var TREATMENT_OPTIONS = ["Yes", "No"];
 
   var STATE = {
     // 0 = nothing rendered (static hero button starts flow)
@@ -143,20 +146,15 @@
 
   // The attorney-representation question (Q6a) requires BOTH:
   //   1. Accident happened within the last 12 months (Q4)
-  //   2. Case status is "Still ongoing" OR "Not sure" (Q6) — only
-  //      "Settled" skips the rest of the qualification branch
-  //      entirely and goes straight to normal storytelling. As of
-  //      this revision, "Not sure" is treated as equivalent to
-  //      "Still ongoing" for qualification purposes — an applicant
-  //      who isn't certain whether their case is technically settled
-  //      is not excluded from the attorney-connection branch.
+  //   2. Case status is "Still ongoing" (Q6) — "Settled" skips the
+  //      rest of the qualification branch entirely and goes straight
+  //      to normal storytelling. "Not sure" was removed as a case-
+  //      status answer as of this revision (see SITUATION_OPTIONS
+  //      above) — only these two values can ever appear here now.
   // situation_status itself is always asked/recorded regardless, so
   // every applicant remains reviewable in the Sheet either way.
   function isAttorneyRepQualified() {
-    return (
-      isRecencyQualified() &&
-      (STATE.answers.situation_status === STILL_ONGOING || STATE.answers.situation_status === SITUATION_NOT_SURE)
-    );
+    return isRecencyQualified() && STATE.answers.situation_status === STILL_ONGOING;
   }
 
   // The attorney-interest question (Q6b) only follows when the
@@ -174,8 +172,8 @@
   }
 
   // HOT LEAD = recency (last 12 months) AND case status "Still
-  // ongoing" or "Not sure" AND no attorney AND wants a free review AND
-  // the other person was at fault. Written out via the full
+  // ongoing" AND no attorney AND wants a free review AND the other
+  // person was at fault. Written out via the full
   // qualification chain (rather than
   // just checking primary_fault) so it stays correct even if the
   // applicant backs up and changes an earlier answer. This is a
@@ -682,11 +680,12 @@
     bindBack();
   }
 
-  // Q6 — case status. "Still ongoing" OR "Not sure" (combined with an
-  // accident within the last 12 months — see isAttorneyRepQualified())
-  // continues into the attorney-representation question next. Only
-  // "Settled" skips the rest of the qualification branch and goes
-  // straight to normal storytelling.
+  // Q6 — case status. Only two answers as of this revision — "Not
+  // sure" was removed (see SITUATION_OPTIONS above). "Still ongoing"
+  // (combined with an accident within the last 12 months — see
+  // isAttorneyRepQualified()) continues into the attorney-
+  // representation question next. "Settled" skips the rest of the
+  // qualification branch and goes straight to normal storytelling.
   // situation_status itself is always asked/recorded regardless.
   function q6Template() {
     var optionsHtml = SITUATION_OPTIONS.map(function (label, i) {
@@ -888,20 +887,31 @@
     bindBack();
   }
 
-  // HOT LEAD Question 2 — medical treatment timing (single-select).
+  // HOT LEAD Question 2 — did the applicant receive medical treatment
+  // (simple Yes/No, single-select). Only reachable when isHotLead() is
+  // true (see currentSequence()) — same gating as before this
+  // revision; only the question text and answer options changed, from
+  // a 3-option "how soon after the accident" timing question to a
+  // plain Yes/No. Still stored in the existing medical_treatment_timing
+  // field/Sheet column — reused as-is rather than adding a new one.
   function qTreatmentTemplate() {
-    var optionsHtml = TREATMENT_TIMING_OPTIONS.map(function (label, i) {
+    var optionsHtml = TREATMENT_OPTIONS.map(function (label, i) {
       return '<button type="button" class="apply-answer-btn" id="qTreatmentOpt' + i + '">' + label + "</button>";
     }).join("");
     return (
-      '<p class="apply-question">How soon after the accident did you get medical treatment?</p>' +
+      '<p class="apply-question">Did you receive medical treatment?</p>' +
       '<div class="apply-answer-list">' + optionsHtml + "</div>" +
       backButton()
     );
   }
   function bindQTreatment() {
-    TREATMENT_TIMING_OPTIONS.forEach(function (label, i) {
+    TREATMENT_OPTIONS.forEach(function (label, i) {
       document.getElementById("qTreatmentOpt" + i).addEventListener("click", function () {
+        // "Yes" or "No" — this answer is pure data collection and does
+        // NOT participate in HOT LEAD qualification either client-side
+        // (see isHotLead() above, which never reads this field) or
+        // server-side (see computeLeadStatus() in
+        // submit-story-application.js, which also never reads it).
         STATE.answers.medical_treatment_timing = label;
         STATE.step = STATE.step + 1;
         render();

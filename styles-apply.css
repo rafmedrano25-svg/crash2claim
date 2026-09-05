@@ -139,6 +139,21 @@ body.apply-page {
   margin: 0 0 4px;
 }
 
+/* Simple, clean, straight underline accent under "PAID" only (the
+   "Get" word is unaffected) — a plain native text-decoration, no
+   curve/wave/SVG/pseudo-element. Thickness and vertical offset are
+   set in em units relative to the span's own font-size (inherited
+   from .apply-hero-eyebrow, including the 46px desktop bump in the
+   min-width:640px query below), so the line scales and repositions
+   automatically with the headline on both mobile and desktop. Does
+   not affect PAID's own font, weight, size, or color in any way. */
+.apply-hero-paid {
+  text-decoration: underline;
+  text-decoration-color: var(--coral);
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.14em;
+}
+
 .apply-hero-dollar {
   /* Mobile/base size — 33px (50% larger than the prior 22px). Only
      one rule below (in the min-width:640px media query) overrides
