@@ -381,6 +381,7 @@ body.app-mode #applyRoot {
 .apply-page input[type="text"],
 .apply-page input[type="tel"],
 .apply-page input[type="email"],
+.apply-page input[type="date"],
 .apply-page textarea,
 .apply-page select {
   width: 100%;
@@ -404,6 +405,33 @@ body.app-mode #applyRoot {
 .apply-page textarea:focus {
   outline: none;
   border-color: var(--teal);
+}
+
+/* DOB question — a single custom MM/DD/YYYY text field (id q2Input)
+   replacing the browser's native <input type="date"> (no calendar
+   icon/picker). It's still type="text", so it already inherits the
+   shared border/background/color/min-height/font-family from the
+   .apply-page input[type="text"] rule above (same 52px tap target as
+   every other field in the funnel) — the rules below just give it a
+   reasonable, centered width instead of stretching full-width like a
+   name or address field, and center/space the digits so the format
+   reads clearly at a glance. Scoped to this one input only — no other
+   question is affected. */
+.apply-dob-input {
+  display: block;
+  width: 220px;
+  max-width: 100%;
+  margin: 0 auto;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  font-variant-numeric: tabular-nums;
+}
+.apply-dob-input::placeholder {
+  color: var(--gray-400);
+  font-weight: 600;
+  letter-spacing: 1px;
 }
 
 .apply-char-count {
