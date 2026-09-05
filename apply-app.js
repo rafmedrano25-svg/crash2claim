@@ -489,18 +489,32 @@
   }
 
   // Q2 — date of birth. Replaced the old "Are you 18 or older?" Yes/No
-  // click as of this revision — age is now derived from the full DOB
+  // click as of an earlier revision — age is derived from the full DOB
   // (see calculateAge()/parseDob() in the Helpers section) rather than
   // asked directly. is_18 is still populated here exactly as before
   // (true/false), so every downstream consumer of is_18 — including
   // apply-payload.js's age_18_confirmation mapping — is unaffected.
+  //
+  // As of THIS revision, the visible control is a single custom text
+  // field (id "q2Input") instead of the browser's native
+  // <input type="date"> (and instead of the three-separate-field
+  // layout from an intervening revision, which has been fully removed
+  // — no q2Month/q2Day/q2Year markup, CSS, auto-advance, backspace-
+  // navigation, or paste-distribution logic remains). There's no
+  // default calendar picker/icon and no year-by-year scrolling. It
+  // auto-formats to MM/DD/YYYY while typing (see bindQ2()'s "input"
+  // listener and formatDobDigits() in the Helpers section) and shows
+  // a numeric keypad on mobile via inputmode="numeric". Internally,
+  // STATE.answers.date_of_birth is still stored as "YYYY-MM-DD"
+  // exactly as before — see mmddyyyyToIso() — so
+  // parseDob()/calculateAge(), the payload field name/shape, and the
+  // Sheet mapping are all completely untouched.
   function q2Template() {
-    var today = new Date();
-    var maxAttr = today.getFullYear() + "-" + pad2(today.getMonth() + 1) + "-" + pad2(today.getDate());
+    var displayValue = isoToMmddyyyy(STATE.answers.date_of_birth || "");
     return (
       '<p class="apply-question">What is your date of birth?</p>' +
       '<div class="apply-field-group">' +
-      '<input type="date" id="q2Input" max="' + maxAttr + '" value="' + escapeAttr(STATE.answers.date_of_birth || "") + '">' +
+      '<input type="text" id="q2Input" class="apply-dob-input" inputmode="numeric" autocomplete="bday" placeholder="MM/DD/YYYY" maxlength="10" value="' + escapeAttr(displayValue) + '">' +
       '<p class="apply-error-text" id="q2Error"></p>' +
       "</div>" +
       '<div class="apply-step-actions">' +
@@ -512,6 +526,17 @@
   function bindQ2() {
     var input = document.getElementById("q2Input");
     var btn = document.getElementById("q2Continue");
+
+    // Auto-format while typing: 02101992 -> 02/10/1992. Rebuilds the
+    // display value from the raw digits on every keystroke (same
+    // technique as common card-expiry-date inputs) so pasted values,
+    // manually-typed slashes, and backspacing all normalize the same
+    // way. Cursor is left at the end after each reformat.
+    input.addEventListener("input", function () {
+      var digits = (input.value || "").replace(/\D/g, "").slice(0, 8);
+      input.value = formatDobDigits(digits);
+    });
+
     btn.addEventListener("click", function () {
       var errorEl = document.getElementById("q2Error");
       if (errorEl) errorEl.textContent = "";
@@ -522,7 +547,8 @@
         return;
       }
 
-      var dob = parseDob(raw);
+      var iso = mmddyyyyToIso(raw);
+      var dob = iso ? parseDob(iso) : null;
       if (!dob) {
         if (errorEl) errorEl.textContent = "Please enter a valid date of birth.";
         return;
@@ -535,7 +561,9 @@
         return;
       }
 
-      STATE.answers.date_of_birth = raw;
+      // Stored exactly as before — "YYYY-MM-DD" — regardless of the
+      // MM/DD/YYYY format the applicant sees and types.
+      STATE.answers.date_of_birth = iso;
 
       var age = calculateAge(dob, todayMidnight);
       if (age < 18) {
@@ -1207,6 +1235,40 @@
     return escapeHtml(str).replace(/"/g, "&quot;");
   }
 
+  // Progressively inserts "/" separators into a raw digit string as
+  // the applicant types into the custom DOB field (id "q2Input"), e.g.
+  // "0210" -> "02/10", "02101992" -> "02/10/1992". Purely a display
+  // formatter — does no calendar validation itself; expects `digits`
+  // to already be stripped of non-digit characters and capped at 8.
+  function formatDobDigits(digits) {
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 4) return digits.slice(0, 2) + "/" + digits.slice(2);
+    return digits.slice(0, 2) + "/" + digits.slice(2, 4) + "/" + digits.slice(4, 8);
+  }
+
+  // Converts the applicant-facing "MM/DD/YYYY" (or "MM / DD / YYYY",
+  // in case a stray space slips in) display string into the internal
+  // "YYYY-MM-DD" storage/payload format, WITHOUT validating that it's
+  // a real calendar date — that's still parseDob()'s job below.
+  // Returns null if the string isn't even shaped like a complete
+  // MM/DD/YYYY value (e.g. still mid-typing).
+  function mmddyyyyToIso(value) {
+    var m = /^(\d{2})\s*\/\s*(\d{2})\s*\/\s*(\d{4})$/.exec(String(value || "").trim());
+    if (!m) return null;
+    return m[3] + "-" + m[1] + "-" + m[2];
+  }
+
+  // Inverse of mmddyyyyToIso() — used to populate the DOB field's
+  // display value from STATE.answers.date_of_birth (still stored as
+  // "YYYY-MM-DD") when re-rendering, e.g. after using Back and
+  // returning to this question. Returns "" for anything that isn't a
+  // well-formed "YYYY-MM-DD" string, same as an unanswered question.
+  function isoToMmddyyyy(value) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || "").trim());
+    if (!m) return "";
+    return m[2] + "/" + m[3] + "/" + m[1];
+  }
+
   // Parses a "YYYY-MM-DD" string (the native <input type="date">
   // value format) into a local-time Date at midnight, or returns null
   // for anything that isn't a real calendar date. Explicitly rejects
@@ -1218,9 +1280,6 @@
   // round-trip check is the only reliable way to catch them. Also
   // rejects blank input and anything not matching the expected shape
   // (the regex simply won't match).
-  function pad2(n) {
-    return n < 10 ? "0" + n : String(n);
-  }
   function parseDob(value) {
     var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || "").trim());
     if (!m) return null;
