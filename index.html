@@ -17,7 +17,7 @@
 <meta name="twitter:title" content="Crash2Claim | Real Car Accident & Claim Stories">
 <meta name="twitter:description" content="Real people share what happened after their car accidents — from the crash and injuries to insurance, claims and what happened next.">
 
-<link rel="stylesheet" href="styles-home.css?v=20260822-1">
+<link rel="stylesheet" href="styles-home.css?v=20260907-1">
 </head>
 <body class="hp-page">
 <a class="hp-skip-link" href="#hp-main">Skip to content</a>
@@ -87,116 +87,101 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>
         </button>
 
-        <div class="hp-carousel" id="hpCarousel" role="list" aria-label="Featured participant stories (sample placeholder content)">
-          <!-- All 8 cards below are SAMPLE / PLACEHOLDER content only.
-               No real participant footage, names, or outcomes are
-               represented. Per explicit user decision, no visible
-               on-card disclosure text/badge is rendered (removed in
-               the visual-redesign round); the modal opened by
-               home.js's initStoryModal() still discloses "Sample
-               Interview / Not an actual participant" the moment a
-               card is clicked, so the honesty check happens at the
-               point of interaction rather than the point of display.
-               data-name/data-state/data-descriptor are inert
-               placeholder architecture (not rendered) for later
-               real-data wiring. Swap data-video-url to a real hosted
-               video URL (and the photo to real footage/poster) and
-               this markup requires no other changes to go live. -->
-          <button type="button" class="hp-story-card" role="listitem" aria-label="Play interview video"
-            data-name="Melissa" data-state="Florida" data-descriptor="Rear-end collision" data-video-url="">
-            <span class="hp-story-card-avatar" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
-            </span>
-            <!-- sample_interview_visual — target: Woman, mid/late 20s. Temporary synthetic/placeholder photo, NOT a real Crash2Claim participant. Falls back to the silhouette above via onerror if the file below has not been uploaded yet. -->
-            <img class="hp-story-card-photo sample_interview_visual" src="/images/interviews/interview-sample-01.webp" alt="" aria-hidden="true" loading="lazy" onerror="this.style.display='none'">
-            <span class="hp-story-play" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
-            </span>
-          </button>
+        <div class="hp-carousel" id="hpCarousel" role="list" aria-label="Real Stories From Real People — placeholder content, real stories coming soon">
+          <!-- REDESIGN (typographic story cards): the previous AI-generated
+               portrait carousel has been fully removed — no photos, no
+               faces, no stock imagery, and no per-card image files are
+               loaded anymore. Each card below is a bold editorial/
+               typographic treatment (quote + tag + state + "Story coming
+               soon") built from CSS only (see .hp-story-card and its
+               child rules in styles-home.css). The 8 hook lines here are
+               clearly-labeled design placeholders — not real participant
+               quotes, names, or outcomes — matching the approved
+               "Preview A: Typographic Story Carousel" concept exactly.
+               Cards are plain, non-interactive list items (no click
+               target, no video-preview modal) since there is no real
+               interview footage yet; once real stories exist, each
+               card's quote/tag/state can be swapped for real content
+               with no structural changes needed. -->
+          <div class="hp-story-card" role="listitem">
+            <span class="hp-story-quotemark" aria-hidden="true">&ldquo;</span>
+            <p class="hp-story-quote">A normal drive home changed everything.</p>
+            <div class="hp-story-meta">
+              <span class="hp-story-tag">Ongoing Case</span>
+              <span class="hp-story-state">Texas</span>
+              <span class="hp-story-cta">&#9654; Story coming soon</span>
+            </div>
+          </div>
 
-          <button type="button" class="hp-story-card" role="listitem" aria-label="Play interview video"
-            data-name="Jonathan" data-state="New York" data-descriptor="Intersection accident" data-video-url="">
-            <span class="hp-story-card-avatar" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
-            </span>
-            <!-- sample_interview_visual — target: Man, early/mid 20s. Temporary synthetic/placeholder photo, NOT a real Crash2Claim participant. Falls back to the silhouette above via onerror if the file below has not been uploaded yet. -->
-            <img class="hp-story-card-photo sample_interview_visual" src="/images/interviews/interview-sample-02.webp" alt="" aria-hidden="true" loading="lazy" onerror="this.style.display='none'">
-            <span class="hp-story-play" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
-            </span>
-          </button>
+          <div class="hp-story-card" role="listitem">
+            <span class="hp-story-quotemark" aria-hidden="true">&ldquo;</span>
+            <p class="hp-story-quote">Hit by a driver who ran a red light.</p>
+            <div class="hp-story-meta">
+              <span class="hp-story-tag">Settled</span>
+              <span class="hp-story-state">Florida</span>
+              <span class="hp-story-cta">&#9654; Story coming soon</span>
+            </div>
+          </div>
 
-          <button type="button" class="hp-story-card" role="listitem" aria-label="Play interview video"
-            data-name="Ashley" data-state="Georgia" data-descriptor="Highway collision" data-video-url="">
-            <span class="hp-story-card-avatar" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
-            </span>
-            <!-- sample_interview_visual — target: Woman, early/mid 30s. Temporary synthetic/placeholder photo, NOT a real Crash2Claim participant. Falls back to the silhouette above via onerror if the file below has not been uploaded yet. -->
-            <img class="hp-story-card-photo sample_interview_visual" src="/images/interviews/interview-sample-03.webp" alt="" aria-hidden="true" loading="lazy" onerror="this.style.display='none'">
-            <span class="hp-story-play" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
-            </span>
-          </button>
+          <div class="hp-story-card" role="listitem">
+            <span class="hp-story-quotemark" aria-hidden="true">&ldquo;</span>
+            <p class="hp-story-quote">Rear-ended on the way to work.</p>
+            <div class="hp-story-meta">
+              <span class="hp-story-tag">Ongoing Case</span>
+              <span class="hp-story-state">New York</span>
+              <span class="hp-story-cta">&#9654; Story coming soon</span>
+            </div>
+          </div>
 
-          <button type="button" class="hp-story-card" role="listitem" aria-label="Play interview video"
-            data-name="Marcus" data-state="Texas" data-descriptor="Hit and run" data-video-url="">
-            <span class="hp-story-card-avatar" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
-            </span>
-            <!-- sample_interview_visual — target: Man, mid/late 30s. Temporary synthetic/placeholder photo, NOT a real Crash2Claim participant. Falls back to the silhouette above via onerror if the file below has not been uploaded yet. -->
-            <img class="hp-story-card-photo sample_interview_visual" src="/images/interviews/interview-sample-04.webp" alt="" aria-hidden="true" loading="lazy" onerror="this.style.display='none'">
-            <span class="hp-story-play" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
-            </span>
-          </button>
+          <div class="hp-story-card" role="listitem">
+            <span class="hp-story-quotemark" aria-hidden="true">&ldquo;</span>
+            <p class="hp-story-quote">A split second changed the whole year.</p>
+            <div class="hp-story-meta">
+              <span class="hp-story-tag">Settled</span>
+              <span class="hp-story-state">Georgia</span>
+              <span class="hp-story-cta">&#9654; Story coming soon</span>
+            </div>
+          </div>
 
-          <button type="button" class="hp-story-card" role="listitem" aria-label="Play interview video"
-            data-name="Priya" data-state="California" data-descriptor="Motorcycle accident" data-video-url="">
-            <span class="hp-story-card-avatar" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
-            </span>
-            <!-- sample_interview_visual — target: Woman, 40s. Temporary synthetic/placeholder photo, NOT a real Crash2Claim participant. Falls back to the silhouette above via onerror if the file below has not been uploaded yet. -->
-            <img class="hp-story-card-photo sample_interview_visual" src="/images/interviews/interview-sample-05.webp" alt="" aria-hidden="true" loading="lazy" onerror="this.style.display='none'">
-            <span class="hp-story-play" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
-            </span>
-          </button>
+          <div class="hp-story-card" role="listitem">
+            <span class="hp-story-quotemark" aria-hidden="true">&ldquo;</span>
+            <p class="hp-story-quote">Stopped at a light. Then everything shook.</p>
+            <div class="hp-story-meta">
+              <span class="hp-story-tag">Ongoing Case</span>
+              <span class="hp-story-state">Ohio</span>
+              <span class="hp-story-cta">&#9654; Story coming soon</span>
+            </div>
+          </div>
 
-          <button type="button" class="hp-story-card" role="listitem" aria-label="Play interview video"
-            data-name="Daniel" data-state="Ohio" data-descriptor="Serious injury, ongoing case" data-video-url="">
-            <span class="hp-story-card-avatar" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
-            </span>
-            <!-- sample_interview_visual — target: Man, late 50s/early 60s. Temporary synthetic/placeholder photo, NOT a real Crash2Claim participant. Falls back to the silhouette above via onerror if the file below has not been uploaded yet. -->
-            <img class="hp-story-card-photo sample_interview_visual" src="/images/interviews/interview-sample-06.webp" alt="" aria-hidden="true" loading="lazy" onerror="this.style.display='none'">
-            <span class="hp-story-play" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
-            </span>
-          </button>
+          <div class="hp-story-card" role="listitem">
+            <span class="hp-story-quotemark" aria-hidden="true">&ldquo;</span>
+            <p class="hp-story-quote">It happened three blocks from home.</p>
+            <div class="hp-story-meta">
+              <span class="hp-story-tag">Settled</span>
+              <span class="hp-story-state">California</span>
+              <span class="hp-story-cta">&#9654; Story coming soon</span>
+            </div>
+          </div>
 
-          <button type="button" class="hp-story-card" role="listitem" aria-label="Play interview video"
-            data-name="" data-state="" data-descriptor="" data-video-url="">
-            <span class="hp-story-card-avatar" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
-            </span>
-            <!-- sample_interview_visual — target: Woman, seated indoors. Temporary synthetic/placeholder photo, NOT a real Crash2Claim participant. Falls back to the silhouette above via onerror if the file below has not been uploaded yet. -->
-            <img class="hp-story-card-photo sample_interview_visual" src="/images/interviews/interview-sample-07.webp" alt="" aria-hidden="true" loading="lazy" onerror="this.style.display='none'">
-            <span class="hp-story-play" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
-            </span>
-          </button>
+          <div class="hp-story-card" role="listitem">
+            <span class="hp-story-quotemark" aria-hidden="true">&ldquo;</span>
+            <p class="hp-story-quote">One turn. One moment. One story.</p>
+            <div class="hp-story-meta">
+              <span class="hp-story-tag">Ongoing Case</span>
+              <span class="hp-story-state">Arizona</span>
+              <span class="hp-story-cta">&#9654; Story coming soon</span>
+            </div>
+          </div>
 
-          <button type="button" class="hp-story-card" role="listitem" aria-label="Play interview video"
-            data-name="" data-state="" data-descriptor="" data-video-url="">
-            <span class="hp-story-card-avatar" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"></path></svg>
-            </span>
-            <!-- sample_interview_visual — target: Man, seated on porch. Temporary synthetic/placeholder photo, NOT a real Crash2Claim participant. Falls back to the silhouette above via onerror if the file below has not been uploaded yet. -->
-            <img class="hp-story-card-photo sample_interview_visual" src="/images/interviews/interview-sample-08.webp" alt="" aria-hidden="true" loading="lazy" onerror="this.style.display='none'">
-            <span class="hp-story-play" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
-            </span>
-          </button>
+          <div class="hp-story-card" role="listitem">
+            <span class="hp-story-quotemark" aria-hidden="true">&ldquo;</span>
+            <p class="hp-story-quote">The claim took longer than the crash.</p>
+            <div class="hp-story-meta">
+              <span class="hp-story-tag">Settled</span>
+              <span class="hp-story-state">Illinois</span>
+              <span class="hp-story-cta">&#9654; Story coming soon</span>
+            </div>
+          </div>
         </div>
 
         <button class="hp-carousel-arrow next" id="hpCarouselNext" aria-label="Scroll stories right">
@@ -385,25 +370,6 @@
 </main>
 
 <!-- =============================================================
-     VIDEO PLACEHOLDER MODAL
-     ============================================================= -->
-<div class="hp-modal-overlay" id="hpModalOverlay">
-  <div class="hp-modal" role="dialog" aria-modal="true" aria-labelledby="hpModalName">
-    <button class="hp-modal-close" id="hpModalClose" aria-label="Close">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
-    </button>
-    <div class="hp-modal-video-area">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 5v14l11-7z"></path></svg>
-      <p class="hp-modal-video-note" id="hpModalNote">This is placeholder content for the Crash2Claim story library. Real interview video will appear here once published.</p>
-    </div>
-    <div class="hp-modal-info">
-      <h3 id="hpModalName">Story preview</h3>
-      <p id="hpModalMeta">Sample placeholder</p>
-    </div>
-  </div>
-</div>
-
-<!-- =============================================================
      FOOTER
      ============================================================= -->
 <footer class="hp-footer">
@@ -448,6 +414,6 @@
   </div>
 </footer>
 
-<script src="home.js?v=20260822-1"></script>
+<script src="home.js?v=20260907-1"></script>
 </body>
 </html>
