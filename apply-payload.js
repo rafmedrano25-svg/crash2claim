@@ -167,6 +167,16 @@ function buildApplicationPayload(answers, applicantId, isTest) {
     fbclid: attribution.fbclid || "",
     msclkid: attribution.msclkid || "",
     ttclid: attribution.ttclid || "",
+
+    // NEW — ActiveProspect TrustedForm compliance certificate URL.
+    // Captured client-side (best-effort, never blocking — see
+    // waitForTrustedFormCertUrl()/validateAndSubmitFromConsent() in
+    // apply-app.js) for EVERY applicant, HOT LEAD or not. Blank if
+    // TrustedForm never loaded or never populated the field in time.
+    // Retention (the billed operation) is a SEPARATE, HOT-LEAD-gated
+    // server-side step — see netlify/functions/submit-story-application.js —
+    // and does not affect what's sent here.
+    trustedform_cert_url: answers.trustedform_cert_url || "",
   };
 }
 
