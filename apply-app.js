@@ -129,8 +129,143 @@
       consent: false, // Application Agreement checkbox, now on the new consent step
       consent_timestamp: "",
       attorney_contact_consent: null, // NEW — Attorney Contact Consent checkbox, true/false/null, optional
+      // NEW — ActiveProspect TrustedForm compliance certificate URL.
+      // Captured (best-effort, never blocking) at final submission —
+      // see validateAndSubmitFromConsent()/waitForTrustedFormCertUrl()
+      // below. Always "" until then; stays "" for the whole session if
+      // TrustedForm never loads or never populates the field in time.
+      trustedform_cert_url: "",
     },
   };
+
+  // -----------------------------------------------------------------
+  // TrustedForm (ActiveProspect) — Round 6 architecture.
+  //
+  // Loads ONCE, for EVERY applicant, starting at page load (not gated
+  // by HOT LEAD status). Auto-Retain is disabled for this account, so
+  // unlike an earlier design considered for this integration, loading
+  // the SDK broadly here has no per-record billing effect — billing
+  // only happens via the explicit, HOT-LEAD-gated server-side Retain
+  // API call in netlify/functions/submit-story-application.js. Every
+  // applicant's certificate URL is still captured and sent to the
+  // Sheet (blank if unavailable); only its RETENTION is HOT-LEAD-only.
+  //
+  // The TrustedForm Certify Web SDK requires a <form> element to exist
+  // in the DOM BEFORE the SDK script loads — a documented hard
+  // prerequisite ("If the form is injected into the page code after
+  // the TrustedForm Certify Web SDK starts, the hidden field will not
+  // be appended to the form." —
+  // https://developers.activeprospect.com/pages/trustedform/implementing-trustedform-certify).
+  // #applyRoot's contents are replaced wholesale on every step
+  // transition (see render()'s innerHTML assignment), so this form —
+  // and the SDK's auto-created hidden xxTrustedFormCertUrl field —
+  // must live OUTSIDE #applyRoot, appended directly to document.body,
+  // so it survives for the entire session regardless of step.
+  // -----------------------------------------------------------------
+  var tfHiddenForm = null;
+  // True only once the SDK <script> has actually been inserted into
+  // the page. Used at submission time to decide whether it's even
+  // worth polling for the hidden field — if insertion failed for some
+  // reason (see the try/catch in initTrustedForm() below), there is
+  // nothing to wait for, so submission stays fully synchronous exactly
+  // as it was before this integration.
+  var tfScriptLoadAttempted = false;
+
+  function initTrustedForm() {
+    if (tfHiddenForm) return; // one-time guard — DOMContentLoaded only fires once anyway
+
+    tfHiddenForm = document.createElement("form");
+    tfHiddenForm.id = "tfHiddenForm";
+    tfHiddenForm.setAttribute("aria-hidden", "true");
+    tfHiddenForm.style.display = "none";
+    document.body.appendChild(tfHiddenForm);
+
+    // "offer" is the highest-level consent-tagging role — it should be
+    // the element that completely captures the area where consent (and
+    // its requirements) is given. #applyRoot is the one element in this
+    // flow that persists across every step (only its children are
+    // replaced — see render()), so it's the correct, re-render-proof
+    // place for this tag, per ActiveProspect's consent-tagging guidance:
+    // https://developers.activeprospect.com/pages/trustedform/consent-tagging
+    if (applyRoot) {
+      applyRoot.setAttribute("data-tf-element-role", "offer");
+    }
+
+    // The SDK must load AFTER tfHiddenForm exists (see prerequisite
+    // note above). Configuration is the exact production values
+    // already confirmed for this account — hardcoded here directly
+    // rather than read from config-apply.js (which stays fully
+    // untouched by this integration):
+    //   field                = xxTrustedFormCertUrl
+    //   use_tagged_consent   = true
+    //   sandbox              = OFF (the parameter is simply omitted —
+    //                          per ActiveProspect's docs, sandbox mode
+    //                          is only enabled by explicitly adding
+    //                          "&sandbox=" + sandbox to the URL)
+    // The "&l=" cache-busting parameter (current timestamp + random)
+    // preserves ActiveProspect's standard cache-busting behavior, so
+    // the script is always fetched fresh rather than served from a
+    // stale browser cache.
+    var tfField = "xxTrustedFormCertUrl";
+    var tfScriptSrc =
+      (document.location.protocol === "https:" ? "https" : "http") +
+      "://api.trustedform.com/trustedform.js" +
+      "?field=" + encodeURIComponent(tfField) +
+      "&use_tagged_consent=true" +
+      "&l=" + new Date().getTime() + Math.random();
+
+    try {
+      var tf = document.createElement("script");
+      tf.type = "text/javascript";
+      tf.async = true;
+      tf.src = tfScriptSrc;
+      var firstScript = document.getElementsByTagName("script")[0];
+      if (firstScript && firstScript.parentNode) {
+        firstScript.parentNode.insertBefore(tf, firstScript);
+      } else {
+        document.head.appendChild(tf);
+      }
+      tfScriptLoadAttempted = true;
+    } catch (e) {
+      console.warn("[apply] TrustedForm: failed to insert SDK script:", e);
+    }
+  }
+
+  // Reads the SDK-populated hidden field. The SDK assigns its OWN
+  // auto-suffixed id (e.g. "xxTrustedFormCertUrl_0") but always keeps
+  // the fixed `name` "xxTrustedFormCertUrl" (matching the Web SDK's
+  // `field` config param), so this reads by NAME, never by id.
+  function readTrustedFormCertUrl() {
+    try {
+      var els = document.getElementsByName("xxTrustedFormCertUrl");
+      if (els && els.length > 0 && els[0].value) {
+        return els[0].value;
+      }
+    } catch (e) {
+      // no-op — TrustedForm capture is always non-blocking
+    }
+    return "";
+  }
+
+  // Bounded poll used only at final submission, in case the SDK
+  // hasn't finished creating/populating the field yet (slow network,
+  // ad blocker delay, etc). Resolves with "" — never rejects — once
+  // maxAttempts is reached, so a TrustedForm delay or failure can
+  // never prevent an applicant from submitting their application.
+  function waitForTrustedFormCertUrl(maxAttempts, intervalMs) {
+    return new Promise(function (resolve) {
+      var attempts = 0;
+      (function poll() {
+        var val = readTrustedFormCertUrl();
+        if (val || attempts >= maxAttempts) {
+          resolve(val || "");
+          return;
+        }
+        attempts++;
+        setTimeout(poll, intervalMs);
+      })();
+    });
+  }
 
   // Recency qualifies HOT LEAD eligibility only when the accident was
   // within the last 12 months ("Within the last 6 months" OR "Within
@@ -224,6 +359,14 @@
       var banner = document.getElementById("applyTestBanner");
       if (banner) banner.style.display = "block";
     }
+
+    // Starts recording the entire /apply session from the very
+    // beginning, for every visitor — not gated by HOT LEAD status
+    // (see the TrustedForm section above for why that's safe now that
+    // Auto-Retain is disabled). Must run before bindStaticHeroButton()/
+    // render() only in the sense that earlier is better for session
+    // coverage; it does not depend on either of them.
+    initTrustedForm();
 
     bindStaticHeroButton();
     render();
@@ -512,7 +655,7 @@
     return (
       '<p class="apply-question">What is your date of birth?</p>' +
       '<div class="apply-field-group">' +
-      '<input type="text" id="q2Input" class="apply-dob-input" inputmode="numeric" autocomplete="bday" placeholder="MM/DD/YYYY" maxlength="10" value="' + escapeAttr(displayValue) + '">' +
+      '<input type="text" id="q2Input" class="apply-dob-input" inputmode="numeric" autocomplete="bday" placeholder="MM/DD/YYYY" maxlength="10" value="' + escapeAttr(displayValue) + '" data-tf-sensitive="true">' +
       '<p class="apply-error-text" id="q2Error"></p>' +
       "</div>" +
       '<div class="apply-step-actions">' +
@@ -651,7 +794,7 @@
     return (
       '<p class="apply-question">In a few sentences, what happened?</p>' +
       '<div class="apply-field-group">' +
-      '<textarea id="q5Input" maxlength="500" placeholder="Tell us briefly what happened...">' + escapeHtml(val) + "</textarea>" +
+      '<textarea id="q5Input" maxlength="500" placeholder="Tell us briefly what happened..." data-tf-sensitive="true">' + escapeHtml(val) + "</textarea>" +
       '<p class="apply-char-count" id="q5Count">' + val.length + "/500</p>" +
       '<p class="apply-error-text" id="q5Error"></p>' +
       "</div>" +
@@ -855,7 +998,14 @@
     return (
       '<p class="apply-question">What injuries did you have?</p>' +
       '<p class="apply-subtext">Select all that apply.</p>' +
-      '<div class="apply-checkbox-list">' + optionsHtml + "</div>" +
+      // Masked per Round 6 requirements — injury selections are one of
+      // the fields that must not be visible in TrustedForm session
+      // replay. data-tf-sensitive="true" is documented to work on
+      // non-input container elements (div/p/img, etc.), not just
+      // <input> — see ActiveProspect's "Flagging Sensitive Data"
+      // article — so tagging this wrapping div masks all nested
+      // checkbox-card content as a unit.
+      '<div class="apply-checkbox-list" data-tf-sensitive="true">' + optionsHtml + "</div>" +
       '<p class="apply-error-text" id="qInjuriesError"></p>' +
       '<div class="apply-step-actions">' +
       '<button type="button" class="apply-btn apply-btn-primary" id="qInjuriesContinue">Continue</button>' +
@@ -900,7 +1050,11 @@
     }).join("");
     return (
       '<p class="apply-question">Did you receive medical treatment?</p>' +
-      '<div class="apply-answer-list">' + optionsHtml + "</div>" +
+      // Masked per Round 6 requirements — same container-level
+      // data-tf-sensitive="true" technique used for the injuries
+      // question above (this is a button-based Yes/No, not a native
+      // input, so the attribute goes on the wrapping container).
+      '<div class="apply-answer-list" data-tf-sensitive="true">' + optionsHtml + "</div>" +
       backButton()
     );
   }
@@ -1078,23 +1232,31 @@
   // answer — this is the applicant's own final affirmative consent.
   function qConsentTemplate() {
     var hotLead = isHotLead();
+    // data-tf-element-role="consent-language" — tags the disclosure
+    // text itself, per ActiveProspect's consent-tagging spec
+    // (https://developers.activeprospect.com/pages/trustedform/consent-tagging).
+    // Both paragraphs get it: for HOT LEAD applicants both the
+    // attorney paragraph and the universal agreement paragraph are
+    // "consent language" the applicant is agreeing to via the single
+    // checkbox below; for everyone else only the universal paragraph
+    // renders at all.
     var attorneyParagraph = !hotLead ? "" : (
-      '<p class="apply-consent-text" style="margin:0 0 10px;">Crash2Claim may share my contact and accident information with an independent attorney or legal service provider who may contact me about my accident. Crash2Claim may receive compensation for this connection. This does not create an attorney-client relationship.</p>'
+      '<p class="apply-consent-text" data-tf-element-role="consent-language" style="margin:0 0 10px;">Crash2Claim may share my contact and accident information with an independent attorney or legal service provider who may contact me about my accident. Crash2Claim may receive compensation for this connection. This does not create an attorney-client relationship.</p>'
     );
     return (
       '<p class="apply-question">Almost done &mdash; one final step</p>' +
       '<p class="apply-subtext">Review the options below, then submit your application.</p>' +
       attorneyParagraph +
-      '<p class="apply-consent-text" style="margin:0 0 10px;">I confirm that I am 18 or older, the information I provided is accurate, and I understand that applying does not guarantee an interview, publication, or payment. The $50 payment is earned only if Crash2Claim accepts my completed recorded interview for publication. Crash2Claim is not a law firm and does not provide legal advice.</p>' +
+      '<p class="apply-consent-text" data-tf-element-role="consent-language" style="margin:0 0 10px;">I confirm that I am 18 or older, the information I provided is accurate, and I understand that applying does not guarantee an interview, publication, or payment. The $50 payment is earned only if Crash2Claim accepts my completed recorded interview for publication. Crash2Claim is not a law firm and does not provide legal advice.</p>' +
       '<div class="apply-field-group">' +
       '<div class="apply-consent-row">' +
-      '<input type="checkbox" id="qConsentAgreement"' + (STATE.answers.consent === true ? " checked" : "") + '>' +
+      '<input type="checkbox" id="qConsentAgreement" data-tf-element-role="consent-opt-in"' + (STATE.answers.consent === true ? " checked" : "") + '>' +
       '<label class="apply-consent-text" for="qConsentAgreement">I agree and consent to the above.</label>' +
       "</div>" +
       '<p class="apply-error-text" id="qConsentError"></p>' +
       "</div>" +
       '<div class="apply-step-actions">' +
-      '<button type="button" class="apply-btn apply-btn-primary" id="qConsentSubmit">Submit My Application</button>' +
+      '<button type="button" class="apply-btn apply-btn-primary" id="qConsentSubmit" data-tf-element-role="submit">Submit My Application</button>' +
       "</div>" +
       backButton()
     );
@@ -1130,7 +1292,37 @@
     // checkbox, so it's true for them and only them.
     STATE.answers.attorney_contact_consent = isHotLead();
 
-    handleSubmit();
+    // If the SDK script insertion itself failed (see the try/catch in
+    // initTrustedForm() and tfScriptLoadAttempted), there is nothing to
+    // poll for: the field will never appear. Submit immediately and
+    // synchronously in that edge case — no artificial delay when
+    // TrustedForm couldn't even attempt to load.
+    if (!tfScriptLoadAttempted) {
+      STATE.answers.trustedform_cert_url = "";
+      handleSubmit();
+      return;
+    }
+
+    // Mark submitting immediately — before the bounded TrustedForm
+    // poll below — so a double-click during that window can't start a
+    // second submission. handleSubmit() also sets this flag; re-setting
+    // it there is harmless.
+    STATE.isSubmitting = true;
+
+    // Best-effort, non-blocking capture of the TrustedForm certificate
+    // URL. Bounded to 15 attempts x 100ms (1.5s max) — if the field
+    // still isn't populated by then (slow network, ad blocker, etc.),
+    // this resolves with "" and the application still submits
+    // normally. TrustedForm capture must never be able to block or
+    // delay an applicant's submission beyond this bound. In practice
+    // this resolves almost immediately: the SDK has had the entire
+    // multi-step application (loaded at page entry — see
+    // initTrustedForm()) to populate the field well before the
+    // applicant reaches this final consent step.
+    waitForTrustedFormCertUrl(15, 100).then(function (certUrl) {
+      STATE.answers.trustedform_cert_url = certUrl;
+      handleSubmit();
+    });
   }
 
   // Any synchronous exception thrown while preparing/dispatching the
@@ -1180,6 +1372,23 @@
         // still reaches a clean final screen either way, just with
         // different copy (never an accusatory error).
         STATE.isDuplicate = !!result.duplicate;
+
+        // Cleanly closes out the TrustedForm recording session now that
+        // the application is done — documented as the correct call for
+        // SPAs where "submission" doesn't cause a page unload (see
+        // https://support.activeprospect.com/hc/en-us/articles/47164845565588-TrustedFormStopRecording-Function).
+        // Guarded since the SDK is only present if it loaded
+        // successfully (script reachable, not blocked, etc.) — this
+        // must never throw or block the applicant from reaching the
+        // thank-you screen either way.
+        try {
+          if (typeof window !== "undefined" && typeof window.trustedFormStopRecording === "function") {
+            window.trustedFormStopRecording();
+          }
+        } catch (tfErr) {
+          console.warn("[apply] TrustedForm: trustedFormStopRecording() failed:", tfErr);
+        }
+
         STATE.step = STATE.step + 1;
         render();
       })
