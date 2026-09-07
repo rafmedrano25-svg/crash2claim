@@ -139,16 +139,30 @@
   };
 
   // -----------------------------------------------------------------
-  // TrustedForm (ActiveProspect) — Round 6 architecture.
+  // TrustedForm (ActiveProspect) — Round 7 architecture.
   //
-  // Loads ONCE, for EVERY applicant, starting at page load (not gated
-  // by HOT LEAD status). Auto-Retain is disabled for this account, so
-  // unlike an earlier design considered for this integration, loading
-  // the SDK broadly here has no per-record billing effect — billing
-  // only happens via the explicit, HOT-LEAD-gated server-side Retain
-  // API call in netlify/functions/submit-story-application.js. Every
-  // applicant's certificate URL is still captured and sent to the
-  // Sheet (blank if unavailable); only its RETENTION is HOT-LEAD-only.
+  // Loads ONCE, for EVERY applicant, but NOT at page load. Per this
+  // round's requirement, Session Replay must never capture the
+  // recruitment landing page or the preliminary "How do you want to
+  // spend your $50?" (payment-intent) question — only the actual
+  // application questions starting at "What's your full name?". So
+  // initTrustedForm() is called exactly once, from inside
+  // bindQPaymentIntent()'s click handler below, at the moment the
+  // applicant advances PAST the payment-intent question — before
+  // STATE.step is advanced and before render() draws the Full Name
+  // question. It is NOT called on DOMContentLoaded, NOT called when
+  // the static "Start Your Application" hero button is clicked, and
+  // NOT called merely because the payment-intent question is on
+  // screen — only when the applicant answers it and moves on.
+  //
+  // Not gated by HOT LEAD status either way. Auto-Retain is disabled
+  // for this account, so loading the SDK broadly here has no
+  // per-record billing effect — billing only happens via the
+  // explicit, HOT-LEAD-gated server-side Retain API call in
+  // netlify/functions/submit-story-application.js (untouched by this
+  // round's change). Every applicant's certificate URL is still
+  // captured and sent to the Sheet (blank if unavailable); only its
+  // RETENTION is HOT-LEAD-only.
   //
   // The TrustedForm Certify Web SDK requires a <form> element to exist
   // in the DOM BEFORE the SDK script loads — a documented hard
@@ -171,8 +185,43 @@
   // as it was before this integration.
   var tfScriptLoadAttempted = false;
 
-  function initTrustedForm() {
-    if (tfHiddenForm) return; // one-time guard — DOMContentLoaded only fires once anyway
+  // Bounded fallback for the readiness gate below. initTrustedForm()
+  // only INSERTS the SDK <script> synchronously — the SDK itself is
+  // fetched and executed asynchronously by the browser — so the exact
+  // moment "recording has begun" cannot be observed directly with a
+  // public API. The best available proxy is the script element's own
+  // load/error event (i.e. the browser finished fetching and running
+  // it). This fallback exists so an ad blocker, network failure, or
+  // ActiveProspect outage — cases where neither event may ever fire —
+  // can never permanently trap the applicant on the payment-intent
+  // question: after this many ms with no load/error, initialization
+  // is treated as "as ready as it's going to get" and the flow
+  // continues anyway (matching this integration's existing philosophy
+  // elsewhere — see waitForTrustedFormCertUrl()'s own bounded poll —
+  // of never letting TrustedForm block submission).
+  var TF_INIT_FALLBACK_MS = 1500;
+
+  // onReady is called EXACTLY ONCE: as soon as the SDK script reports
+  // load or error, or after TF_INIT_FALLBACK_MS if neither ever fires.
+  // Callers must not render/enable anything that should be part of
+  // the TrustedForm-recorded session until onReady runs.
+  function initTrustedForm(onReady) {
+    var ready = typeof onReady === "function" ? onReady : function () {};
+
+    // One-time guard. The call site (bindQPaymentIntent(), below) is
+    // itself guarded against re-firing while a call is in flight, but
+    // this still matters for real: the applicant can navigate Back to
+    // the payment-intent question and answer it again, which re-runs
+    // bindQPaymentIntent() and calls initTrustedForm() a second time.
+    // That must never create a second hidden form/second SDK <script>
+    // insertion (which would risk a second certificate) — and since
+    // the SDK is already loaded (or already given up via fallback)
+    // from the first pass, there is nothing left to wait for, so
+    // readiness is reported immediately.
+    if (tfHiddenForm) {
+      ready();
+      return;
+    }
 
     tfHiddenForm = document.createElement("form");
     tfHiddenForm.id = "tfHiddenForm";
@@ -219,6 +268,25 @@
       tf.type = "text/javascript";
       tf.async = true;
       tf.src = tfScriptSrc;
+
+      // Fire `ready` exactly once, however initialization resolves:
+      // the script loaded, the script errored (blocked by an ad
+      // blocker, 404, network failure — ActiveProspect being down
+      // must never trap the applicant), or the bounded fallback timer
+      // above elapses because neither event ever fired at all (some
+      // blockers silently drop the request without ever erroring).
+      var settled = false;
+      var fallbackTimer = null;
+      var settle = function () {
+        if (settled) return;
+        settled = true;
+        if (fallbackTimer) clearTimeout(fallbackTimer);
+        ready();
+      };
+      tf.onload = settle;
+      tf.onerror = settle;
+      fallbackTimer = setTimeout(settle, TF_INIT_FALLBACK_MS);
+
       var firstScript = document.getElementsByTagName("script")[0];
       if (firstScript && firstScript.parentNode) {
         firstScript.parentNode.insertBefore(tf, firstScript);
@@ -228,6 +296,10 @@
       tfScriptLoadAttempted = true;
     } catch (e) {
       console.warn("[apply] TrustedForm: failed to insert SDK script:", e);
+      // Insertion itself failed synchronously — there is nothing to
+      // wait for, so report ready immediately rather than stalling
+      // the applicant for the full fallback window.
+      ready();
     }
   }
 
@@ -360,13 +432,13 @@
       if (banner) banner.style.display = "block";
     }
 
-    // Starts recording the entire /apply session from the very
-    // beginning, for every visitor — not gated by HOT LEAD status
-    // (see the TrustedForm section above for why that's safe now that
-    // Auto-Retain is disabled). Must run before bindStaticHeroButton()/
-    // render() only in the sense that earlier is better for session
-    // coverage; it does not depend on either of them.
-    initTrustedForm();
+    // TrustedForm is intentionally NOT initialized here. Per this
+    // round's requirement, the landing page and the preliminary
+    // payment-intent question must never be captured — see the
+    // TrustedForm section above initTrustedForm() for the full design
+    // note. initTrustedForm() is instead called once, later, from
+    // bindQPaymentIntent()'s click handler, at the moment the
+    // applicant advances past that question.
 
     bindStaticHeroButton();
     render();
@@ -585,11 +657,35 @@
     );
   }
   function bindQPaymentIntent() {
+    // Local to THIS rendering of the payment-intent step — a fresh
+    // `advancing` starts false every time bindQPaymentIntent() runs
+    // (i.e. every time this step is (re-)rendered, including after
+    // the applicant navigates Back to it). Guards against a second
+    // click (the same option twice, or a different option) firing a
+    // second initTrustedForm()/advance while the first is still
+    // waiting on the readiness callback — without blocking a
+    // legitimate re-answer after Back, since that gets its own fresh
+    // `advancing` from a fresh bindQPaymentIntent() call.
+    var advancing = false;
     PAYMENT_INTENT_OPTIONS.forEach(function (opt, i) {
       document.getElementById("qPaymentIntentOpt" + i).addEventListener("click", function () {
+        if (advancing) return;
+        advancing = true;
         STATE.answers.payment_intent = opt.label;
-        STATE.step = STATE.step + 1;
-        render();
+        // TrustedForm begins here — the landing page and this
+        // payment-intent question itself must never be part of the
+        // Session Replay. initTrustedForm() is idempotent (see its
+        // one-time guard above), so this stays safe even if the
+        // applicant reaches this question a second time via Back.
+        // STATE.step only advances / render() only draws the Full
+        // Name question inside the readiness callback, so the
+        // applicant cannot type a name until TrustedForm has actually
+        // loaded (or the bounded fallback has kicked in) — not merely
+        // until initTrustedForm() has been called.
+        initTrustedForm(function () {
+          STATE.step = STATE.step + 1;
+          render();
+        });
       });
     });
     // Intentionally no bindBack() — this is always the first step.
