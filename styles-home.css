@@ -390,6 +390,7 @@ body.hp-page {
    --------------------------------------------------------------- */
 .hp-intro-j {
   padding: 40px 0 36px;
+  background: var(--lblue);
 }
 .hp-intro-j-inner {
   max-width: 1150px;
@@ -431,7 +432,7 @@ body.hp-page {
 .hp-intro-j-line {
   flex: 1;
   width: 1px;
-  background: var(--gray-200);
+  background: rgba(15, 37, 64, 0.14); /* darkened for contrast vs the lblue section background */
   margin: 4px 0;
 }
 .hp-intro-j-content {
