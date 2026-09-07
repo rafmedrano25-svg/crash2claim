@@ -415,85 +415,104 @@ body.hp-page {
   border-radius: 8px;
 }
 
+/* REDESIGN — typographic story cards (replaces the former AI-portrait
+   photo/avatar/play-button treatment). No images are loaded for these
+   cards at all: the card face is pure CSS (brand gradient + a subtle
+   road-line texture) plus editorial typography (quote mark, hook line,
+   tag, state, "Story coming soon"). Card size/spacing/typography
+   intentionally match the approved "Preview A: Typographic Story
+   Carousel" concept exactly. Cards are plain, non-interactive list
+   items (see index.html) — no cursor:pointer, no click target. */
 .hp-story-card {
   scroll-snap-align: start;
   flex: none;
-  width: 180px;
+  width: 220px;
   aspect-ratio: 9 / 16;
   border-radius: var(--radius-lg);
   position: relative;
   overflow: hidden;
-  cursor: pointer;
-  border: none;
-  padding: 0;
-  text-align: left;
   box-shadow: var(--shadow-card);
   background: linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 55%, var(--teal) 140%);
+  padding: 22px 18px 20px;
+  display: flex;
+  flex-direction: column;
+  color: var(--white);
 }
 @media (max-width: 640px) {
   .hp-story-card {
-    width: 42vw;
-    min-width: 130px;
-    max-width: 170px;
+    width: 58vw;
+    min-width: 190px;
+    max-width: 240px;
   }
 }
 
-/* sample_interview_visual — interview image layer:
-   Each card gets an <img class="hp-story-card-photo sample_interview_visual">
-   pointing at /images/interviews/interview-sample-0N.webp, layered
-   (z-index 1) on top of the .hp-story-card-avatar silhouette
-   (z-index 0). If the file hasn't been uploaded yet, the <img>'s
-   inline onerror handler hides it, and the silhouette underneath
-   shows through automatically — no JS/markup change needed once
-   real files exist, they just need to be uploaded to that path.
-   The sample-tag / play button / bottom-gradient info bar are
-   pinned to z-index 2 so they always stay above both. */
-.hp-story-card-avatar {
+/* Subtle road/lane-line texture — abstract, brand-colored, no imagery. */
+.hp-story-card::before {
+  content: "";
   position: absolute;
   inset: 0;
-  z-index: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background-image:
+    repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.07) 0px, rgba(255, 255, 255, 0.07) 2px, transparent 2px, transparent 34px),
+    linear-gradient(0deg, rgba(255, 90, 54, 0.1), transparent 55%);
+  pointer-events: none;
+}
+
+.hp-story-quotemark {
+  font-size: 46px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--coral);
   opacity: 0.9;
-}
-.hp-story-card-avatar svg {
-  width: 46%;
-  height: 46%;
-  color: rgba(255, 255, 255, 0.35);
+  margin: 0 0 6px;
+  font-family: Georgia, "Times New Roman", serif;
 }
 
-.hp-story-card-photo {
-  position: absolute;
-  inset: 0;
+.hp-story-quote {
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.28;
+  letter-spacing: -0.01em;
+  margin: 0 0 auto;
+  position: relative;
   z-index: 1;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
 }
 
+.hp-story-meta {
+  position: relative;
+  z-index: 1;
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
-.hp-story-play {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  z-index: 2;
-  transform: translate(-50%, -50%);
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.94);
+.hp-story-tag {
+  display: inline-flex;
+  align-self: flex-start;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--navy);
+  background: var(--white);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.hp-story-state {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.hp-story-cta {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
   display: flex;
   align-items: center;
-  justify-content: center;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
-}
-.hp-story-play svg {
-  width: 17px;
-  height: 17px;
-  color: var(--navy);
-  margin-left: 2px;
+  gap: 6px;
+  margin-top: 4px;
 }
 
 
@@ -894,85 +913,6 @@ body.hp-page {
   .hp-footer-col a {
     margin-bottom: 8px;
   }
-}
-
-/* ---------------------------------------------------------------
-   Video placeholder modal
-   --------------------------------------------------------------- */
-.hp-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 37, 64, 0.72);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 500;
-  padding: 20px;
-}
-.hp-modal-overlay.open {
-  display: flex;
-}
-.hp-modal {
-  background: var(--navy);
-  color: var(--white);
-  width: 100%;
-  max-width: 360px;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  position: relative;
-}
-.hp-modal-close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-  border: none;
-  color: var(--white);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 2;
-}
-.hp-modal-close:hover {
-  background: rgba(255, 255, 255, 0.22);
-}
-.hp-modal-video-area {
-  aspect-ratio: 9 / 16;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 12px;
-  background: linear-gradient(160deg, var(--navy) 0%, var(--navy-2) 55%, var(--teal) 140%);
-  text-align: center;
-  padding: 24px;
-}
-.hp-modal-video-area svg {
-  width: 44px;
-  height: 44px;
-  opacity: 0.6;
-}
-.hp-modal-video-note {
-  font-size: 13px;
-  opacity: 0.85;
-  line-height: 1.5;
-  max-width: 260px;
-}
-.hp-modal-info {
-  padding: 16px 18px 20px;
-}
-.hp-modal-info h3 {
-  margin: 0 0 4px;
-  font-size: 16px;
-}
-.hp-modal-info p {
-  margin: 0;
-  font-size: 13px;
-  opacity: 0.75;
 }
 
 /* ---------------------------------------------------------------
