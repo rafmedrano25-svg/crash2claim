@@ -25,6 +25,13 @@ const crypto = require("crypto");
 const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 
+// Hard ceiling on the outbound TrustedForm Retain request (see
+// retainTrustedFormCertificate() below) — an ActiveProspect outage or
+// slow response must never be able to meaningfully delay the
+// applicant's Crash2Claim submission. Not a retry budget: on timeout
+// the call is simply abandoned and logged, never retried.
+const RETAIN_REQUEST_TIMEOUT_MS = 5000;
+
 // Column order MUST match the header row in the RECRUITMENT Google
 // Sheet exactly. This is a completely separate column set from
 // submit-lead.js's COLUMNS array.
@@ -129,6 +136,17 @@ const COLUMNS = [
   // it would misalign every column after it against historical Sheet
   // rows. It will simply always be blank in every row submitted from
   // here forward.
+  // NEW (TrustedForm integration) — appended at the very end, same
+  // append-only pattern as every column above. ActiveProspect
+  // TrustedForm compliance certificate URL, captured client-side for
+  // EVERY applicant (see apply-app.js/apply-payload.js) — blank if
+  // TrustedForm never loaded or never populated in time. Retention of
+  // the certificate (the billed TrustedForm operation) is a separate,
+  // HOT-LEAD-gated server-side step performed further down in this
+  // file (see retainTrustedFormCertificate()) — it does not change
+  // what is written to this column; the raw cert URL is written here
+  // regardless of whether retention succeeds, fails, or is skipped.
+  "trustedform_cert_url",
 ];
 
 // Duplicate-detection is keyed off these two columns. Resolved by
@@ -225,6 +243,23 @@ exports.handler = async function (event) {
 
     var row = buildRow(applicant, serverSubmissionId, serverReceivedAt);
     await appendRow(sheetId, sheetTabName, accessToken, row);
+
+    // TrustedForm Retain — HOT LEAD only. lead_status here is
+    // RECOMPUTED via the same authoritative computeLeadStatus()
+    // already used in buildRow() above (never a client-supplied
+    // value), and retention only runs when a certificate URL was
+    // actually captured. This call is fully non-blocking: it's
+    // awaited (so it completes before this function's execution
+        // context can be frozen/recycled) but retainTrustedFormCertificate()
+
+    // fully catches its own errors and never throws, so a Retain
+    // failure can never change the response already determined above
+    // (the applicant's row is already written by this point either way).
+    var leadStatusForRetain = computeLeadStatus(applicant);
+    if (leadStatusForRetain === "HOT LEAD" && applicant.trustedform_cert_url) {
+      await retainTrustedFormCertificate(applicant.trustedform_cert_url, applicant, applicantIdForLogging);
+    }
+
     return jsonResponse(200, { ok: true, duplicate: false, applicant_id: applicantIdForLogging });
   } catch (err) {
     console.error("[submit-story-application] Delivery failed. applicant_id=" + applicantIdForLogging + " reason=" + (err && err.message));
@@ -351,6 +386,136 @@ function computeLeadStatus(applicant) {
   var wantsAttorney = applicant.interested_in_attorney === "Yes";
   var otherPersonAtFault = applicant.primary_fault === "Other person";
   return isAdult && recentEnough && qualifyingStatus && noAttorney && wantsAttorney && otherPersonAtFault ? "HOT LEAD" : "";
+}
+
+// -----------------------------------------------------------------
+// TrustedForm Retain (ActiveProspect) — server-side ONLY, HOT LEAD-only.
+//
+// Called from the handler above only when computeLeadStatus() (this
+// exact function, never a client-supplied value) returns "HOT LEAD"
+// AND a non-blank trustedform_cert_url was captured. Fully
+// non-blocking by design: every failure path below only logs — it
+// never throws out of this function, so it can never turn an
+// otherwise-successful application submission into an error response,
+// and it never affects what was already written to the Sheet.
+//
+// API surface used (ActiveProspect TrustedForm Certificate API v4.0 —
+// "Run Certificate Operations"):
+//   Endpoint: POST <trustedform_cert_url> (the full certificate URL
+//     captured client-side, e.g. https://cert.trustedform.com/<cert_id>
+//     — this API is invoked by POSTing directly to that URL, there is
+//     no separate/different endpoint to construct).
+//   Headers: Content-Type: application/json, Accept: application/json,
+//     Api-Version: 4.0 (explicitly forced to the current v4.0 schema
+//     regardless of the account's dashboard-configured default),
+//     Authorization: HTTP Basic — username "API" (ignored by
+//     ActiveProspect, any value works), password = TRUSTEDFORM_API_KEY.
+//   Body: { retain: { reference, vendor }, match_lead: { email, phone } }
+//     — match_lead is REQUIRED whenever retain is requested per
+//     ActiveProspect's own docs ("The match_lead operation is required
+//     when running the retain operation"), so this is always included,
+//     never optional, whenever this function runs.
+//   Success: HTTP 200 with a JSON body containing a top-level `outcome`
+//     ("success"/"failure"/"error" — best-practice signal for whether
+//     to treat the lead as valid; a "failure" on match_lead does NOT
+//     un-retain the certificate, per ActiveProspect: "The result of the
+//     match_lead operation does not impact the behavior of the retain
+//     operation"), plus `retain.results` (expires_at, masked_cert_url,
+//     previously_retained) and `match_lead.result` (email_match,
+//     phone_match, success).
+//   Errors: 400 (malformed cert id/body), 401 (bad API key), 402
+//     (account inactive/out of funds), 403 (operation unavailable on
+//     this plan — Retain requires Self-Service plan or higher), 404
+//     (certificate expired or not found), 405 (sandboxed certificate —
+//     cannot be claimed), 422 (certificate claimed too many times).
+//   Source (fetched directly, current as of this integration):
+//     https://developers.activeprospect.com/api-reference/claims_api-v4.yaml
+//     https://developers.activeprospect.com/api-reference/certificate-url/run-certificate-operations
+//     https://support.activeprospect.com/hc/en-us/articles/44098371450388-Retain-API-Operation
+//     https://support.activeprospect.com/hc/en-us/articles/44098159891860-Certificate-API-Version-4-0
+async function retainTrustedFormCertificate(certUrl, applicant, applicantIdForLogging) {
+  var apiKey = process.env.TRUSTEDFORM_API_KEY;
+  if (!apiKey) {
+    console.error("[submit-story-application] TrustedForm Retain skipped: TRUSTEDFORM_API_KEY is not configured. applicant_id=" + applicantIdForLogging);
+    return;
+  }
+  // match_lead requires email and/or phone. Both are always-required
+  // fields earlier in the application flow, so in practice both should
+  // always be present by the time this runs — this check is a
+  // defensive guard, not an expected path.
+  if (!applicant.email && !applicant.phone) {
+    console.error("[submit-story-application] TrustedForm Retain skipped: match_lead requires email and/or phone, both missing. applicant_id=" + applicantIdForLogging);
+    return;
+  }
+
+  var matchLead = {};
+  if (applicant.email) matchLead.email = applicant.email;
+  if (applicant.phone) matchLead.phone = applicant.phone;
+
+  var requestBody = {
+    retain: {
+      reference: applicant.applicant_id || applicantIdForLogging,
+      vendor: "Crash2Claim",
+    },
+    match_lead: matchLead,
+  };
+
+  try {
+    var res = await fetch(certUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Api-Version": "4.0",
+        "Authorization": "Basic " + Buffer.from("API:" + apiKey).toString("base64"),
+      },
+      body: JSON.stringify(requestBody),
+      // Aborts the request if ActiveProspect hasn't responded within
+      // RETAIN_REQUEST_TIMEOUT_MS. No retry — the catch block below
+      // just logs and returns, exactly like any other Retain failure.
+      signal: AbortSignal.timeout(RETAIN_REQUEST_TIMEOUT_MS),
+    });
+
+    var responseText = await res.text();
+    var parsed = null;
+    try {
+      parsed = JSON.parse(responseText);
+    } catch (parseErr) {
+      parsed = null;
+    }
+
+    if (!res.ok) {
+      console.error(
+        "[submit-story-application] TrustedForm Retain failed. applicant_id=" + applicantIdForLogging +
+        " http_status=" + res.status +
+        " outcome=" + (parsed && parsed.outcome) +
+        " reason=" + (parsed && parsed.reason) +
+        " raw=" + responseText.slice(0, 300)
+      );
+      return;
+    }
+
+    var retainResults = parsed && parsed.retain && parsed.retain.results;
+    var matchLeadResult = parsed && parsed.match_lead && parsed.match_lead.result;
+    console.log(
+      "[submit-story-application] TrustedForm Retain succeeded. applicant_id=" + applicantIdForLogging +
+      " outcome=" + (parsed && parsed.outcome) +
+      " previously_retained=" + (retainResults && retainResults.previously_retained) +
+      " expires_at=" + (retainResults && retainResults.expires_at) +
+      " match_lead_success=" + (matchLeadResult && matchLeadResult.success)
+    );
+  } catch (err) {
+    // AbortSignal.timeout() rejects with a DOMException named
+    // "TimeoutError" — distinguished here only so the log line clearly
+    // says "timed out" rather than the generic message below. Both
+    // branches behave identically otherwise: log only, return, never
+    // throw, never retry, never touch the applicant's response.
+    if (err && err.name === "TimeoutError") {
+      console.error("[submit-story-application] TrustedForm Retain timed out after " + RETAIN_REQUEST_TIMEOUT_MS + "ms. applicant_id=" + applicantIdForLogging);
+    } else {
+      console.error("[submit-story-application] TrustedForm Retain request threw. applicant_id=" + applicantIdForLogging + " reason=" + (err && err.message));
+    }
+  }
 }
 
 // Formats a raw ISO 8601 UTC timestamp (e.g. "2026-08-23T11:25:36.069Z")
@@ -554,4 +719,5 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports.COLUMNS = COLUMNS;
   module.exports.formatEasternTimestamp = formatEasternTimestamp;
   module.exports.buildRow = buildRow;
+  module.exports.retainTrustedFormCertificate = retainTrustedFormCertificate;
 }
