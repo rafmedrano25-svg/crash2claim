@@ -4,9 +4,17 @@
  * Deliberately separate from app.js (archived case-eval funnel) and
  * apply-app.js (/apply — must never be touched). This file only
  * drives presentational behavior on the new brand homepage: the
- * mobile nav toggle, the featured-stories carousel arrows, and the
- * placeholder video modal. No lead logic, no form submission, no
- * network calls of any kind live here.
+ * mobile nav toggle and the featured-stories carousel arrows. No
+ * lead logic, no form submission, no network calls of any kind live
+ * here.
+ *
+ * REDESIGN NOTE: the "Real Stories" carousel cards are now static
+ * typographic cards (see index.html / styles-home.css) with no photo,
+ * no click target, and no video preview — so the placeholder video
+ * modal that used to open on card click (initStoryModal(), plus the
+ * .hp-modal-* markup/CSS it drove) has been removed as obsolete. The
+ * carousel arrows below are unaffected and still work exactly as
+ * before.
  * -----------------------------------------------------------------
  */
 
@@ -16,7 +24,6 @@
   document.addEventListener("DOMContentLoaded", function () {
     initMobileNav();
     initCarousel();
-    initStoryModal();
   });
 
   // ---------------------------------------------------------------
@@ -68,60 +75,6 @@
       nextBtn.addEventListener("click", function () {
         track.scrollBy({ left: cardStep() * 2, behavior: "smooth" });
       });
-    }
-  }
-
-  // ---------------------------------------------------------------
-  // Placeholder video modal
-  // ---------------------------------------------------------------
-  function initStoryModal() {
-    var overlay = document.getElementById("hpModalOverlay");
-    var closeBtn = document.getElementById("hpModalClose");
-    var nameEl = document.getElementById("hpModalName");
-    var metaEl = document.getElementById("hpModalMeta");
-    var noteEl = document.getElementById("hpModalNote");
-    if (!overlay) return;
-
-    var cards = document.querySelectorAll(".hp-story-card");
-    cards.forEach(function (card) {
-      card.addEventListener("click", function () {
-        var videoUrl = card.getAttribute("data-video-url") || "";
-
-        // Intentionally NOT displaying data-name/data-state/data-descriptor
-        // here — those attributes are inert placeholder architecture for
-        // later real-participant data, not content meant to be shown to
-        // visitors. Showing a neutral, honest label instead so the modal
-        // never implies these are real Crash2Claim participants.
-        if (nameEl) nameEl.textContent = "Sample Interview";
-        if (metaEl) metaEl.textContent = "Not an actual participant";
-
-        // As soon as a real hosted video URL is present on a card
-        // (data-video-url), this is the one spot that needs updating
-        // to actually play it — everything else in the modal already
-        // works. Left as a placeholder note until real footage exists.
-        if (noteEl) {
-          noteEl.textContent = videoUrl
-            ? "Video playback not yet wired up for this sample build."
-            : "This is placeholder content for the Crash2Claim story library. Real interview video will appear here once published.";
-        }
-
-        openModal();
-      });
-    });
-
-    if (closeBtn) closeBtn.addEventListener("click", closeModal);
-    overlay.addEventListener("click", function (e) {
-      if (e.target === overlay) closeModal();
-    });
-    document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && overlay.classList.contains("open")) closeModal();
-    });
-
-    function openModal() {
-      overlay.classList.add("open");
-    }
-    function closeModal() {
-      overlay.classList.remove("open");
     }
   }
 })();
