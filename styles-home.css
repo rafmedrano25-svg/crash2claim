@@ -384,6 +384,86 @@ body.hp-page {
   color: var(--navy);
   margin: 0 0 12px;
 }
+/* ---------------------------------------------------------------
+   Why Crash2Claim (Option J — Crash2Claim Explainer)
+   Subtle three-step progression rail: Scale -> Aftermath -> Story.
+   --------------------------------------------------------------- */
+.hp-intro-j {
+  padding: 40px 0 36px;
+}
+.hp-intro-j-inner {
+  max-width: 1150px;
+  margin: 0 auto;
+}
+.hp-intro-j-headline {
+  font-size: clamp(26px, 3.2vw, 36px);
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  margin: 14px auto 28px;
+  max-width: 640px;
+  text-align: center;
+}
+.hp-intro-j-rail-wrap {
+  max-width: 760px;
+  margin: 0 auto;
+}
+.hp-intro-j-step {
+  display: flex;
+  gap: 20px;
+}
+.hp-intro-j-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 12px;
+  flex-shrink: 0;
+}
+.hp-intro-j-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--teal);
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+.hp-intro-j-line {
+  flex: 1;
+  width: 1px;
+  background: var(--gray-200);
+  margin: 4px 0;
+}
+.hp-intro-j-content {
+  padding-bottom: 20px;
+  flex: 1;
+}
+.hp-intro-j-step-last .hp-intro-j-content {
+  padding-bottom: 0;
+}
+.hp-intro-j-label {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--coral);
+  margin-bottom: 6px;
+}
+.hp-intro-j-stat {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--teal);
+  margin: 0;
+  line-height: 1.5;
+}
+.hp-intro-j-content p {
+  font-size: 16px;
+  color: var(--gray-600);
+  line-height: 1.7;
+  margin: 0;
+  text-align: left;
+}
+
 .hp-section-sub {
   font-size: 17px;
   color: var(--gray-600);
