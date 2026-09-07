@@ -750,3 +750,65 @@ body.app-mode #applyRoot {
     padding: 34px 34px 28px;
   }
 }
+
+/* ---------------------------------------------------------------
+   Desktop responsive optimization (~1024px+) — approved.
+   Mobile and the 640px tablet tweaks above are unchanged. Scoped to
+   the landing-only elements (hero, process steps, info cards). The
+   focused application Q&A flow (#applyRoot / app-mode .apply-card)
+   is deliberately left at its existing narrower width — a single-
+   question conversational flow doesn't benefit from being stretched
+   to desktop content widths.
+   --------------------------------------------------------------- */
+:root {
+  --max-width-desktop: 1150px;
+}
+
+@media (min-width: 1024px) {
+  .apply-header,
+  .apply-hero,
+  .apply-steps,
+  .apply-footer {
+    max-width: var(--max-width-desktop);
+  }
+
+  .apply-steps {
+    gap: 28px;
+    margin: 20px 0 36px;
+  }
+
+  .apply-step-chip {
+    padding: 26px 20px;
+  }
+
+  .apply-step-chip .num {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+
+  .apply-step-chip .label {
+    font-size: 13.5px;
+  }
+
+  .apply-info-grid {
+    width: 100%;
+    max-width: var(--max-width-desktop);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+
+  .apply-info-grid .apply-info-card {
+    max-width: none;
+    width: 100%;
+    margin-bottom: 0;
+    padding: 40px 40px 34px;
+  }
+
+  .apply-info-grid .apply-info-card h2 {
+    font-size: 18px;
+  }
+}
