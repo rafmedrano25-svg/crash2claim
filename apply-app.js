@@ -105,6 +105,12 @@
     isSubmitting: false,
     hasSubmitted: false,
     isDuplicate: false,
+    // NEW — set when the server's U.S. IP + U.S. phone verification
+    // gate rejected the application (see handleSubmit()/thankYouTemplate()
+    // below and runUsVerification() in submit-story-application.js).
+    // The applicant still reaches a clean final screen, just with
+    // generic copy — never told which specific check failed.
+    usVerificationFailed: false,
     applicantId: null,
     webhookWarning: false,
     answers: {
@@ -1468,6 +1474,11 @@
         // still reaches a clean final screen either way, just with
         // different copy (never an accusatory error).
         STATE.isDuplicate = !!result.duplicate;
+        // NEW — server-side U.S. verification gate rejected this
+        // application (see submit-story-application.js's
+        // runUsVerification()). Nothing about WHY is available here
+        // or shown to the applicant — see thankYouTemplate() below.
+        STATE.usVerificationFailed = !!result.usVerificationFailed;
 
         // Cleanly closes out the TrustedForm recording session now that
         // the application is done — documented as the correct call for
@@ -1503,6 +1514,20 @@
   // Thank-you (final) screen
   // -----------------------------------------------------------------
   function thankYouTemplate() {
+    // NEW — server-side U.S. verification gate rejected this
+    // application (see runUsVerification() in
+    // submit-story-application.js: originating IP must resolve to
+    // "US" AND the phone must pass NANP structural validation). Only
+    // this single generic message is ever shown — never which check
+    // failed, never any technical detail.
+    if (STATE.usVerificationFailed) {
+      return (
+        '<div class="apply-card">' +
+        '<h2 class="apply-thankyou-title">We\'re sorry.</h2>' +
+        '<p class="apply-thankyou-body">We\'re sorry, but Crash2Claim applications are currently available only to U.S.-based participants with a valid U.S. phone number.</p>' +
+        "</div>"
+      );
+    }
     if (STATE.isDuplicate) {
       return (
         '<div class="apply-card">' +
