@@ -188,8 +188,14 @@ function buildApplicationPayload(answers, applicantId, isTest) {
  * server's duplicate-applicant flag (see submit-story-application.js)
  * so the UI can show the friendly "already submitted" message instead
  * of the normal thank-you copy, without writing a second Sheet row.
+ * NEW — also surfaces usVerificationFailed: true (see
+ * submit-story-application.js's runUsVerification()/exports.handler)
+ * when the server's U.S. IP + U.S. phone verification gate rejected
+ * the application before it ever reached Sheets/HOT LEAD/TrustedForm
+ * Retain. Same shape as `duplicate`: a plain boolean flag read off an
+ * otherwise-normal 200 response, nothing else is exposed.
  * @param {Object} payload
- * @returns {Promise<{ok: boolean, duplicate?: boolean}>}
+ * @returns {Promise<{ok: boolean, duplicate?: boolean, usVerificationFailed?: boolean}>}
  */
 function sendApplicationPayload(payload) {
   return fetch(APPLY_CONFIG.WEBHOOK_URL, {
@@ -204,11 +210,15 @@ function sendApplicationPayload(payload) {
           return {};
         })
         .then(function (body) {
-          return { ok: res.ok, duplicate: !!(body && body.duplicate) };
+          return {
+            ok: res.ok,
+            duplicate: !!(body && body.duplicate),
+            usVerificationFailed: !!(body && body.usVerificationFailed),
+          };
         });
     })
     .catch(function () {
-      return { ok: false, duplicate: false };
+      return { ok: false, duplicate: false, usVerificationFailed: false };
     });
 }
 
