@@ -154,10 +154,24 @@ const COLUMNS = [
   // verification returns before appendRow() is ever called, so these
   // four columns are always "US" / "US" / "TRUE" / "TRUE" for every
   // row that exists in this Sheet.
-  "ip_country", // ISO 3166-1 alpha-2 country code IPinfo Lite resolved for the applicant's originating IP (e.g. "US")
-  "phone_country", // "US" when the phone passed NANP structural validation, "" otherwise (see validateUsPhoneStructure())
-  "phone_valid", // "TRUE" / "FALSE" — result of validateUsPhoneStructure()
-  "us_verification_passed", // "TRUE" / "FALSE" — the overall gate result (ip_country === "US" AND phone_valid)
+  "ip_country", // ISO 3166-1 alpha-2 country code IPinfo Lite resolved for the applicant's originating IP (e.g. "US") — UNCHANGED, still live at its original position; never touched by the privacy-check addition below.
+  "phone_country", // "US" when the phone passed NANP structural validation, "" otherwise (see validateUsPhoneStructure()) — UNCHANGED
+  "phone_valid", // "TRUE" / "FALSE" — result of validateUsPhoneStructure() — UNCHANGED
+  "us_verification_passed", // "TRUE" / "FALSE" — the overall gate result (ip_country === "US" AND phone_valid) — UNCHANGED; note this predates the proxycheck.io privacy check below and reflects only the IP-country + phone legs, exactly as it always has.
+  // NEW (VPN/proxy/Tor/hosting privacy check, simplified Sheet output) —
+  // appended at the very end, same append-only pattern as every column
+  // above. The underlying verification GATE (see runUsVerification()/
+  // verifyNoPrivacyDetection() below) already requires US IP + no VPN/
+  // proxy/Tor/hosting + valid US phone, ALL of which must pass before
+  // any row is ever written — a failure at any stage returns before
+  // appendRow() is ever called. Per-check detail columns (privacy_check_
+  // passed/vpn_detected/proxy_detected/tor_detected/hosting_detected)
+  // were considered and deliberately NOT added, since they would be
+  // redundant (always TRUE/FALSE/FALSE/FALSE/FALSE for every row that
+  // exists). This single column is the one explicit marker that a row
+  // passed the COMPLETE gate, including the privacy check that
+  // us_verification_passed above does not cover.
+  "full_us_verification_passed", // "TRUE" for every row in this Sheet — only ever set once runUsVerification() (IP + privacy + phone, in that order) has fully passed.
 ];
 
 // Duplicate-detection is keyed off these two columns. Resolved by
@@ -211,19 +225,28 @@ exports.handler = async function (event) {
 
   // -----------------------------------------------------------------
   // U.S. applicant verification gate (see runUsVerification() and its
-  // helpers further down this file). BOTH of the following must pass:
+  // helpers further down this file). ALL THREE of the following must
+  // pass, checked in this exact order (each is short-circuited by the
+  // one before it — a failure at any stage skips the remaining
+  // stages entirely):
   //   1. The request's originating IP resolves to country "US" via a
-  //      server-side IPinfo Lite lookup.
-  //   2. The already-10-digit-normalized phone additionally passes
+  //      server-side IPinfo Lite lookup (verifyUsIp()).
+  //   2. That SAME originating IP is not positively identified by
+  //      proxycheck.io's v3 API as a VPN, proxy, Tor exit node, or
+  //      hosting/datacenter address (verifyNoPrivacyDetection()) — a
+  //      second, independent server-side check layered on top of the
+  //      IPinfo country check, not a replacement for it.
+  //   3. The already-10-digit-normalized phone additionally passes
   //      full NANP structural validation (area code/exchange rules,
   //      not a known placeholder/fictional number).
   // This runs BEFORE the Google credential check, BEFORE any Sheets
   // access, BEFORE HOT LEAD classification, and BEFORE the TrustedForm
-  // Retain call below — a failure here returns immediately with a
-  // single generic response and none of that downstream logic ever
-  // runs. The applicant is never told which of the two checks failed;
-  // only the technical reason is logged server-side (see
-  // verifyUsIp()/runUsVerification()) for diagnosis.
+  // Retain call below — a failure at any stage returns immediately
+  // with a single generic response and none of that downstream logic
+  // ever runs. The applicant is never told which check failed, or
+  // that a privacy/anonymizer check exists at all; only the technical
+  // reason is logged server-side (see runUsVerification() and its
+  // helpers) for diagnosis.
   // -----------------------------------------------------------------
   var verification = await runUsVerification(applicant, event, normalizedPhone, applicantIdForLogging);
   if (!verification.passed) {
@@ -245,6 +268,13 @@ exports.handler = async function (event) {
   applicant.phone_country = verification.phoneCountry;
   applicant.phone_valid = verification.phoneValid ? "TRUE" : "FALSE";
   applicant.us_verification_passed = "TRUE";
+  // Single simplified marker for the COMPLETE gate (IP country + no
+  // VPN/proxy/Tor/hosting + phone) — see the COLUMNS comment above.
+  // Hardcoded "TRUE" is correct and intentional, same reasoning as
+  // us_verification_passed above: this line is only ever reached after
+  // runUsVerification() has already returned passed === true, so there
+  // is no "FALSE" case for a row that exists in the Sheet at all.
+  applicant.full_us_verification_passed = "TRUE";
 
   var email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
   var privateKeyRaw = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
@@ -337,16 +367,20 @@ function normalizePhone(phone) {
 // U.S. applicant verification — server-side ONLY (see the gate call
 // site in exports.handler above, right after phone normalization).
 //
-// Two independent checks, BOTH required:
-//   1. verifyUsIp()               — originating IP resolves to "US"
-//   2. validateUsPhoneStructure() — phone is structurally a valid
-//                                   NANP/+1 number
+// Three independent checks, ALL required, run in this order:
+//   1. verifyUsIp()                  — originating IP resolves to "US"
+//   2. verifyNoPrivacyDetection()    — that SAME IP is not a positively
+//                                      identified VPN/proxy/Tor/hosting
+//                                      address (proxycheck.io v3)
+//   3. validateUsPhoneStructure()    — phone is structurally a valid
+//                                      NANP/+1 number
 //
-// Fails CLOSED throughout: any missing IP, missing IPINFO_TOKEN,
-// IPinfo error/timeout, or malformed IPinfo response is treated as a
-// FAILED check, never a pass. Nothing here throws — every failure
-// path returns a normal "not passed" result so the caller in
-// exports.handler always gets a clean, awaitable answer.
+// Fails CLOSED throughout: any missing IP, missing IPINFO_TOKEN/
+// PROXYCHECK_API_KEY, IPinfo/proxycheck.io error/timeout, or malformed
+// response from either provider is treated as a FAILED check, never a
+// pass. Nothing here throws — every failure path returns a normal
+// "not passed" result so the caller in exports.handler always gets a
+// clean, awaitable answer.
 // -----------------------------------------------------------------
 
 // Hard ceiling on the outbound IPinfo Lite request, same philosophy
@@ -398,10 +432,10 @@ function getClientIp(event) {
 // basic ASN/organization info only — it does NOT detect VPNs,
 // proxies, hosting/datacenter IPs, or other anonymization services,
 // and this function makes no such claim. It is intentionally kept as
-// a single, isolated "does this IP resolve to US?" check so that a
-// dedicated VPN/proxy/privacy-detection provider could be layered in
-// later as an additional, separate check without rewriting this
-// function or the gate that calls it.
+// a single, isolated "does this IP resolve to US?" check. VPN/proxy/
+// Tor/hosting detection is layered in as a separate, independent
+// check — see verifyNoPrivacyDetection() below — without this
+// function or its own contract changing at all.
 async function verifyUsIp(ip, applicantIdForLogging) {
   if (!ip) {
     console.error("[submit-story-application] US verification: no client IP could be determined. applicant_id=" + applicantIdForLogging);
@@ -490,33 +524,230 @@ function validateUsPhoneStructure(digits10) {
   return true;
 }
 
-// The single combined gate called from exports.handler. BOTH
-// ipResult.passed and phoneValid must be true for the overall result
-// to pass. Also returns everything needed to populate the four new
-// append-only Sheet columns (ip_country/phone_country/phone_valid/
-// us_verification_passed) — the caller only writes those when
-// `passed` is true (see the gate call site above), but the raw values
-// are computed here regardless so the one log line below always shows
-// the full picture for diagnosis.
+// Hard ceiling on the outbound proxycheck.io request, same philosophy
+// as IPINFO_REQUEST_TIMEOUT_MS/RETAIN_REQUEST_TIMEOUT_MS above — a
+// proxycheck.io outage or slow response must never be able to
+// meaningfully delay (or hang) an applicant's submission. No retry: on
+// timeout the lookup is simply treated as failed (fails closed — see
+// verifyNoPrivacyDetection() below).
+var PROXYCHECK_REQUEST_TIMEOUT_MS = 5000;
+
+// proxycheck.io v3 API (https://proxycheck.io/api/#introduction_v3) —
+// queried directly against the SAME applicant IP already determined by
+// getClientIp() (never a separately-determined IP). Detects VPN,
+// proxy, Tor exit node, and hosting/datacenter traffic using the
+// documented v3 `detections` object, which — as of the stable v3
+// release — returns real booleans (not the old v2 "yes"/"no" strings)
+// for each category. This is a second, independent server-side check
+// layered on top of (not a replacement for) the IPinfo Lite country
+// check above — see verifyUsIp()'s SCOPE NOTE.
+//
+// PROXYCHECK_API_KEY is read exclusively from the Netlify environment
+// (process.env) and is never included in any response body, log line,
+// or the data written to the Sheet.
+//
+// Endpoint and response shape confirmed directly against the live,
+// current v3 API (not assumed from older v2 documentation or
+// third-party examples):
+//   GET https://proxycheck.io/v3/<ip>?key=<PROXYCHECK_API_KEY>
+// Live response shape:
+//   {
+//     "status": "ok",
+//     "<ip>": {
+//       "network": {...}, "location": {...}, "device_estimate": {...},
+//       "detections": {
+//         "proxy": false, "vpn": false, "compromised": false,
+//         "scraper": false, "tor": false, "hosting": false,
+//         "anonymous": false, "risk": 0, "confidence": 100,
+//         "first_seen": null, "last_seen": null, "times_seen": null
+//       },
+//       "detection_history": null, "attack_history": null,
+//       "operator": null, "last_updated": "..."
+//     },
+//     "query_time": 5
+//   }
+// Per proxycheck.io's own documented v3 status/HTTP-code contract:
+// "ok" and "warning" both carry a fully-populated result at HTTP 200
+// and are treated as valid data here; "denied" (HTTP 429/401/403 —
+// rate-limited, bad key, or blocked) and "error" (HTTP 400 —
+// malformed request) both mean no reliable detection data was
+// returned and are treated as a FAILED (fail-closed) check, exactly
+// like any other error path below. res.ok (a non-2xx status) already
+// catches every "denied"/"error" case, since proxycheck.io's v3 API
+// (unlike v2) returns real HTTP status codes for those rather than
+// hiding them inside a 200 response body.
+//
+// BLOCKING RULE: an applicant is rejected only when proxycheck.io
+// POSITIVELY identifies (detections.<field> === true) the IP as a
+// VPN, a proxy, a Tor exit node, or hosting/datacenter
+// infrastructure — the four fields the current v3 API documents as
+// reliable positive-detection booleans, and the same four this
+// project's Google Sheet records (see COLUMNS above). Ordinary
+// residential/business/wireless IPs, and IPs proxycheck.io simply has
+// no data on, always pass this check. `compromised` and `scraper` are
+// separate v3 detection categories and are intentionally NOT used for
+// blocking here — they fall outside "VPN/proxy/Tor/anonymizer" as
+// scoped for this task, and using them would risk blocking ordinary
+// traffic proxycheck.io merely suspects of unrelated abuse.
+//
+// SCOPE NOTE (VPN/proxy limitation, same posture as verifyUsIp()
+// above): proxycheck.io's positive detections reflect what it has
+// observed and catalogued — like any such provider, it cannot
+// guarantee detection of every VPN/proxy/Tor/anonymizer service in
+// existence, only the ones in its database. This function makes no
+// stronger claim than that.
+async function verifyNoPrivacyDetection(ip, applicantIdForLogging) {
+  var failedResult = { passed: false, vpn: false, proxy: false, tor: false, hosting: false };
+
+  if (!ip) {
+    console.error("[submit-story-application] Privacy check: no client IP could be determined. applicant_id=" + applicantIdForLogging);
+    return failedResult;
+  }
+
+  var apiKey = process.env.PROXYCHECK_API_KEY;
+  if (!apiKey) {
+    console.error("[submit-story-application] Privacy check: PROXYCHECK_API_KEY is not configured. applicant_id=" + applicantIdForLogging);
+    return failedResult;
+  }
+
+  try {
+    var url = "https://proxycheck.io/v3/" + encodeURIComponent(ip) + "?key=" + encodeURIComponent(apiKey);
+    var res = await fetch(url, {
+      // No retry — a proxycheck.io outage or slow response must never
+      // be able to meaningfully delay the applicant. On timeout this
+      // simply fails closed, same as every other failure path below.
+      signal: AbortSignal.timeout(PROXYCHECK_REQUEST_TIMEOUT_MS),
+    });
+
+    if (!res.ok) {
+      console.error("[submit-story-application] Privacy check: proxycheck.io request failed. applicant_id=" + applicantIdForLogging + " http_status=" + res.status);
+      return failedResult;
+    }
+
+    var data = await res.json();
+    if (!data || (data.status !== "ok" && data.status !== "warning")) {
+      console.error("[submit-story-application] Privacy check: proxycheck.io returned a non-ok status. applicant_id=" + applicantIdForLogging + " status=" + (data && data.status));
+      return failedResult;
+    }
+
+    var ipResult = data[ip];
+    var detections = ipResult && ipResult.detections;
+    if (
+      !detections ||
+      typeof detections.vpn !== "boolean" ||
+      typeof detections.proxy !== "boolean" ||
+      typeof detections.tor !== "boolean" ||
+      typeof detections.hosting !== "boolean"
+    ) {
+      console.error("[submit-story-application] Privacy check: proxycheck.io response missing/malformed detections object. applicant_id=" + applicantIdForLogging);
+      return failedResult;
+    }
+
+    var vpn = detections.vpn === true;
+    var proxy = detections.proxy === true;
+    var tor = detections.tor === true;
+    var hosting = detections.hosting === true;
+
+    return { passed: !vpn && !proxy && !tor && !hosting, vpn: vpn, proxy: proxy, tor: tor, hosting: hosting };
+  } catch (err) {
+    var reason = err && err.name === "TimeoutError" ? "timed_out_after_" + PROXYCHECK_REQUEST_TIMEOUT_MS + "ms" : (err && err.message) || "unknown_error";
+    console.error("[submit-story-application] Privacy check: proxycheck.io request threw or returned an unparseable response. applicant_id=" + applicantIdForLogging + " reason=" + reason);
+    return failedResult;
+  }
+}
+
+// The single combined gate called from exports.handler. Runs the
+// three checks in the required order — US IP, then privacy/VPN
+// check, then phone — short-circuiting at the first failure (each
+// stage only runs once the ones before it have passed), exactly per
+// the requested architecture. Returns everything needed to populate
+// the five append-only Sheet columns (ip_country/phone_country/
+// phone_valid/us_verification_passed/full_us_verification_passed —
+// the caller only writes those when `passed` is true, see the gate
+// call site above) plus the per-check privacy detail (privacyCheckPassed/
+// vpnDetected/proxyDetected/torDetected/hostingDetected) used only for
+// the log line below and by direct callers/tests — those detail flags
+// are intentionally NOT persisted to the Sheet as their own columns
+// (see the COLUMNS comment above), since they'd be redundant: a row
+// only ever exists here once every one of them is already known-good.
 async function runUsVerification(applicant, event, normalizedPhone, applicantIdForLogging) {
   var ip = getClientIp(event);
   var ipResult = await verifyUsIp(ip, applicantIdForLogging);
-  var phoneValid = validateUsPhoneStructure(normalizedPhone);
-  var passed = ipResult.passed && phoneValid;
 
-  if (!passed) {
+  if (!ipResult.passed) {
     console.log(
-      "[submit-story-application] US verification FAILED — application not submitted downstream (no Sheets write, no HOT LEAD, no TrustedForm Retain). applicant_id=" + applicantIdForLogging +
-      " ip_country=" + (ipResult.countryCode || "(undetermined)") +
-      " phone_valid=" + phoneValid
+      "[submit-story-application] US verification FAILED at the IP/country check — application not submitted downstream (no Sheets write, no HOT LEAD, no TrustedForm Retain). applicant_id=" + applicantIdForLogging +
+      " ip_country=" + (ipResult.countryCode || "(undetermined)")
     );
+    return {
+      passed: false,
+      ipCountry: ipResult.countryCode || "",
+      phoneCountry: "",
+      phoneValid: false,
+      privacyCheckPassed: false,
+      vpnDetected: false,
+      proxyDetected: false,
+      torDetected: false,
+      hostingDetected: false,
+    };
+  }
+
+  // Only reached once the IP has already been confirmed to resolve to
+  // the US — same originating IP, no separate/second IP determination
+  // (see verifyNoPrivacyDetection() above).
+  var privacyResult = await verifyNoPrivacyDetection(ip, applicantIdForLogging);
+  if (!privacyResult.passed) {
+    console.log(
+      "[submit-story-application] US verification FAILED at the privacy/VPN check — application not submitted downstream (no Sheets write, no HOT LEAD, no TrustedForm Retain). applicant_id=" + applicantIdForLogging +
+      " ip_country=" + ipResult.countryCode +
+      " vpn_detected=" + privacyResult.vpn +
+      " proxy_detected=" + privacyResult.proxy +
+      " tor_detected=" + privacyResult.tor +
+      " hosting_detected=" + privacyResult.hosting
+    );
+    return {
+      passed: false,
+      ipCountry: ipResult.countryCode,
+      phoneCountry: "",
+      phoneValid: false,
+      privacyCheckPassed: false,
+      vpnDetected: privacyResult.vpn,
+      proxyDetected: privacyResult.proxy,
+      torDetected: privacyResult.tor,
+      hostingDetected: privacyResult.hosting,
+    };
+  }
+
+  var phoneValid = validateUsPhoneStructure(normalizedPhone);
+  if (!phoneValid) {
+    console.log(
+      "[submit-story-application] US verification FAILED at the phone check — application not submitted downstream (no Sheets write, no HOT LEAD, no TrustedForm Retain). applicant_id=" + applicantIdForLogging +
+      " ip_country=" + ipResult.countryCode +
+      " phone_valid=false"
+    );
+    return {
+      passed: false,
+      ipCountry: ipResult.countryCode,
+      phoneCountry: "",
+      phoneValid: false,
+      privacyCheckPassed: true,
+      vpnDetected: false,
+      proxyDetected: false,
+      torDetected: false,
+      hostingDetected: false,
+    };
   }
 
   return {
-    passed: passed,
-    ipCountry: ipResult.countryCode || "",
-    phoneCountry: phoneValid ? "US" : "",
-    phoneValid: phoneValid,
+    passed: true,
+    ipCountry: ipResult.countryCode,
+    phoneCountry: "US",
+    phoneValid: true,
+    privacyCheckPassed: true,
+    vpnDetected: false,
+    proxyDetected: false,
+    torDetected: false,
+    hostingDetected: false,
   };
 }
 
@@ -957,6 +1188,7 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports.retainTrustedFormCertificate = retainTrustedFormCertificate;
   module.exports.getClientIp = getClientIp;
   module.exports.verifyUsIp = verifyUsIp;
+  module.exports.verifyNoPrivacyDetection = verifyNoPrivacyDetection;
   module.exports.isPlaceholderUsPhoneNumber = isPlaceholderUsPhoneNumber;
   module.exports.validateUsPhoneStructure = validateUsPhoneStructure;
   module.exports.runUsVerification = runUsVerification;
