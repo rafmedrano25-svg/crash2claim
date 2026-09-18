@@ -147,6 +147,17 @@ const COLUMNS = [
   // what is written to this column; the raw cert URL is written here
   // regardless of whether retention succeeds, fails, or is skipped.
   "trustedform_cert_url",
+  // NEW (U.S. applicant verification) — appended at the very end,
+  // same append-only pattern as every column above. Populated by
+  // runUsVerification() (see below) and ONLY ever written for rows
+  // that actually reach appendRow() — an application that fails
+  // verification returns before appendRow() is ever called, so these
+  // four columns are always "US" / "US" / "TRUE" / "TRUE" for every
+  // row that exists in this Sheet.
+  "ip_country", // ISO 3166-1 alpha-2 country code IPinfo Lite resolved for the applicant's originating IP (e.g. "US")
+  "phone_country", // "US" when the phone passed NANP structural validation, "" otherwise (see validateUsPhoneStructure())
+  "phone_valid", // "TRUE" / "FALSE" — result of validateUsPhoneStructure()
+  "us_verification_passed", // "TRUE" / "FALSE" — the overall gate result (ip_country === "US" AND phone_valid)
 ];
 
 // Duplicate-detection is keyed off these two columns. Resolved by
@@ -197,6 +208,43 @@ exports.handler = async function (event) {
   // form — never whatever raw formatting the client sent — regardless
   // of what the client did or didn't normalize on its end.
   applicant.phone = normalizedPhone;
+
+  // -----------------------------------------------------------------
+  // U.S. applicant verification gate (see runUsVerification() and its
+  // helpers further down this file). BOTH of the following must pass:
+  //   1. The request's originating IP resolves to country "US" via a
+  //      server-side IPinfo Lite lookup.
+  //   2. The already-10-digit-normalized phone additionally passes
+  //      full NANP structural validation (area code/exchange rules,
+  //      not a known placeholder/fictional number).
+  // This runs BEFORE the Google credential check, BEFORE any Sheets
+  // access, BEFORE HOT LEAD classification, and BEFORE the TrustedForm
+  // Retain call below — a failure here returns immediately with a
+  // single generic response and none of that downstream logic ever
+  // runs. The applicant is never told which of the two checks failed;
+  // only the technical reason is logged server-side (see
+  // verifyUsIp()/runUsVerification()) for diagnosis.
+  // -----------------------------------------------------------------
+  var verification = await runUsVerification(applicant, event, normalizedPhone, applicantIdForLogging);
+  if (!verification.passed) {
+    return jsonResponse(200, {
+      ok: true,
+      duplicate: false,
+      usVerificationFailed: true,
+      applicant_id: applicantIdForLogging,
+    });
+  }
+  // Only reached when verification passed — these four values are
+  // therefore always "US" / "US" / "TRUE" / "TRUE" for every row this
+  // function ever writes (see the ip_country/phone_country/phone_valid/
+  // us_verification_passed entries in COLUMNS above). Set directly on
+  // `applicant` so buildRow()'s existing generic COLUMNS-driven mapping
+  // (`applicant[key]`) picks them up with no special-casing needed,
+  // same pattern already used for `applicant.phone` just above.
+  applicant.ip_country = verification.ipCountry;
+  applicant.phone_country = verification.phoneCountry;
+  applicant.phone_valid = verification.phoneValid ? "TRUE" : "FALSE";
+  applicant.us_verification_passed = "TRUE";
 
   var email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
   var privateKeyRaw = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
@@ -283,6 +331,193 @@ function normalizePhone(phone) {
     digits = digits.slice(1);
   }
   return digits;
+}
+
+// -----------------------------------------------------------------
+// U.S. applicant verification — server-side ONLY (see the gate call
+// site in exports.handler above, right after phone normalization).
+//
+// Two independent checks, BOTH required:
+//   1. verifyUsIp()               — originating IP resolves to "US"
+//   2. validateUsPhoneStructure() — phone is structurally a valid
+//                                   NANP/+1 number
+//
+// Fails CLOSED throughout: any missing IP, missing IPINFO_TOKEN,
+// IPinfo error/timeout, or malformed IPinfo response is treated as a
+// FAILED check, never a pass. Nothing here throws — every failure
+// path returns a normal "not passed" result so the caller in
+// exports.handler always gets a clean, awaitable answer.
+// -----------------------------------------------------------------
+
+// Hard ceiling on the outbound IPinfo Lite request, same philosophy
+// as RETAIN_REQUEST_TIMEOUT_MS above — an IPinfo outage or slow
+// response must never be able to meaningfully delay (or hang) an
+// applicant's submission. No retry: on timeout the lookup is simply
+// treated as failed (fails closed — see verifyUsIp() below).
+var IPINFO_REQUEST_TIMEOUT_MS = 5000;
+
+// Netlify's own documented source for the real client IP on a
+// Function invocation: this header is set by Netlify's edge/proxy
+// layer itself on every request that reaches a Function, reflecting
+// the actual TCP connection IP — Netlify overwrites it regardless of
+// what (if anything) a client sends claiming to be this header, so it
+// cannot be spoofed by modifying the request. This is Netlify's own
+// documented/recommended source of truth for this value.
+//   Source: https://answers.netlify.com/t/is-the-client-ip-header-going-to-be-supported-long-term/11203
+// x-forwarded-for is used only as a fallback if that header is ever
+// unexpectedly absent. Its first entry is meant to be the original
+// client, but — unlike the Netlify-owned header above — that chain
+// can in principle be influenced before it reaches Netlify's edge, so
+// it is intentionally the SECOND choice here, never the primary one.
+// This function deliberately does NOT fall back to any other header
+// (e.g. a bare "x-real-ip"), and does NOT trust anything that would
+// resolve to Netlify's own server/edge IP rather than the applicant's.
+function getClientIp(event) {
+  var headers = (event && event.headers) || {};
+  var direct = headers["x-nf-client-connection-ip"] || headers["X-NF-Client-Connection-IP"];
+  if (direct && String(direct).trim()) return String(direct).trim();
+
+  var xff = headers["x-forwarded-for"] || headers["X-Forwarded-For"];
+  if (xff) {
+    var first = String(xff).split(",")[0].trim();
+    if (first) return first;
+  }
+  return "";
+}
+
+// IPinfo Lite (https://ipinfo.io/developers/lite-api) — the free,
+// country-level tier of IPinfo's API. Queried directly against the
+// specific applicant IP determined by getClientIp() above (never the
+// "/lite/me" self-lookup shortcut, which would resolve to Netlify's
+// own outbound IP rather than the applicant's). IPINFO_TOKEN is read
+// exclusively from the Netlify environment (process.env) and is never
+// included in any response body, log line, or the data written to
+// the Sheet.
+//
+// SCOPE NOTE: IPinfo Lite provides country-level geolocation and
+// basic ASN/organization info only — it does NOT detect VPNs,
+// proxies, hosting/datacenter IPs, or other anonymization services,
+// and this function makes no such claim. It is intentionally kept as
+// a single, isolated "does this IP resolve to US?" check so that a
+// dedicated VPN/proxy/privacy-detection provider could be layered in
+// later as an additional, separate check without rewriting this
+// function or the gate that calls it.
+async function verifyUsIp(ip, applicantIdForLogging) {
+  if (!ip) {
+    console.error("[submit-story-application] US verification: no client IP could be determined. applicant_id=" + applicantIdForLogging);
+    return { passed: false, countryCode: "" };
+  }
+
+  var token = process.env.IPINFO_TOKEN;
+  if (!token) {
+    console.error("[submit-story-application] US verification: IPINFO_TOKEN is not configured. applicant_id=" + applicantIdForLogging);
+    return { passed: false, countryCode: "" };
+  }
+
+  try {
+    var url = "https://api.ipinfo.io/lite/" + encodeURIComponent(ip) + "?token=" + encodeURIComponent(token);
+    var res = await fetch(url, {
+      // No retry — an IPinfo outage or slow response must never be
+      // able to meaningfully delay the applicant. On timeout this
+      // simply fails closed, same as every other failure path below.
+      signal: AbortSignal.timeout(IPINFO_REQUEST_TIMEOUT_MS),
+    });
+
+    if (!res.ok) {
+      console.error("[submit-story-application] US verification: IPinfo request failed. applicant_id=" + applicantIdForLogging + " http_status=" + res.status);
+      return { passed: false, countryCode: "" };
+    }
+
+    var data = await res.json();
+    var countryCode = data && typeof data.country_code === "string" ? data.country_code.trim().toUpperCase() : "";
+    if (!countryCode) {
+      console.error("[submit-story-application] US verification: IPinfo response missing/malformed country_code. applicant_id=" + applicantIdForLogging);
+      return { passed: false, countryCode: "" };
+    }
+
+    return { passed: countryCode === "US", countryCode: countryCode };
+  } catch (err) {
+    var reason = err && err.name === "TimeoutError" ? "timed_out_after_" + IPINFO_REQUEST_TIMEOUT_MS + "ms" : (err && err.message) || "unknown_error";
+    console.error("[submit-story-application] US verification: IPinfo request threw or returned an unparseable response. applicant_id=" + applicantIdForLogging + " reason=" + reason);
+    return { passed: false, countryCode: "" };
+  }
+}
+
+// Known non-dialable / placeholder patterns — rejected even when they
+// would otherwise pass the structural NANP checks in
+// validateUsPhoneStructure() below. Covers the all-same-digit block
+// (0000000000 ... 9999999999), the two obvious sequential runs, and
+// NANPA's own reserved fictional-use block (555-0100 through
+// 555-0199), which is set aside specifically so it is never assigned
+// to a real subscriber and is the standard placeholder number used in
+// film/TV/fiction.
+function isPlaceholderUsPhoneNumber(digits10) {
+  if (/^(\d)\1{9}$/.test(digits10)) return true; // all 10 digits identical
+  if (digits10 === "1234567890" || digits10 === "0123456789" || digits10 === "9876543210") return true;
+  var exchange = digits10.slice(3, 6);
+  var line = digits10.slice(6, 10);
+  if (exchange === "555" && line.charAt(0) === "0" && line.charAt(1) === "1") return true; // 555-01XX reserved fictional block
+  return false;
+}
+
+// Structural NANP validation only — confirms the already-normalized
+// 10-digit value is SHAPED like a valid U.S./+1 number: exactly 10
+// digits, a valid area-code structure, a valid exchange-code
+// structure, and not a known fictional/placeholder pattern. This does
+// NOT verify the number is currently assigned, active, or actually
+// owned/controlled by the applicant — confirming that would require a
+// paid carrier-lookup API (e.g. Twilio Lookup), which is explicitly
+// out of scope for this integration.
+function validateUsPhoneStructure(digits10) {
+  if (!/^[0-9]{10}$/.test(String(digits10 || ""))) return false;
+
+  var areaCode = digits10.slice(0, 3);
+  var exchange = digits10.slice(3, 6);
+
+  // NANP area code: first digit must be 2-9 (never 0 or 1), and the
+  // second+third digits can't both be "1" (an "N11" area code is
+  // reserved for service codes like 411/611/911 and never assigned as
+  // a real geographic area code).
+  if (areaCode.charAt(0) < "2") return false;
+  if (areaCode.charAt(1) === "1" && areaCode.charAt(2) === "1") return false;
+
+  // NANP exchange code: same first-digit rule and N11 restriction.
+  if (exchange.charAt(0) < "2") return false;
+  if (exchange.charAt(1) === "1" && exchange.charAt(2) === "1") return false;
+
+  if (isPlaceholderUsPhoneNumber(digits10)) return false;
+
+  return true;
+}
+
+// The single combined gate called from exports.handler. BOTH
+// ipResult.passed and phoneValid must be true for the overall result
+// to pass. Also returns everything needed to populate the four new
+// append-only Sheet columns (ip_country/phone_country/phone_valid/
+// us_verification_passed) — the caller only writes those when
+// `passed` is true (see the gate call site above), but the raw values
+// are computed here regardless so the one log line below always shows
+// the full picture for diagnosis.
+async function runUsVerification(applicant, event, normalizedPhone, applicantIdForLogging) {
+  var ip = getClientIp(event);
+  var ipResult = await verifyUsIp(ip, applicantIdForLogging);
+  var phoneValid = validateUsPhoneStructure(normalizedPhone);
+  var passed = ipResult.passed && phoneValid;
+
+  if (!passed) {
+    console.log(
+      "[submit-story-application] US verification FAILED — application not submitted downstream (no Sheets write, no HOT LEAD, no TrustedForm Retain). applicant_id=" + applicantIdForLogging +
+      " ip_country=" + (ipResult.countryCode || "(undetermined)") +
+      " phone_valid=" + phoneValid
+    );
+  }
+
+  return {
+    passed: passed,
+    ipCountry: ipResult.countryCode || "",
+    phoneCountry: phoneValid ? "US" : "",
+    phoneValid: phoneValid,
+  };
 }
 
 function columnIndexToLetter(index) {
@@ -720,4 +955,9 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports.formatEasternTimestamp = formatEasternTimestamp;
   module.exports.buildRow = buildRow;
   module.exports.retainTrustedFormCertificate = retainTrustedFormCertificate;
+  module.exports.getClientIp = getClientIp;
+  module.exports.verifyUsIp = verifyUsIp;
+  module.exports.isPlaceholderUsPhoneNumber = isPlaceholderUsPhoneNumber;
+  module.exports.validateUsPhoneStructure = validateUsPhoneStructure;
+  module.exports.runUsVerification = runUsVerification;
 }
