@@ -6,7 +6,7 @@
 <title>Get Paid to Tell Your Car Accident Story | Crash2Claim</title>
 <meta name="description" content="Crash2Claim is looking for real people to share their car accident story in a short recorded interview. Payment is provided only to selected participants whose completed interview is accepted for publication.">
 <meta name="robots" content="noindex, follow">
-<link rel="stylesheet" href="/styles-apply.css?v=20260905-4">
+<link rel="stylesheet" href="/styles-apply.css?v=20260930-1">
 </head>
 <body class="apply-page">
 
@@ -14,23 +14,38 @@
 
 <div class="apply-shell">
 
-  <header class="apply-header">
-    <a href="/" class="apply-wordmark" aria-label="Crash2Claim home">
-      Crash<span class="apply-badge">2</span>Claim
-    </a>
+  <header class="apply-section apply-header-section">
+    <div class="apply-container apply-header">
+      <a href="/" class="apply-wordmark" aria-label="Crash2Claim home">
+        Crash<span class="apply-badge">2</span>Claim
+      </a>
+    </div>
   </header>
 
-  <section class="apply-hero apply-landing-only">
-    <p class="apply-hero-eyebrow">Get <span class="apply-hero-paid">Paid</span></p>
-    <h1 class="apply-hero-headline">Tell Your Car Accident Story.</h1>
-    <p class="apply-hero-sub">Real people. Real stories. Any outcome.</p>
-    <p class="apply-hero-disclaimer" id="heroDisclaimer"></p>
-    <div class="apply-hero-cta">
-      <button type="button" id="startApplyBtn" class="apply-btn apply-btn-primary">Start Your Application</button>
+  <section class="apply-section apply-hero-section apply-landing-only">
+    <div class="apply-container">
+      <div class="apply-hero">
+        <p class="apply-hero-eyebrow">Get <span class="apply-hero-paid">Paid</span></p>
+        <h1 class="apply-hero-headline">Tell Your Car Accident Story.</h1>
+        <p class="apply-hero-sub">Real people. Real stories. Any outcome.</p>
+        <p class="apply-hero-disclaimer" id="heroDisclaimer"></p>
+        <div class="apply-hero-cta">
+          <button type="button" id="startApplyBtn" class="apply-btn apply-btn-primary">Start Your Application</button>
+        </div>
+      </div>
     </div>
   </section>
 
-  <div class="apply-steps apply-landing-only" id="howItWorks"></div>
+  <section class="apply-section apply-steps-section apply-landing-only">
+    <div class="apply-container">
+      <p class="apply-section-eyebrow">The Process</p>
+      <h2 class="apply-section-heading">How It Works</h2>
+      <p class="apply-section-subheading">From application to payment, here&rsquo;s what happens.</p>
+      <div class="apply-steps-track">
+        <div class="apply-steps" id="howItWorks"></div>
+      </div>
+    </div>
+  </section>
 
   <!-- JS-driven application flow mounts here: opening $50-use question,
        then 8 more base questions (name through contact/consent), with
@@ -40,34 +55,63 @@
        the sections above/below marked apply-landing-only are hidden. -->
   <main id="applyRoot"></main>
 
-  <div class="apply-info-grid apply-landing-only">
-    <div class="apply-info-card apply-landing-only">
-      <h2>Who we're looking for</h2>
-      <ul id="eligibilityList"></ul>
-    </div>
+  <section class="apply-section apply-info-section apply-landing-only">
+    <div class="apply-container">
+      <div class="apply-info-grid">
+        <div class="apply-info-card apply-landing-only">
+          <p class="apply-info-eyebrow">Eligibility</p>
+          <h2>Who we&rsquo;re looking for</h2>
+          <ul id="eligibilityList" class="apply-check-list"></ul>
+        </div>
 
-    <div class="apply-info-card apply-landing-only">
-      <h2>How the $50 payment works</h2>
-      <p id="disclosureIntro" style="margin:0 0 8px;"></p>
-      <ol id="disclosureSteps"></ol>
-      <p id="disclosureOutro"></p>
+        <div class="apply-info-card apply-landing-only">
+          <p class="apply-info-eyebrow">Payment</p>
+          <h2>How the $50 payment works</h2>
+          <p id="disclosureIntro" style="margin:0 0 8px;"></p>
+          <ol id="disclosureSteps" class="apply-check-list"></ol>
+          <p id="disclosureOutro"></p>
+        </div>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <footer class="apply-footer">
-    <div class="apply-footer-links">
-      <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
-      <a href="terms.html" target="_blank" rel="noopener noreferrer">Terms of Use</a>
+  <section class="apply-section apply-stories-section apply-landing-only">
+    <div class="apply-container">
+      <p class="apply-section-eyebrow">Social Proof</p>
+      <h2 class="apply-section-heading">A Real Person. A Real Crash Story.</h2>
+      <p class="apply-section-subheading">Meet the person who shared his accident experience with Crash2Claim.</p>
+      <div class="apply-stories-grid" id="storiesGrid"></div>
     </div>
-    <p class="apply-footer-disclaimer">
-      Crash2Claim is not a law firm and does not provide legal advice. We share accident stories and may connect individuals with independent legal or service providers based on the information they submit.
-    </p>
+  </section>
+
+  <section class="apply-section apply-final-cta-section apply-landing-only">
+    <div class="apply-container apply-final-cta">
+      <h2>Your Story Could Help Someone Else.</h2>
+      <p>Been in a car accident? Share what happened and you may be selected for a paid Crash2Claim interview.</p>
+      <button type="button" id="startApplyBtnBottom" class="apply-btn apply-btn-primary apply-btn-lg">Start Your Application</button>
+      <p class="apply-final-cta-disclaimer">Applying does not guarantee selection or payment.</p>
+    </div>
+  </section>
+
+  <footer class="apply-section apply-footer-section">
+    <div class="apply-container apply-footer">
+      <a href="/" class="apply-wordmark apply-footer-wordmark" aria-label="Crash2Claim home">
+        Crash<span class="apply-badge">2</span>Claim
+      </a>
+      <div class="apply-footer-links">
+        <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+        <a href="terms.html" target="_blank" rel="noopener noreferrer">Terms of Use</a>
+      </div>
+      <p class="apply-footer-disclaimer">
+        Crash2Claim is not a law firm and does not provide legal advice. We share accident stories and may connect individuals with independent legal or service providers based on the information they submit.
+      </p>
+    </div>
   </footer>
 
 </div>
 
 <script src="/attribution.js?v=20260822-1"></script>
-<script src="/config-apply.js?v=20260905-2"></script>
+<script src="/config-apply.js?v=20260930-1"></script>
 <script>
   // Populate the static info sections from APPLY_CONFIG so the copy
   // lives in exactly one place (config-apply.js) and can't drift
@@ -87,6 +131,44 @@
     return "<li>" + s + "</li>";
   }).join("");
   document.getElementById("disclosureOutro").textContent = APPLY_CONFIG.PAYMENT_DISCLOSURE_FULL_OUTRO;
+
+  // "A Real Person. A Real Crash Story." section. Purely data-driven
+  // from APPLY_CONFIG.REAL_STORIES (see config-apply.js) — currently a
+  // single Max entry — so participant photos/copy/links can be swapped
+  // or a second story added later without touching markup. The "Paid
+  // Participant" badge and "Watch Story" link are each rendered ONLY
+  // when their underlying data says so — never inferred, never
+  // defaulted on.
+  document.getElementById("storiesGrid").innerHTML = APPLY_CONFIG.REAL_STORIES.map(function (s) {
+    var paidBadge = s.paid
+      ? '<span class="apply-story-badge">&#10003; Paid Participant</span>'
+      : "";
+    var watchLink = s.videoUrl
+      ? '<a class="apply-story-watch" href="' + s.videoUrl + '" target="_blank" rel="noopener noreferrer">Watch ' + s.pronounPossessive + " Story &rarr;</a>"
+      : "";
+    return (
+      '<article class="apply-story-card">' +
+        '<div class="apply-story-media"><img src="' + s.image + '" alt="' + s.name + '" loading="lazy"></div>' +
+        '<div class="apply-story-body">' +
+          '<p class="apply-story-name">' + s.name.toUpperCase() + "&rsquo;S STORY</p>" +
+          '<p class="apply-story-blurb">&ldquo;' + s.blurb + '&rdquo;</p>' +
+          '<p class="apply-story-status">' + s.status + "</p>" +
+          paidBadge +
+          watchLink +
+        "</div>" +
+      "</article>"
+    );
+  }).join("");
+
+  // Second "Start Your Application" button (final CTA section, lower
+  // on the page) simply forwards its click to the SAME hero button
+  // already wired up in apply-app.js's bindStaticHeroButton() — no
+  // application/submission logic is duplicated or reimplemented here,
+  // this just triggers the one existing handler so both buttons share
+  // a single source of behavior and destination.
+  document.getElementById("startApplyBtnBottom").addEventListener("click", function () {
+    document.getElementById("startApplyBtn").click();
+  });
 </script>
 <script src="/apply-payload.js?v=20260905-1"></script>
 <script src="/apply-app.js?v=20260905-1"></script>
