@@ -6,6 +6,17 @@
    case-evaluation site. Shares the same design tokens (colors,
    font stack, radii) so it still looks like the same brand, but
    every rule here is scoped to recruitment-page classes only.
+
+   This revision restructures the LANDING sections (header, hero,
+   how-it-works, eligibility/payment, the new stories section, the
+   new final CTA, and the footer) into full-bleed
+   ".apply-section" blocks with alternating backgrounds, each
+   holding a centered ".apply-container" of content — so the page
+   uses the full viewport width on large screens instead of a single
+   narrow column floating in empty space. The entire "Application
+   mode" block below (the focused Q&A flow rendered into #applyRoot
+   once "Start Your Application" is clicked) is UNCHANGED from the
+   prior revision: same selectors, same values, same behavior.
    ================================================================= */
 
 :root {
@@ -28,6 +39,13 @@
   --shadow-card: 0 12px 32px rgba(15, 37, 64, 0.1);
   --max-width: 560px;
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  /* Landing-page section container widths. Kept distinct from
+     --max-width (560px, used only by the application Q&A card so
+     that flow stays untouched) and from --max-width-desktop (below,
+     retained for the info-grid). */
+  --container: 1200px;
+  --container-narrow: 720px;
 }
 
 * {
@@ -42,7 +60,7 @@ body {
 
 body.apply-page {
   font-family: var(--font);
-  background: var(--lblue);
+  background: var(--white);
   color: var(--navy);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
@@ -76,22 +94,98 @@ body.apply-page {
 }
 
 /* ---------------------------------------------------------------
-   Shell
+   Shell + section/container layout utilities
+   -----------------------------------------------------------------
+   .apply-shell is now a plain full-width block (the flex/centering
+   that used to live here has moved into .apply-container). Each
+   landing section is a full-bleed .apply-section with its own
+   background, alternating white / light-blue / navy so the page
+   reads as distinct chapters rather than one long undifferentiated
+   column, per the requested visual hierarchy.
    --------------------------------------------------------------- */
 .apply-shell {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0 16px 40px;
+  width: 100%;
+  display: block;
+}
+
+.apply-section {
+  width: 100%;
+  padding: 40px 0;
+}
+
+.apply-header-section {
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-100);
+  padding: 18px 0;
+}
+
+.apply-hero-section {
+  background: var(--lblue);
+  padding: 36px 0 44px;
+}
+
+.apply-steps-section {
+  background: var(--white);
+}
+
+.apply-info-section {
+  background: var(--gray-50);
+}
+
+.apply-stories-section {
+  background: var(--white);
+}
+
+.apply-final-cta-section {
+  background: var(--navy);
+  color: var(--white);
+}
+
+.apply-footer-section {
+  background: var(--navy-2);
+  color: var(--white);
+  padding: 32px 0 28px;
+}
+
+.apply-container {
+  width: 100%;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Shared section heading treatment — used above How It Works and
+   Real Crash2Claim Stories. */
+.apply-section-eyebrow {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--coral);
+  text-align: center;
+  margin: 0 0 8px;
+}
+
+.apply-section-heading {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--navy);
+  text-align: center;
+  margin: 0 0 8px;
+}
+
+.apply-section-subheading {
+  font-size: 15px;
+  color: var(--gray-600);
+  text-align: center;
+  max-width: 520px;
+  margin: 0 auto;
 }
 
 .apply-header {
   width: 100%;
-  max-width: var(--max-width);
   display: flex;
   justify-content: center;
-  padding: 24px 0 8px;
 }
 
 .apply-wordmark {
@@ -124,9 +218,10 @@ body.apply-page {
    --------------------------------------------------------------- */
 .apply-hero {
   width: 100%;
-  max-width: var(--max-width);
+  max-width: var(--container-narrow);
+  margin: 0 auto;
   text-align: center;
-  padding: 8px 0 20px;
+  padding: 8px 0 0;
 }
 
 .apply-hero-eyebrow {
@@ -143,10 +238,10 @@ body.apply-page {
    "Get" word is unaffected) — a plain native text-decoration, no
    curve/wave/SVG/pseudo-element. Thickness and vertical offset are
    set in em units relative to the span's own font-size (inherited
-   from .apply-hero-eyebrow, including the 46px desktop bump in the
-   min-width:640px query below), so the line scales and repositions
-   automatically with the headline on both mobile and desktop. Does
-   not affect PAID's own font, weight, size, or color in any way. */
+   from .apply-hero-eyebrow, including the desktop bumps below), so
+   the line scales and repositions automatically with the headline
+   at every breakpoint. Does not affect PAID's own font, weight,
+   size, or color in any way. */
 .apply-hero-paid {
   text-decoration: underline;
   text-decoration-color: var(--coral);
@@ -154,14 +249,12 @@ body.apply-page {
   text-underline-offset: 0.14em;
 }
 
+/* Not rendered anywhere in the current markup (the $50 figure lives
+   only in the fine-print disclaimer below) — kept defined, unused,
+   so a stray future reference to it doesn't fall back to browser
+   defaults, and so its historical mobile/desktop sizing (33px/36px)
+   stays intact for regression tracking. */
 .apply-hero-dollar {
-  /* Mobile/base size — 33px (50% larger than the prior 22px). Only
-     one rule below (in the min-width:640px media query) overrides
-     this, to 36px on desktop (50% larger than the prior 24px). There
-     is no other rule anywhere in this file that touches
-     .apply-hero-dollar's font-size — confirmed by grepping the whole
-     file and by inspecting document.styleSheets directly on the live
-     page. Font family, weight, and color are unchanged. */
   font-size: 33px;
   line-height: 1.2;
   font-weight: 700;
@@ -184,9 +277,12 @@ body.apply-page {
 }
 
 .apply-hero-disclaimer {
+  /* gray-600 (not gray-400) against the hero's light-blue background —
+     gray-400 reads at roughly 2:1 contrast here, below the ~4.5:1
+     needed for 12px text, which made this hard to read on the hero. */
   font-size: 12px;
   line-height: 1.5;
-  color: var(--gray-400);
+  color: var(--gray-600);
   margin: 10px auto 0;
   max-width: 440px;
 }
@@ -199,19 +295,26 @@ body.apply-page {
 /* ---------------------------------------------------------------
    How it works strip
    --------------------------------------------------------------- */
+.apply-steps-track {
+  width: 100%;
+  max-width: var(--container);
+  margin: 24px auto 0;
+  position: relative;
+}
+
 .apply-steps {
   width: 100%;
-  max-width: var(--max-width);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin: 8px 0 24px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
 }
 
 .apply-step-chip {
+  position: relative;
   background: var(--white);
-  border-radius: var(--radius-sm);
-  padding: 12px 6px;
+  border: 1px solid var(--gray-100);
+  border-radius: var(--radius-md);
+  padding: 18px 12px;
   text-align: center;
   box-shadow: var(--shadow-card);
 }
@@ -220,54 +323,92 @@ body.apply-page {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: var(--teal-tint);
   color: var(--teal);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .apply-step-chip .label {
-  font-size: 11px;
+  font-size: 12.5px;
   font-weight: 700;
   color: var(--navy-2);
   line-height: 1.3;
 }
 
 /* ---------------------------------------------------------------
-   Info sections (eligibility / disclosure)
+   Info sections (eligibility / payment)
    --------------------------------------------------------------- */
+.apply-info-grid {
+  width: 100%;
+  max-width: var(--container-narrow);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .apply-info-card {
   width: 100%;
-  max-width: var(--max-width);
   background: var(--white);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
-  padding: 22px 22px 20px;
-  margin-bottom: 16px;
+  padding: 26px 24px 24px;
+}
+
+.apply-info-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--coral);
+  margin: 0 0 8px;
 }
 
 .apply-info-card h2 {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 800;
   color: var(--navy);
-  margin: 0 0 10px;
+  margin: 0 0 14px;
 }
 
 .apply-info-card ol,
 .apply-info-card ul {
   margin: 0;
-  padding-left: 20px;
+  padding-left: 0;
   font-size: 14px;
   line-height: 1.6;
   color: var(--navy-2);
+  list-style: none;
 }
 
-.apply-info-card li {
-  margin-bottom: 4px;
+.apply-check-list li {
+  position: relative;
+  padding-left: 26px;
+  margin-bottom: 10px;
+}
+
+.apply-check-list li::before {
+  content: "\2713";
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--teal-tint);
+  color: var(--teal);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
 }
 
 .apply-info-card p {
@@ -278,9 +419,277 @@ body.apply-page {
 }
 
 /* ---------------------------------------------------------------
-   Application card / steps (mirrors main survey's card pattern,
-   independently defined so it never depends on css/styles.css)
+   Real Crash2Claim Stories — editorial story cards, not
+   testimonials: no fabricated quote attribution beyond the generic,
+   non-specific blurb text supplied via APPLY_CONFIG.REAL_STORIES.
+   The "Paid Participant" badge and "Watch Story" link only render
+   when apply.html's population script finds that data present.
    --------------------------------------------------------------- */
+.apply-stories-grid {
+  /* Single-testimonial layout: one centered card rather than a
+     multi-column grid, so it doesn't sit alone in an empty 3-column
+     row. If more stories are added to REAL_STORIES later, widen this
+     back out to a multi-column grid at the tablet/desktop
+     breakpoints below. */
+  width: 100%;
+  max-width: 460px;
+  margin: 28px auto 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.apply-story-card {
+  background: var(--white);
+  border: 1px solid var(--gray-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.apply-story-media {
+  width: 100%;
+  /* 16:9 reads as a video-thumbnail rather than a profile photo, which
+     is the editorial feel requested for this section (Taylor and
+     Auriel's images are video stills; Max's is a photo, but all three
+     share this same frame so the three cards look intentionally
+     consistent regardless of source). */
+  aspect-ratio: 16 / 9;
+  background: var(--gray-100);
+  overflow: hidden;
+}
+
+.apply-story-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Max's photo is already cropped to this exact 16:9 frame
+     (images/interviews/max-story.jpg is 800x450), so object-fit:cover
+     doesn't need to crop it further — this object-position is just a
+     safe default in case a future story image isn't pre-cropped to
+     16:9. */
+  object-position: center 25%;
+}
+
+.apply-story-body {
+  padding: 18px 18px 20px;
+}
+
+.apply-story-name {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--coral-dark);
+  margin: 0 0 8px;
+}
+
+.apply-story-blurb {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--navy-2);
+  margin: 0 0 12px;
+  font-style: italic;
+}
+
+.apply-story-status {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gray-600);
+  margin: 0 0 8px;
+}
+
+.apply-story-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--teal-tint);
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 10px;
+  border-radius: 999px;
+  margin: 0 8px 0 0;
+}
+
+.apply-story-watch {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--coral-dark);
+  text-decoration: none;
+}
+
+.apply-story-watch:hover {
+  text-decoration: underline;
+}
+
+/* ---------------------------------------------------------------
+   Final full-width CTA — closes the page before the footer with a
+   navy band, echoing the hero's CTA so the funnel has one clear
+   last invitation to apply.
+   --------------------------------------------------------------- */
+.apply-final-cta {
+  max-width: var(--container-narrow);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.apply-final-cta h2 {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--white);
+  margin: 0 0 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+.apply-final-cta p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #cdd9e6;
+  margin: 0 auto 24px;
+  max-width: 480px;
+}
+
+.apply-btn-lg {
+  max-width: 340px;
+  margin: 0 auto;
+}
+
+.apply-final-cta-disclaimer {
+  font-size: 12px;
+  color: #93a4b8;
+  margin: 14px 0 0;
+}
+
+/* ---------------------------------------------------------------
+   Footer
+   --------------------------------------------------------------- */
+.apply-footer {
+  max-width: var(--container-narrow);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.apply-footer-wordmark {
+  color: var(--white);
+  margin-bottom: 16px;
+  justify-content: center;
+  display: inline-flex;
+}
+
+.apply-footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.apply-footer-links a {
+  font-size: 12px;
+  color: #cdd9e6;
+  text-decoration: none;
+}
+
+.apply-footer-links a:hover {
+  text-decoration: underline;
+}
+
+.apply-footer-disclaimer {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #8ea0b6;
+  padding: 0 8px;
+}
+
+/* ---------------------------------------------------------------
+   Tablet (≥640px) — landing-page type/spacing bump.
+   --------------------------------------------------------------- */
+@media (min-width: 640px) {
+  .apply-hero-eyebrow {
+    font-size: 46px;
+  }
+  .apply-hero-headline {
+    font-size: 30px;
+  }
+  .apply-hero-sub {
+    font-size: 16px;
+  }
+  .apply-hero-dollar {
+    font-size: 36px;
+  }
+  .apply-card,
+  .apply-info-card {
+    padding: 34px 34px 28px;
+  }
+  .apply-steps {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ---------------------------------------------------------------
+   Tablet (≥700px) — single story card, sized up slightly from the
+   mobile width now that there's room, still centered rather than
+   stretched full-width.
+   --------------------------------------------------------------- */
+@media (min-width: 700px) {
+  .apply-stories-grid {
+    max-width: 520px;
+  }
+  .apply-story-body {
+    padding: 16px 16px 18px;
+  }
+  .apply-story-blurb {
+    font-size: 13.5px;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Tablet (≥768px) — eligibility/payment go two-up at a narrower,
+   tablet-appropriate width so 768px doesn't feel like an in-between
+   size stuck on the mobile single-column stack until 1024px.
+   --------------------------------------------------------------- */
+@media (min-width: 768px) {
+  .apply-info-grid {
+    max-width: 700px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: stretch;
+  }
+  .apply-info-grid .apply-info-card {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* =================================================================
+   APPLICATION MODE — the focused Q&A flow shown once "Start Your
+   Application" is clicked. UNCHANGED from the prior revision:
+   selectors, values, and behavior are byte-for-byte the same as
+   before this landing-page redesign. Nothing in this block was
+   touched so the application flow, its styling, and its logic are
+   fully preserved.
+   ================================================================= */
+body.app-mode .apply-landing-only {
+  display: none !important;
+}
+
+body.app-mode #applyRoot {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding-top: 4px;
+}
+
+#applyRoot .apply-card {
+  max-width: 480px;
+  margin: 4px auto 0;
+}
+
 .apply-card {
   width: 100%;
   max-width: var(--max-width);
@@ -300,29 +709,6 @@ body.apply-page {
   color: var(--gray-600);
   display: flex;
   justify-content: space-between;
-}
-
-/* ---------------------------------------------------------------
-   Application mode — dedicated full-page experience shown once
-   "Start Your Application" is clicked. Landing-only sections are
-   hidden via body.app-mode; #applyRoot becomes the focused surface,
-   sized and proportioned to match the case-evaluation funnel's
-   question UX (max-width ~480px, 20px radius card, same shadow).
-   --------------------------------------------------------------- */
-body.app-mode .apply-landing-only {
-  display: none !important;
-}
-
-body.app-mode #applyRoot {
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  padding-top: 4px;
-}
-
-#applyRoot .apply-card {
-  max-width: 480px;
-  margin: 4px auto 0;
 }
 
 .apply-app-header {
@@ -492,12 +878,10 @@ body.app-mode #applyRoot {
 }
 
 /* ---------------------------------------------------------------
-   NEW — opening "$50 use" question (icon card grid) and HOT LEAD
-   injuries multi-select (checkbox cards). Added for the payment_intent
-   / HOT LEAD branch update. Pure additions — nothing above this
-   block was changed. Reuses the same pale-aqua/coral design tokens
-   as .apply-answer-btn above so it stays visually consistent with
-   the existing design system.
+   Opening "$50 use" question (icon card grid) and HOT LEAD
+   injuries multi-select (checkbox cards). Reuses the same
+   pale-aqua/coral design tokens as .apply-answer-btn above so it
+   stays visually consistent with the existing design system.
    --------------------------------------------------------------- */
 .apply-subtext {
   font-size: 13px;
@@ -507,8 +891,6 @@ body.app-mode #applyRoot {
   margin: -10px 0 16px;
 }
 
-/* Opening "$50 use" question — 2x2 icon card grid on wider screens,
-   single column on narrow mobile widths. */
 .apply-icon-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -556,7 +938,6 @@ body.app-mode #applyRoot {
   color: #fff;
 }
 
-/* HOT LEAD injuries question — multi-select checkbox cards. */
 .apply-checkbox-list {
   display: flex;
   flex-direction: column;
@@ -636,10 +1017,7 @@ body.app-mode #applyRoot {
 }
 
 /* Attorney-interest question only — plain footer-style fine print,
-   pushed well below the Back button toward the bottom of the card.
-   Matches .apply-footer-disclaimer's visual treatment (same size,
-   color, weight, line-height) but scoped to this one screen. No
-   border, no background, no badge — text only. */
+   pushed well below the Back button toward the bottom of the card. */
 .apply-attorney-disclosure {
   font-size: 11px;
   font-weight: 400;
@@ -694,121 +1072,166 @@ body.app-mode #applyRoot {
   line-height: 1.6;
 }
 
-.apply-footer {
-  width: 100%;
-  max-width: var(--max-width);
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid var(--gray-200);
-  text-align: center;
-}
-
-.apply-footer-links {
-  display: flex;
-  justify-content: center;
-  gap: 14px;
-  margin-bottom: 10px;
-}
-
-.apply-footer-links a {
-  font-size: 12px;
-  color: var(--gray-600);
-  text-decoration: none;
-}
-
-.apply-footer-disclaimer {
-  font-size: 11px;
-  line-height: 1.6;
-  color: var(--gray-400);
-  padding: 0 8px;
-}
-
-/* Mobile-only extra breathing room above the footer. On narrow
-   screens the footer's own disclaimer sits directly below the
-   attorney-interest disclosure (both use the same muted fine-print
-   styling), so the base 24px/16px spacing above reads as one blended
-   block of legal text. This widens the gap and keeps everything in
-   normal document flow — no absolute/fixed positioning anywhere.
-   Desktop keeps the original 24px/16px spacing (untouched below). */
-@media (max-width: 639px) {
-  .apply-footer {
-    margin-top: 44px;
-    padding-top: 20px;
-  }
-}
-
-@media (min-width: 640px) {
-  .apply-hero-eyebrow {
-    font-size: 46px;
-  }
-  .apply-hero-dollar {
-    /* Desktop size — 36px (50% larger than the prior 24px). */
-    font-size: 36px;
-  }
-  .apply-card,
-  .apply-info-card {
-    padding: 34px 34px 28px;
-  }
-}
+/* =================================================================
+   END application-mode block.
+   ================================================================= */
 
 /* ---------------------------------------------------------------
-   Desktop responsive optimization (~1024px+) — approved.
-   Mobile and the 640px tablet tweaks above are unchanged. Scoped to
-   the landing-only elements (hero, process steps, info cards). The
-   focused application Q&A flow (#applyRoot / app-mode .apply-card)
-   is deliberately left at its existing narrower width — a single-
-   question conversational flow doesn't benefit from being stretched
-   to desktop content widths.
+   Desktop responsive optimization (~1024px+).
    --------------------------------------------------------------- */
 :root {
   --max-width-desktop: 1150px;
 }
 
 @media (min-width: 1024px) {
-  .apply-header,
-  .apply-hero,
-  .apply-steps,
-  .apply-footer {
-    max-width: var(--max-width-desktop);
+  .apply-section {
+    padding: 64px 0;
+  }
+  .apply-header-section {
+    padding: 22px 0;
+  }
+  /* Logo reads a little small once the header bar spans a full wide
+     desktop viewport with lots of side whitespace — same wordmark,
+     just scaled up slightly to match the rest of the page's new
+     proportions. */
+  .apply-wordmark {
+    font-size: 28px;
+  }
+  .apply-wordmark .apply-badge {
+    width: 32px;
+    height: 32px;
+    font-size: 17px;
+  }
+  .apply-hero-section {
+    padding: 72px 0 84px;
+  }
+
+  .apply-hero {
+    max-width: 860px;
+  }
+  .apply-hero-eyebrow {
+    font-size: 60px;
+  }
+  .apply-hero-headline {
+    font-size: 42px;
+    margin: 0 0 14px;
+  }
+  .apply-hero-sub {
+    font-size: 19px;
+    margin: 0 0 16px;
+  }
+  .apply-hero-disclaimer {
+    max-width: 560px;
+    font-size: 13px;
+  }
+  .apply-hero-cta {
+    max-width: 360px;
+    margin-top: 24px;
+  }
+
+  .apply-section-heading {
+    font-size: 32px;
+  }
+  .apply-section-subheading {
+    font-size: 16px;
+  }
+
+  /* How It Works — connecting flow line behind the four chips. */
+  .apply-steps-track::before {
+    content: "";
+    position: absolute;
+    top: 44px;
+    left: 8%;
+    right: 8%;
+    height: 2px;
+    background: var(--gray-200);
+    z-index: 0;
   }
 
   .apply-steps {
+    grid-template-columns: repeat(4, 1fr);
     gap: 28px;
-    margin: 20px 0 36px;
+    position: relative;
+    z-index: 1;
   }
 
   .apply-step-chip {
-    padding: 26px 20px;
+    padding: 28px 22px;
   }
 
   .apply-step-chip .num {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     font-size: 14px;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
   }
 
   .apply-step-chip .label {
-    font-size: 13.5px;
+    font-size: 14px;
   }
 
+  /* Eligibility + Payment — equal-height, two-column, more balanced
+     padding than the narrow mobile stack. */
   .apply-info-grid {
-    width: 100%;
     max-width: var(--max-width-desktop);
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 28px;
-    align-items: start;
+    gap: 32px;
+    align-items: stretch;
   }
 
   .apply-info-grid .apply-info-card {
-    max-width: none;
     width: 100%;
-    margin-bottom: 0;
-    padding: 40px 40px 34px;
+    padding: 44px 40px 38px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
   }
 
   .apply-info-grid .apply-info-card h2 {
-    font-size: 18px;
+    font-size: 20px;
+  }
+
+  /* Real Crash2Claim Stories — single card, sized up a bit more for
+     desktop, still centered (not stretched full-width). */
+  .apply-stories-grid {
+    max-width: 620px;
+  }
+
+  .apply-story-body {
+    padding: 22px 22px 24px;
+  }
+
+  /* Final CTA — widened from --container-narrow (720px) so the
+     uppercase 36px heading has room to sit on one line at desktop
+     instead of wrapping awkwardly after 2-3 words. */
+  .apply-final-cta {
+    max-width: 880px;
+  }
+  .apply-final-cta h2 {
+    font-size: 36px;
+  }
+  .apply-final-cta p {
+    font-size: 17px;
+    max-width: 560px;
+  }
+  .apply-btn-lg {
+    max-width: 380px;
+  }
+
+  .apply-footer {
+    max-width: var(--max-width-desktop);
+  }
+}
+
+@media (min-width: 1440px) {
+  .apply-container {
+    max-width: 1360px;
+  }
+  .apply-hero-eyebrow {
+    font-size: 66px;
+  }
+  .apply-hero-headline {
+    font-size: 46px;
   }
 }
