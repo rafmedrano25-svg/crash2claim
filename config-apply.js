@@ -87,39 +87,24 @@ var APPLY_CONFIG = {
     { num: "4", label: "Review / Get Paid" },
   ],
 
-  // "A Real Person. A Real Crash Story." section on the /apply landing
-  // page (see apply.html's inline population script). As of this
-  // revision the section shows ONE testimonial only (Max) — Taylor and
-  // Auriel's video-based entries were removed at the user's explicit
-  // request ("forget the videos then lets just have one testimonial
-  // and have it be the photo of max"), not because their assets were
-  // unusable. Swap `name`, `blurb`, `status`, `paid`, `image`, and
-  // `videoUrl` for each real Crash2Claim participant as interviews are
-  // published. Nothing here is fabricated beyond generic, non-specific
-  // descriptive copy (no quotes attributed to the participant, no
-  // injury/settlement/outcome details, no statistics).
+  // "Real Stories" / participant testimonial section — INTENTIONALLY
+  // EMPTY as of this revision. The section markup and its population
+  // script were removed from apply.html entirely (per explicit user
+  // request to pull the single Max placeholder testimonial while the
+  // desktop layout is being refined); this array is left in place,
+  // empty, so the data shape and these notes survive for whenever a
+  // proper multi-participant Real Stories section is built later.
+  // images/interviews/max-story.jpg was intentionally left on disk,
+  // unused, for that future round — do not delete it.
   //
-  // `paid` must ONLY ever be set to true when factually confirmed —
-  // it renders the "Paid Participant" badge. Do not default this to
-  // true for a new entry; leave it false until payment is confirmed.
+  // When restoring: `paid` must ONLY ever be set to true when
+  // factually confirmed — it renders the "Paid Participant" badge.
   // `videoUrl` is optional — leave "" until a real published video URL
   // exists; the "Watch Story" link/button only renders when it's set.
-  //
-  // `image` points at /images/interviews/max-story.jpg — a real
-  // cropped photo (not a stock/generic placeholder), sourced from the
-  // user-supplied headshot and cropped to the section's 16:9
-  // treatment.
-  REAL_STORIES: [
-    {
-      name: "Max",
-      pronounPossessive: "His",
-      blurb: "Max shared his accident experience with Crash2Claim.",
-      status: "Interview Published",
-      paid: false, // not yet confirmed — do not mark paid until verified
-      image: "/images/interviews/max-story.jpg",
-      videoUrl: "",
-    },
-  ],
+  // Nothing here should ever be fabricated beyond generic,
+  // non-specific descriptive copy (no quotes attributed to the
+  // participant, no injury/settlement/outcome details, no statistics).
+  REAL_STORIES: [],
 
   STATES: [
     "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware",
