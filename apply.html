@@ -75,14 +75,12 @@
     </div>
   </section>
 
-  <section class="apply-section apply-stories-section apply-landing-only">
-    <div class="apply-container">
-      <p class="apply-section-eyebrow">Social Proof</p>
-      <h2 class="apply-section-heading">A Real Person. A Real Crash Story.</h2>
-      <p class="apply-section-subheading">Meet the person who shared his accident experience with Crash2Claim.</p>
-      <div class="apply-stories-grid" id="storiesGrid"></div>
-    </div>
-  </section>
+  <!-- Real Stories / participant section intentionally removed for now
+       (desktop-layout-refinement round) — the single Max placeholder
+       testimonial is being held back until a proper multi-participant
+       section is built. APPLY_CONFIG.REAL_STORIES is now an empty
+       array (see config-apply.js); max-story.jpg is left in place,
+       unused, for that future round. -->
 
   <section class="apply-section apply-final-cta-section apply-landing-only">
     <div class="apply-container apply-final-cta">
@@ -132,33 +130,11 @@
   }).join("");
   document.getElementById("disclosureOutro").textContent = APPLY_CONFIG.PAYMENT_DISCLOSURE_FULL_OUTRO;
 
-  // "A Real Person. A Real Crash Story." section. Purely data-driven
-  // from APPLY_CONFIG.REAL_STORIES (see config-apply.js) — currently a
-  // single Max entry — so participant photos/copy/links can be swapped
-  // or a second story added later without touching markup. The "Paid
-  // Participant" badge and "Watch Story" link are each rendered ONLY
-  // when their underlying data says so — never inferred, never
-  // defaulted on.
-  document.getElementById("storiesGrid").innerHTML = APPLY_CONFIG.REAL_STORIES.map(function (s) {
-    var paidBadge = s.paid
-      ? '<span class="apply-story-badge">&#10003; Paid Participant</span>'
-      : "";
-    var watchLink = s.videoUrl
-      ? '<a class="apply-story-watch" href="' + s.videoUrl + '" target="_blank" rel="noopener noreferrer">Watch ' + s.pronounPossessive + " Story &rarr;</a>"
-      : "";
-    return (
-      '<article class="apply-story-card">' +
-        '<div class="apply-story-media"><img src="' + s.image + '" alt="' + s.name + '" loading="lazy"></div>' +
-        '<div class="apply-story-body">' +
-          '<p class="apply-story-name">' + s.name.toUpperCase() + "&rsquo;S STORY</p>" +
-          '<p class="apply-story-blurb">&ldquo;' + s.blurb + '&rdquo;</p>' +
-          '<p class="apply-story-status">' + s.status + "</p>" +
-          paidBadge +
-          watchLink +
-        "</div>" +
-      "</article>"
-    );
-  }).join("");
+  // Real Stories section population intentionally removed (see the
+  // HTML comment above the final-CTA section for context) — there is
+  // no #storiesGrid element on the page right now, so there is
+  // nothing to populate. APPLY_CONFIG.REAL_STORIES still exists as an
+  // empty array in config-apply.js for a future round.
 
   // Second "Start Your Application" button (final CTA section, lower
   // on the page) simply forwards its click to the SAME hero button
